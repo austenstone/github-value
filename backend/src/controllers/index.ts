@@ -1,1 +1,1 @@
-export * from './surveryController';
+export * from './survery.controller';

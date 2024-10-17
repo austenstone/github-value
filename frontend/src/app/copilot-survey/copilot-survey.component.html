@@ -1,0 +1,32 @@
+<h1>Copilot Developer Survey</h1>
+<form [formGroup]="surveyForm" (ngSubmit)="onSubmit()">
+  <label id="example-radio-group-label">Did you use Copilot for this PR?</label>
+  <mat-radio-group aria-labelledby="example-radio-group-label" class="example-radio-group">
+    <mat-radio-button class="example-radio-button" [value]="1">Yes</mat-radio-button>
+    <mat-radio-button class="example-radio-button" [value]="0">No</mat-radio-button>
+  </mat-radio-group>
+  <label id="example-radio-group-label">How much less time did the actual coding take with Copilot?</label>
+  <p>
+    <mat-slider class="example-mat-slider" [max]="100" [min]="0" [step]="10" discrete="true" tickInterval="10">
+      <input matSliderThumb formControlName="timeSavingPercentage">
+    </mat-slider>
+  </p>
+  <label id="example-radio-group-label">Describe your thought process for calculating (or estimating) the time
+    saved</label>
+  <mat-form-field class="example-form-field">
+    <mat-label>I chose {{surveyForm.get('timeSavingPercentage')?.value}}% because Copilot enabled me to...</mat-label>
+    <textarea matInput></textarea>
+  </mat-form-field>
+  <label id="example-radio-group-label">Did you use Copilot for this PR?</label>
+  <mat-radio-group aria-labelledby="example-radio-group-label" class="example-radio-group">
+    <mat-radio-button class="example-radio-button" value="fasterPRs">Faster PR's 🚀</mat-radio-button>
+    <mat-radio-button class="example-radio-button" value="fasterReleases">Faster Releases 📦</mat-radio-button>
+    <mat-radio-button class="example-radio-button" value="repoHousekeeping">Repo/Team Housekeeping 🧹</mat-radio-button>
+    <mat-radio-button class="example-radio-button" value="techDebt">Tech Debt, Reduce Defects and Vulns
+      🛠️</mat-radio-button>
+    <mat-radio-button class="example-radio-button" value="experimentLearn">Experiment, Learn, or Work on Something NEW
+      🧪</mat-radio-button>
+    <mat-radio-button class="example-radio-button" value="other">Other 🤔</mat-radio-button>
+  </mat-radio-group>
+  <button mat-raised-button color="primary" type="submit">Submit</button>
+</form>
