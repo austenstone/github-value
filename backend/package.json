@@ -1,11 +1,10 @@
 {
   "name": "my-fullstack-app-backend",
   "version": "1.0.0",
-  "type": "module",
   "description": "Backend for my fullstack application using Node.js and TypeScript",
   "main": "src/app.ts",
   "scripts": {
-    "start": "tsx src/app.ts",
+    "start": "node dist/app.js",
     "test": "jest",
     "build": "tsc",
     "dev": "nodemon src/app.ts",
