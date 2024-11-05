@@ -9,14 +9,19 @@ import logger from "./logger";
 import updateDotenv from 'update-dotenv';
 import settingsService from './settings.service';
 
+
 class Setup {
   private static instance: Setup;
   app?: App;
-  webhooks: any;
+  webhooks: ReturnType<typeof createNodeMiddleware> | undefined;
   installationId: number | undefined;
-  installation: any;
+  installation: { id: number; [key: string]: any };
 
-  private constructor() {} // Private constructor to prevent direct instantiation
+  private constructor() {
+    this.installation = {
+      id: 0
+    } // we need to fix this...
+  }
 
   public static getInstance(): Setup {
     if (!Setup.instance) {
@@ -29,7 +34,7 @@ class Setup {
     dotenv.config();
     const _octokit = new Octokit();
     const response = await _octokit.rest.apps.createFromManifest({
-      code: code as string,
+      code,
     })
     const data = response.data;
 
@@ -60,16 +65,14 @@ class Setup {
       throw new Error('Failed to get installation URL');
     }
 
-    const installation: any = await (new Promise((resolve, reject) => {
-      _app.eachInstallation((install) => {
-        if (install && install.installation && install.installation.id) {
-          resolve(install.installation);
-        } else {
-          reject(new Error("No installation found"));
+    const installation: any = await (async () => {
+      for await (const install of _app.eachInstallation.iterator()) {
+        if (install?.installation?.id) {
+          return install.installation;
         }
-        return false; // Stop after the first installation
-      });
-    }));
+      }
+      throw new Error("No installation found");
+    })();
 
     this.installationId = installation.id;
     this.addToEnv({
@@ -84,12 +87,12 @@ class Setup {
     return installUrl;
   }
 
-  addToEnv = (obj: { [key: string]: string }) => {
+  addToEnv = (obj: Record<string, string>) => {
     updateDotenv(obj);
     Object.entries(obj).forEach(([key, value]) => {
       process.env[key] = value;
     });
-  }
+    };
 
   createAppFromInstallationId = async (installationId: number) => {
     dotenv.config();
@@ -133,7 +136,7 @@ class Setup {
     this.app = new App({
       appId: process.env.GITHUB_APP_ID,
       privateKey: process.env.GITHUB_APP_PRIVATE_KEY,
-      installationId: process.env.GITHUB_APP_INSTALLATION_ID,
+      installationId: Number(process.env.GITHUB_APP_INSTALLATION_ID),
       webhooks: {
         secret: process.env.GITHUB_WEBHOOK_SECRET
       },
@@ -169,6 +172,7 @@ class Setup {
   start = async () => {
     const octokit = await this.getOctokit();
     const authenticated = await octokit.rest.apps.getAuthenticated();
+    if (!authenticated.data) throw new Error("Failed to get installation.")
     this.installation = authenticated.data;
     this.createWebhookMiddleware();
 
@@ -191,7 +195,6 @@ class Setup {
     const manifest = JSON.parse(readFileSync('github-manifest.json', 'utf8'));
     const base = new URL(baseUrl);
     manifest.url = base.href;
-    manifest.hook_attributes.url = new URL('/api/github/webhooks', base).href;
     manifest.setup_url = new URL('/api/setup/install/complete', base).href;
     manifest.redirect_url = new URL('/api/setup/registration/complete', base).href;
     manifest.hook_attributes.url = SmeeService.getWebhookProxyUrl();
