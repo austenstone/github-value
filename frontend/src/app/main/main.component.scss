@@ -1,0 +1,50 @@
+.sidenav-container {
+  height: 100%;
+}
+
+.sidenav {
+  width: auto;
+  padding: 0 12px;
+}
+
+.sidenav .mat-toolbar {
+  background: inherit;
+}
+
+.mat-toolbar.mat-primary {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+mat-sidenav {
+  mat-toolbar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 8px !important;
+    img { // really we want to add 8px of margin to button
+      margin-left: 8px;
+    }
+  }
+}
+
+.hide-nav-text {
+  span {
+    display: none;
+  }
+  .mat-mdc-list-item {
+    padding-right: 0 !important;
+  }
+}
+
+.sidenav-content {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  height: calc(100vh - 64px);
+}
+
+mat-divider {
+  margin: 12px 0;
+}

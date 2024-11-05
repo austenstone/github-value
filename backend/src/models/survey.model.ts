@@ -34,6 +34,9 @@ Survey.init({
   percentTimeSaved: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    set(value: number) {
+      this.setDataValue('percentTimeSaved', !this.usedCopilot ? 0 : value);
+    }
   },
   reason: {
     type: DataTypes.STRING,

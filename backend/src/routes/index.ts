@@ -1,8 +1,9 @@
 import { Router, Request, Response } from 'express';
-import SurveyController from '../controllers/survery.controller.js';
+import SurveyController from '../controllers/survey.controller.js';
 import metricsController from '../controllers/metrics.controller.js';
 import settingsController from '../controllers/settings.controller.js';
 import setupController from '../controllers/setup.controller.js';
+import SeatsController from '../controllers/seats.controller.js';
 
 const router = Router();
 
@@ -19,6 +20,10 @@ router.delete('/survey/:id', SurveyController.deleteSurvey);
 router.get('/metrics', metricsController.getAllMetrics);
 router.get('/metrics/:day', metricsController.getMetricsByDay);
 
+router.get('/seats', SeatsController.getAllSeats);
+router.get('/seats/:login', SeatsController.getSeatByLogin);
+router.get('/seats/:login/activity', SeatsController.getSeatActivityByLogin);
+
 router.get('/settings', settingsController.getAllSettings);
 router.post('/settings', settingsController.createSettings);
 router.get('/settings/:name', settingsController.getSettingsByName);
@@ -32,6 +37,9 @@ router.get('/setup/status', setupController.isSetup);
 router.get('/setup/manifest', setupController.getManifest);
 router.post('/setup/existing-app', setupController.addExistingApp);
 
-router.get
+// get all other routes
+router.get('*', (req: Request, res: Response) => {
+  res.status(404).send('Route not found');
+});
 
 export default router;

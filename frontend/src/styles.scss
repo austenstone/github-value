@@ -49,3 +49,22 @@ body {
   -ms-user-select: none;
   user-select: none;
 }
+
+.page-container {
+  display:block;
+  width:100%;
+  width: 1250px;
+  @media screen and (max-width: 1450px) {
+    width: 100%;
+  }
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.page-header {
+  display: flex;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}

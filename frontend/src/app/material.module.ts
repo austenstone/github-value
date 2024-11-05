@@ -24,6 +24,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatStepperModule } from '@angular/material/stepper';
+import { MatSidenavModule } from '@angular/material/sidenav';
 
 @NgModule({
   exports: [
@@ -60,7 +61,8 @@ import { MatStepperModule } from '@angular/material/stepper';
     MatIconModule,
     MatToolbarModule,
     MatDialogModule,
-    MatStepperModule
+    MatStepperModule,
+    MatSidenavModule
   ]
 })
 export class MaterialModule { }

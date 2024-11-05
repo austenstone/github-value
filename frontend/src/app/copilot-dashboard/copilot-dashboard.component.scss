@@ -1,15 +1,30 @@
-.example-spacer {
-  flex: 1 1 auto;
+// .active-route {
+//   background: #005cbb1a !important;
+// }
+
+// .page-container {
+//   @media screen and (min-width: 1024px) {
+//     margin: 0;
+//     max-width: calc(100% - 96px);
+//     padding: 0 48px 96px;
+//   }
+// }
+
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
 }
 
-.active-route {
-  background: #005cbb1a !important;
+.example-container {
+  width: 100%;
+  height: 100%;
 }
 
-.page-container {
-  @media screen and (min-width: 1024px) {
-    margin: 0;
-    max-width: calc(100% - 96px);
-    padding: 0 48px 96px;
-  }
+.example-sidenav-content {
+  display: flex;
+  height: 100%;
+  // align-items: center;
+  justify-content: center;
 }

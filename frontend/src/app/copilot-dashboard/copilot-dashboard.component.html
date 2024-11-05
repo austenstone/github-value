@@ -1,18 +1,36 @@
-<mat-toolbar color="primary">
-  <a mat-button routerLink="/" routerLinkActive="active-route" [routerLinkActiveOptions]="{exact:
-true}">
-    <mat-icon style="width:24px; height:24px;" svgIcon="github"></mat-icon>
-    <span>GitHub Value</span>
-  </a>
-  <a mat-button routerLink="/surveys" routerLinkActive="active-route">
-    <mat-icon>assignment</mat-icon>
-    <span>Surveys</span>
-  </a>
-  <span class="example-spacer"></span>
-  <a mat-icon-button routerLink="/settings" routerLinkActive="active-route">
-    <mat-icon>settings</mat-icon>
-  </a>
+<mat-toolbar color="primary"> 
+  <button mat-icon-button (click)="drawer.toggle()" aria-label="Toggle sidebar navigation">
+    <mat-icon>menu</mat-icon>
+  </button>
 </mat-toolbar>
-<div class="page-container">
-  <router-outlet />
-</div>
+
+<mat-drawer-container class="example-container" autosize>
+  <mat-drawer #drawer class="example-sidenav" mode="side">
+    <mat-list role="list">
+      <mat-list-item role="listitem"><a mat-button routerLink="/" routerLinkActive="active-route" [routerLinkActiveOptions]="{exact:
+        true}">
+            <mat-icon style="width:24px; height:24px;" svgIcon="github"></mat-icon>
+            <span>GitHub Value</span>
+          </a>
+        </mat-list-item>
+      <mat-list-item role="listitem">
+        <a mat-button routerLink="/surveys" routerLinkActive="active-route">
+          <mat-icon>assignment</mat-icon>
+          <span>Surveys</span>
+        </a>
+      </mat-list-item>
+      <mat-list-item role="listitem">
+        <a mat-icon-button routerLink="/settings" routerLinkActive="active-route">
+          <mat-icon>settings</mat-icon>
+        </a>
+      </mat-list-item>
+    </mat-list>
+  </mat-drawer>
+
+  <div class="sidenav-content">
+    <div class="page-container">
+      <router-outlet />
+    </div>
+  </div>
+
+</mat-drawer-container>

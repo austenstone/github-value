@@ -15,8 +15,7 @@ class SurveyController {
           repo: survey.repo,
           issue_number: survey.prNumber
         })
-        const installation = setup.installation;
-        const comment = comments.data.find(comment => comment.user?.login.startsWith(installation.slug));
+        const comment = comments.data.find(comment => comment.user?.login.startsWith(setup.installation.slug));
         if (comment) {
           octokit.rest.issues.updateComment({
             owner: survey.owner,
@@ -25,7 +24,7 @@ class SurveyController {
             body: `Thanks for filling out the copilot survey @${survey.userId}!`
           })
         } else {
-          logger.info(`No comment found for survey from ${installation.slug}`)
+          logger.info(`No comment found for survey from ${setup.installation.slug}`)
         }
       } catch (error) {
         logger.error('Error updating survey comment', error);
