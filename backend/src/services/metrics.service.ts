@@ -1,8 +1,8 @@
 import { CronJob, CronTime } from 'cron';
-import { Metrics, Breakdown } from '../models/metrics.model';
-import setup from './setup';
-import logger from "./logger";
-import settingsService from "./settings.service";
+import { Metrics, Breakdown } from '../models/metrics.model.js';
+import setup from './setup.js';
+import logger from "./logger.js";
+import settingsService from "./settings.service.js";
 
 class MetricsService {
   private static instance: MetricsService;

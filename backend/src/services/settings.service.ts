@@ -1,6 +1,6 @@
-import { Settings } from '../models/settings.model';
-import MetricsService from './metrics.service';
-import setup from './setup';
+import { Settings } from '../models/settings.model.js';
+import MetricsService from './metrics.service.js';
+import setup from './setup.js';
 
 class SettingsService {
   public baseUrl = process.env.BASE_URL || 'http://localhost';

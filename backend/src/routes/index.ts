@@ -1,8 +1,8 @@
 import { Router, Request, Response } from 'express';
-import SurveyController from '../controllers/survery.controller';
-import metricsController from '../controllers/metrics.controller';
-import settingsController from '../controllers/settings.controller';
-import setupController from '../controllers/setup.controller';
+import SurveyController from '../controllers/survery.controller.js';
+import metricsController from '../controllers/metrics.controller.js';
+import settingsController from '../controllers/settings.controller.js';
+import setupController from '../controllers/setup.controller.js';
 
 const router = Router();
 

@@ -1,8 +1,8 @@
 import { Sequelize } from 'sequelize';
-import { Settings } from './models/settings.model';
-import { Metrics, Breakdown } from './models/metrics.model';
-import { Survey } from './models/survey.model';
-import logger from './services/logger';
+import { Settings } from './models/settings.model.js';
+import { Metrics, Breakdown } from './models/metrics.model.js';
+import { Survey } from './models/survey.model.js';
+import logger from './services/logger.js';
 
 const sequelize = new Sequelize({
   dialect: 'mysql',

@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ES6",
-    "module": "CommonJS",
+    "target": "esnext",
+    "module": "esnext",
     "moduleResolution": "Node",
     "rootDir": "./src",
     "outDir": "./dist",
@@ -9,8 +9,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": "./", // Add this line
-    "paths": {       // Add this block
+    "sourceMap": true,
+    "baseUrl": "./",
+    "paths": {
       "*": ["src/*"]
     }
   },

@@ -1,5 +1,6 @@
 {
   "name": "GitHub Value",
+  "type": "module",
   "version": "1.0.0",
   "description": "Demonstrate the value of GitHub",
   "main": "src/app.ts",

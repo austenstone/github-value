@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Metrics, Breakdown } from '../models/metrics.model';
+import { Metrics, Breakdown } from '../models/metrics.model.js';
 
 class MetricsController {
   // Get all metrics 📊

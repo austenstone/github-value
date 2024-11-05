@@ -1,13 +1,13 @@
 import dotenv from 'dotenv';
 import { appendFileSync, readFileSync } from "fs";
 import { App, createNodeMiddleware, Octokit } from "octokit";
-import { setupWebhookListeners } from '../controllers/webhook.controller';
-import { app as expressApp } from '../app';
-import metricsService from "./metrics.service";
-import SmeeService from './smee';
-import logger from "./logger";
 import updateDotenv from 'update-dotenv';
-import settingsService from './settings.service';
+import { setupWebhookListeners } from '../controllers/webhook.controller.js';
+import { app as expressApp } from '../app.js';
+import metricsService from "./metrics.service.js";
+import SmeeService from './smee.js';
+import logger from "./logger.js";
+import settingsService from './settings.service.js';
 
 class Setup {
   private static instance: Setup;
