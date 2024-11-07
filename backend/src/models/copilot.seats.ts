@@ -1,7 +1,7 @@
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../database';
 
-const Assignee = sequelize.define('Assignee', {
+const CopilotAssignee = sequelize.define('CopilotAssignee', {
   login: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -75,11 +75,10 @@ const Assignee = sequelize.define('Assignee', {
     allowNull: false,
   },
 }, {
-  tableName: 'assignees',
   timestamps: false,
 });
 
-const AssigningTeam = sequelize.define('AssigningTeam', {
+const CopilotAssigningTeam = sequelize.define('CopilotAssigningTeam', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -133,11 +132,10 @@ const AssigningTeam = sequelize.define('AssigningTeam', {
     allowNull: true,
   },
 }, {
-  tableName: 'assigning_teams',
   timestamps: false,
 });
 
-const Seat = sequelize.define('Seat', {
+const CopilotSeat = sequelize.define('CopilotSeat', {
   created_at: {
     type: DataTypes.DATE,
     allowNull: false,
@@ -165,23 +163,78 @@ const Seat = sequelize.define('Seat', {
   assigneeId: {
     type: DataTypes.INTEGER,
     references: {
-      model: Assignee,
+      model: CopilotAssignee,
       key: 'id',
     }
   },
   assigningTeamId: {
     type: DataTypes.INTEGER,
     references: {
-      model: AssigningTeam,
+      model: CopilotAssigningTeam,
       key: 'id',
     },
   },
 }, {
-  tableName: 'seats',
   timestamps: false,
 });
 
-Seat.belongsTo(Assignee, { foreignKey: 'assigneeId', as: 'assignee' });
-Seat.belongsTo(AssigningTeam, { foreignKey: 'assigningTeamId', as: 'assigning_team' });
+CopilotSeat.belongsTo(CopilotAssignee, { foreignKey: 'assigneeId', as: 'assignee' });
+CopilotSeat.belongsTo(CopilotAssigningTeam, { foreignKey: 'assigningTeamId', as: 'assigning_team' });
 
-export { Assignee, AssigningTeam, Seat };
+async function insertSeats(data: any[]) {
+  for (const seat of data) {
+    const assignee = await CopilotAssignee.findOrCreate({
+      where: { id: seat.assignee.id },
+      defaults: {
+        login: seat.assignee.login,
+        node_id: seat.assignee.node_id,
+        avatar_url: seat.assignee.avatar_url,
+        gravatar_id: seat.assignee.gravatar_id,
+        url: seat.assignee.url,
+        html_url: seat.assignee.html_url,
+        followers_url: seat.assignee.followers_url,
+        following_url: seat.assignee.following_url,
+        gists_url: seat.assignee.gists_url,
+        starred_url: seat.assignee.starred_url,
+        subscriptions_url: seat.assignee.subscriptions_url,
+        organizations_url: seat.assignee.organizations_url,
+        repos_url: seat.assignee.repos_url,
+        events_url: seat.assignee.events_url,
+        received_events_url: seat.assignee.received_events_url,
+        type: seat.assignee.type,
+        site_admin: seat.assignee.site_admin,
+      }
+    });
+
+    const assigningTeam = seat.assigning_team ? await CopilotAssigningTeam.findOrCreate({
+      where: { id: seat.assigning_team.id },
+      defaults: {
+        node_id: seat.assigning_team.node_id,
+        url: seat.assigning_team.url,
+        html_url: seat.assigning_team.html_url,
+        name: seat.assigning_team.name,
+        slug: seat.assigning_team.slug,
+        description: seat.assigning_team.description,
+        privacy: seat.assigning_team.privacy,
+        notification_setting: seat.assigning_team.notification_setting,
+        permission: seat.assigning_team.permission,
+        members_url: seat.assigning_team.members_url,
+        repositories_url: seat.assigning_team.repositories_url,
+        parent: seat.assigning_team.parent,
+      }
+    }) : null;
+
+    await CopilotSeat.create({
+      created_at: seat.created_at,
+      updated_at: seat.updated_at,
+      pending_cancellation_date: seat.pending_cancellation_date,
+      last_activity_at: seat.last_activity_at,
+      last_activity_editor: seat.last_activity_editor,
+      plan_type: (seat as any).plan_type,
+      assigneeId: seat.assignee.id,
+      assigningTeamId: assigningTeam ? seat.assigning_team?.id : null,
+    });
+  }
+}
+
+export { CopilotAssignee, CopilotAssigningTeam, CopilotSeat, insertSeats };

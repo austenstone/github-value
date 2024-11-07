@@ -11,7 +11,6 @@ const Settings = sequelize.define('Settings', {
     allowNull: false,
   }
 }, {
-  tableName: 'settings',
   timestamps: false,
 });
 

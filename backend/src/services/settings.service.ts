@@ -1,5 +1,5 @@
 import { Settings } from '../models/settings.model';
-import MetricsService from './metrics.service';
+import QueryService from './query.service';
 import setup from './setup';
 
 class SettingsService {
@@ -35,7 +35,7 @@ class SettingsService {
         setup.addToEnv({ GITHUB_WEBHOOK_SECRET: value });
         break;
       case 'metricsCronExpression':
-        MetricsService.getInstance().updateCronJob(value);
+        QueryService.getInstance().updateCronJob(value);
         break;
     }
     try {

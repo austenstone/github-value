@@ -3,7 +3,7 @@ import { appendFileSync, readFileSync } from "fs";
 import { App, createNodeMiddleware, Octokit } from "octokit";
 import { setupWebhookListeners } from '../controllers/webhook.controller';
 import { app as expressApp } from '../app';
-import metricsService from "./metrics.service";
+import metricsService from "./query.service";
 import SmeeService from './smee';
 import logger from "./logger";
 import updateDotenv from 'update-dotenv';

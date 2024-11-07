@@ -1,9 +1,10 @@
 import { Router, Request, Response } from 'express';
 import SurveyController from '../controllers/survey.controller';
-import metricsController from '../controllers/metrics.controller';
+import usageController from '../controllers/usage.controller';
 import settingsController from '../controllers/settings.controller';
 import setupController from '../controllers/setup.controller';
 import SeatsController from '../controllers/seats.controller';
+import metricsController from '../controllers/metrics.controller';
 
 const router = Router();
 
@@ -17,8 +18,9 @@ router.get('/survey/:id', SurveyController.getSurveyById);
 router.put('/survey/:id', SurveyController.updateSurvey);
 router.delete('/survey/:id', SurveyController.deleteSurvey);
 
-router.get('/metrics', metricsController.getAllMetrics);
-router.get('/metrics/:day', metricsController.getMetricsByDay);
+router.get('/usage', usageController.getUsage);
+
+router.get('/metrics', metricsController.getMetrics);
 
 router.get('/seats', SeatsController.getAllSeats);
 router.get('/seats/:login', SeatsController.getSeatByLogin);

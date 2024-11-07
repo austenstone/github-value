@@ -1,14 +1,14 @@
 import { Request, Response } from 'express';
-import { Seat, Assignee, AssigningTeam } from '../models/copilot.seats';
+import { CopilotSeat, CopilotAssignee, CopilotAssigningTeam } from '../models/copilot.seats';
 
 class SeatsController {
   // Get all metrics 📊
   async getAllSeats(req: Request, res: Response): Promise<void> {
     try {
-      const metrics = await Seat.findAll({
+      const metrics = await CopilotSeat.findAll({
         include: [
-          { model: Assignee, as: 'assignee' },
-          { model: AssigningTeam, as: 'assigning_team' }
+          { model: CopilotAssignee, as: 'assignee' },
+          { model: CopilotAssigningTeam, as: 'assigning_team' }
         ]
       });
       res.status(200).json(metrics); // 🎉 All metrics retrieved!
@@ -21,18 +21,18 @@ class SeatsController {
   async getSeatByLogin(req: Request, res: Response): Promise<void> {
     try {
       const { login } = req.params;
-      const assignee = await Assignee.findOne({
+      const assignee = await CopilotAssignee.findOne({
         where: { login }
       });
       if (!assignee) {
         res.status(404).json({ error: 'Assignee not found' }); // 🚨 Assignee not foun
         return;
       }
-      const metrics = await Seat.findOne({
+      const metrics = await CopilotSeat.findOne({
         where: { assigneeId: assignee?.dataValues.id },
         include: [
-          { model: Assignee, as: 'assignee' },
-          { model: AssigningTeam, as: 'assigning_team' }
+          { model: CopilotAssignee, as: 'assignee' },
+          { model: CopilotAssigningTeam, as: 'assigning_team' }
         ]
       });
       if (metrics) {
@@ -49,11 +49,11 @@ class SeatsController {
   async getSeatActivityByLogin(req: Request, res: Response): Promise<void> {
     try {
       const { login } = req.params;
-      const metrics = await Seat.findAndCountAll({
+      const metrics = await CopilotSeat.findAndCountAll({
         where: { login },
         include: [
-          { model: Assignee, as: 'assignee' },
-          { model: AssigningTeam, as: 'assigning_team' }
+          { model: CopilotAssignee, as: 'assignee' },
+          { model: CopilotAssigningTeam, as: 'assigning_team' }
         ]
       });
       if (metrics) {

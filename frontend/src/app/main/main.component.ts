@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { Observable } from 'rxjs';
 import { map, shareReplay } from 'rxjs/operators';
 import { AppModule } from '../app.module';
+import { MetricsService } from '../services/metrics.service';
 
 @Component({
   selector: 'app-main',
@@ -29,8 +30,13 @@ export class MainComponent {
   private breakpointObserver = inject(BreakpointObserver);
   hideNavText = false;
 
-  constructor() {
+  constructor(
+    private metricsService: MetricsService
+  ) {
     this.hideNavText = localStorage.getItem('hideNavText') === 'true';
+    this.metricsService.getMetrics().subscribe(data => {
+      console.log(data);
+    });
   }
 
   isHandset$: Observable<boolean> = this.breakpointObserver.observe(Breakpoints.Handset)
