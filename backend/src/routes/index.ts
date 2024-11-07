@@ -1,10 +1,18 @@
 import { Router, Request, Response } from 'express';
+<<<<<<< HEAD
 import SurveyController from '../controllers/survey.controller';
 import usageController from '../controllers/usage.controller';
 import settingsController from '../controllers/settings.controller';
 import setupController from '../controllers/setup.controller';
 import SeatsController from '../controllers/seats.controller';
 import metricsController from '../controllers/metrics.controller';
+=======
+import SurveyController from '../controllers/survey.controller.js';
+import metricsController from '../controllers/metrics.controller.js';
+import settingsController from '../controllers/settings.controller.js';
+import setupController from '../controllers/setup.controller.js';
+import SeatsController from '../controllers/seats.controller.js';
+>>>>>>> 518279f0bc3ac0923b7498bd46ecf4fa4794e860
 
 const router = Router();
 

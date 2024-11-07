@@ -1,5 +1,5 @@
-import logger from "./logger";
-import settingsService from "./settings.service";
+import logger from "./logger.js";
+import settingsService from "./settings.service.js";
 
 class SmeeService {
   private static instance: SmeeService;

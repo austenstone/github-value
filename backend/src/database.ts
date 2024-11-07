@@ -1,6 +1,14 @@
 import { Sequelize } from 'sequelize';
+<<<<<<< HEAD
 import logger from './services/logger';
 import mysql2 from 'mysql2/promise';
+=======
+import { Settings } from './models/settings.model.js';
+import { Metrics, Breakdown } from './models/metrics.model.js';
+import { Survey } from './models/survey.model.js';
+import { Assignee, AssigningTeam, Seat } from './models/copilot.seats.js';
+import logger from './services/logger.js';
+>>>>>>> 518279f0bc3ac0923b7498bd46ecf4fa4794e860
 
 const sequelize = new Sequelize({
   dialect: 'mysql',

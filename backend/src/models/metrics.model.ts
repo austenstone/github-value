@@ -1,8 +1,13 @@
+<<<<<<< HEAD
 // models/daily-metric.ts
 import { Model, DataTypes, Sequelize } from 'sequelize';
 import { sequelize } from '../database';
 import { ChatModel, CopilotMetrics } from './metrics.model.interfaces';
 import logger from '../services/logger';
+=======
+import { DataTypes } from 'sequelize';
+import { sequelize } from '../database.js';
+>>>>>>> 518279f0bc3ac0923b7498bd46ecf4fa4794e860
 
 // Main metric model 📈
 export class MetricDaily extends Model {

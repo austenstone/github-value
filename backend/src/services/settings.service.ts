@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 import { Settings } from '../models/settings.model';
 import QueryService from './query.service';
 import setup from './setup';
+=======
+import { Settings } from '../models/settings.model.js';
+import MetricsService from './metrics.service.js';
+import setup from './setup.js';
+>>>>>>> 518279f0bc3ac0923b7498bd46ecf4fa4794e860
 
 class SettingsService {
   public baseUrl = process.env.BASE_URL || 'http://localhost';
