@@ -27,7 +27,7 @@
     "highcharts": "^11.4.8",
     "highcharts-angular": "^4.0.1",
     "rxjs": "~7.8.0",
-    "smee-client": "^2.0.3",
+    "smee-client": "^2.0.4",
     "tslib": "^2.3.0",
     "zone.js": "~0.14.10"
   },
