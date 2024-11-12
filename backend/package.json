@@ -13,7 +13,7 @@
   "dependencies": {
     "bunyan": "^1.8.15",
     "cors": "^2.8.5",
-    "cron": "^3.1.9",
+    "cron": "^3.2.0",
     "dotenv": "^16.4.5",
     "eventsource": "^2.0.2",
     "express": "^4.21.1",
