@@ -15,8 +15,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    links:
-      - db
     volumes:
       - ./:/src
 
@@ -29,20 +27,11 @@ services:
       # TZ: UTC
     ports:
       - '3306:3306'
-    expose:
-      - '3306'
     volumes:
       - db:/var/lib/mysql
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 1s
+
 volumes:
   db:
-
-networks:
-  default:
-    driver: bridge

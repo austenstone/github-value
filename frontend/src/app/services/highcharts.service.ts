@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { CopilotMetrics } from './metrics.service.interfaces';
 import { DashboardCardBarsInput } from '../main/copilot/copilot-dashboard/dashboard-card/dashboard-card-bars/dashboard-card-bars.component';
+import { ActivityResponse } from './seat.service';
 
 @Injectable({
   providedIn: 'root'
@@ -256,5 +257,116 @@ export class HighchartsService {
       { name: '.COM Chat', icon: 'public', value: data.copilot_dotcom_chat?.total_engaged_users || 0, maxValue: totalSeats },
       { name: '.COM PRs', icon: 'merge', value: data.copilot_dotcom_pull_requests?.total_engaged_users || 0, maxValue: totalSeats },
     ];
+  }
+
+  transformActivityMetricsToLine(data: ActivityResponse) {
+      const activeUsersSeries = {
+        name: 'Users',
+        type: 'spline',
+        data: Object.entries(data).map(([date, dateData]) => {
+          return {
+            x: new Date(date).getTime(),
+            y: (dateData.totalActive / dateData.totalSeats) * 100,
+            raw: dateData.totalActive  // Store original value for tooltip
+          };
+        }),
+        lineWidth: 2,
+        marker: {
+          enabled: true,
+          radius: 4,
+          symbol: 'circle'
+        },
+        states: {
+          hover: {
+            lineWidth: 3
+          }
+        }
+      };
+      
+      console.log(activeUsersSeries);
+      return {
+        series: [activeUsersSeries],
+      };
+  }
+
+  transformMetricsToDailyActivityLine(activity: ActivityResponse, metrics: CopilotMetrics[]) {
+    const initalSeries = {
+      name: 'Active Users',
+      type: 'spline',
+      data: [],
+      lineWidth: 2,
+      marker: {
+        enabled: true,
+        radius: 4,
+        symbol: 'circle'
+      },
+      states: {
+        hover: {
+          lineWidth: 3
+        }
+      }
+    };
+    const dailyActiveIdeCompletionsSeries = {
+      ...initalSeries,
+      name: 'IDE Completions',
+      data: [] as Highcharts.PointOptionsObject[]
+    };
+    const dailyActiveIdeChatSeries = {
+      ...initalSeries,
+      name: 'IDE Chats',
+      data: [] as Highcharts.PointOptionsObject[]
+    };
+    const dailyActiveDotcomChatSeries = {
+      ...initalSeries,
+      name: '.COM Chats',
+      data: [] as Highcharts.PointOptionsObject[]
+    };
+    const dailyActiveDotcomPrSeries = {
+      ...initalSeries,
+      name: '.COM Pull Requests',
+      data: [] as Highcharts.PointOptionsObject[]
+    };
+
+    Object.entries(activity).forEach(([date, dateData]) => {
+      const currentMetrics = metrics.find(m => m.date.startsWith(date));
+      console.log(dateData, currentMetrics);
+      if (currentMetrics?.copilot_ide_code_completions) {
+        (dailyActiveIdeCompletionsSeries.data as any).push({
+          x: new Date(date).getTime(),
+          y: (currentMetrics.copilot_ide_code_completions.total_code_suggestions / dateData.totalActive) * 100,
+          raw: date
+        });
+      }
+      if (currentMetrics?.copilot_ide_chat) {
+        (dailyActiveIdeChatSeries.data as any).push({
+          x: new Date(date).getTime(),
+          y: (currentMetrics.copilot_ide_chat.total_chats / dateData.totalActive) * 100,
+          raw: date
+        });
+      }
+      if (currentMetrics?.copilot_dotcom_chat) {
+        (dailyActiveDotcomChatSeries.data as any).push({
+          x: new Date(date).getTime(),
+          y: (currentMetrics.copilot_dotcom_chat.total_chats / dateData.totalActive) * 100,
+          raw: date
+        });
+      }
+      if (currentMetrics?.copilot_dotcom_pull_requests) {
+        (dailyActiveDotcomPrSeries.data as any).push({
+          x: new Date(date).getTime(),
+          y: (currentMetrics.copilot_dotcom_pull_requests.total_pr_summaries_created / dateData.totalActive) * 100,
+          raw: date
+        });
+      }
+    });
+
+    return {
+      series: [
+        dailyActiveIdeCompletionsSeries,
+        dailyActiveIdeChatSeries,
+        dailyActiveDotcomChatSeries,
+        dailyActiveDotcomPrSeries,
+      ]
+    }
   }
 }

@@ -1,3 +1,4 @@
+# https://github.com/devcontainers/images/blob/main/src/javascript-node/.devcontainer/Dockerfile
 ARG VARIANT=23-bookworm
 FROM node:${VARIANT}
 
@@ -30,5 +31,6 @@ RUN \
 # ARG EXTRA_NODE_VERSION=10
 # RUN su node -c "source /usr/local/share/nvm/nvm.sh && nvm install ${EXTRA_NODE_VERSION}"
 
-# [Optional] Uncomment if you want to install more global node modules
-# RUN su node -c "npm install -g <your-package-list-here>"
+# [Optional] Uncomment if you want to install more global node packages
+ARG EXTRA_NODE_PACKAGES="@angular/cli"
+RUN su node -c "npm install -g ${EXTRA_NODE_PACKAGES}"

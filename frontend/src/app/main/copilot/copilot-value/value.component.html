@@ -8,13 +8,13 @@
       <mat-card-header>
         <mat-card-title>Adoption</mat-card-title>
       </mat-card-header>
-      <app-adoption-chart></app-adoption-chart>
+      <app-adoption-chart [data]="activityData"></app-adoption-chart>
     </mat-card>
     <mat-card class="chart-card" appearance="outlined">
       <mat-card-header>
         <mat-card-title>Daily Activity (Usage)</mat-card-title>
       </mat-card-header>
-      <app-daily-activity-chart></app-daily-activity-chart>
+      <app-daily-activity-chart [activity]="activityData" [metrics]="metricsData"></app-daily-activity-chart>
     </mat-card>
     <mat-card class="chart-card" appearance="outlined">
       <mat-card-header>

@@ -2,16 +2,30 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "Develop (No docker/Codespace)",
+			"detail": "Start the backend and frontend in development mode. Run this if you already have the database running or are running in a GitHub Codespace.",
+			"group": "build",
+			"icon": {
+				"id": "github"
+			},
+			"problemMatcher": [],
+			"dependsOn": [
+				"npm: start - frontend",
+				"npm: dev - backend",
+			]
+		},
+		{
 			"problemMatcher": [],
 			"label": "Develop",
 			"detail": "Start the backend and frontend in development mode",
 			"group": "build",
 			"icon": {
-				"id": "star"
+				"id": "vm"
 			},
 			"dependsOn": [
+				"npm: db:start - backend",
 				"npm: start - frontend",
-				"npm: dev - backend",
+				"npm: dev - backend with db"
 			]
 		},
 		{
@@ -98,7 +112,25 @@
         "id": "server"
       },
 			"dependsOn": [
-				"npm: dotenv - backend",
+				"npm: install - backend"
+			],
+			"presentation": {
+				"group": "dev"
+			}
+		},
+		{
+			"type": "npm",
+			"script": "dev",
+			"path": "backend",
+      "isBackground": true,
+			"problemMatcher": [],
+			"label": "npm: dev - backend with db",
+			"detail": "nodemon src/app.ts | bunyan -o short",
+      "icon": {
+        "id": "server"
+      },
+			"dependsOn": [
+				"npm: install - backend",
 				"npm: db:start - backend"
 			],
 			"presentation": {
@@ -117,8 +149,7 @@
       },
 			"dependsOn": [
 				"npm: build - backend",
-				"npm: build - frontend",
-				"npm: db:start - backend"
+				"npm: build - frontend"
 			]
 		},
 		{
@@ -138,7 +169,7 @@
 		},
 		{
 			"type": "npm",
-			"script": "start -- --open",
+			"script": "start",
 			"path": "frontend",
       "isBackground": true,
 			"problemMatcher": [],
@@ -146,7 +177,7 @@
       "icon": {
         "id": "dashboard"
       },
-			"detail": "ng serve --open",
+			"detail": "npm run start",
 			"dependsOn": [
 				"npm: install - frontend"
 			],

@@ -1,18 +1,19 @@
-FROM node:23 AS backend-builder
+ARG VARIANT=23
+FROM node:${VARIANT} AS backend-builder
 WORKDIR /app/backend
 COPY backend/package.json backend/package-lock.json ./
 RUN npm install
 COPY backend/ ./
 RUN npm run build
 
-FROM node:23 AS frontend-builder
+FROM node:${VARIANT} AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm install
 COPY frontend/ ./
 RUN npm run build
 
-FROM node:23
+FROM node:${VARIANT}
 WORKDIR /app
 
 COPY --from=backend-builder /app/backend/dist ./backend/dist

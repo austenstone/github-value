@@ -1,24 +1,36 @@
 services:
   dev:
-    extends:
-      file: ../compose.yml
-      service: backend
-    build: .
-    ports:
-      - "80:80"
-      - "4200:4200"
+    build:
+      dockerfile: ./Dockerfile
     volumes:
-      # Mount the parent directory (project root) to /workspace
-      - ..:/workspace/github-value:cached
-    # Overrides default command so things don't shut down after the process ends.
-    command: /bin/sh -c "while sleep 1000; do :; done"
+      - ../..:/workspaces:cached   
+    network_mode: service:db
+    command: sleep infinity
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
       NODE_ENV: development
+      MYSQL_HOST: db
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: octocat
+      MYSQL_DATABASE: value
 
   db:
-    extends:
-      file: ../compose.yml
-      service: db
+    image: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: octocat
+      MYSQL_DATABASE: value
+    volumes:
+      - db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
 volumes:
   db:

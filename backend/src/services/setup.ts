@@ -30,6 +30,7 @@ class Setup {
   webhooks?: Express;
   installationId?: number;
   installation?: any;
+  installUrl: string | undefined;
   setupStatus: SetupStatus = {
     isSetup: false,
     dbInitialized: false,
@@ -54,7 +55,7 @@ class Setup {
     dotenv.config();
     const _octokit = new Octokit();
     const response = await _octokit.rest.apps.createFromManifest({
-      code: code as string,
+      code,
     })
     const data = response.data;
 
@@ -80,8 +81,8 @@ class Setup {
       }
     })
 
-    const installUrl = await _app.getInstallationUrl();
-    if (!installUrl) {
+    this.installUrl = await _app.getInstallationUrl();
+    if (!this.installUrl) {
       throw new Error('Failed to get installation URL');
     }
 
@@ -96,10 +97,8 @@ class Setup {
       GITHUB_WEBHOOK_SECRET: webhookSecret,
       GITHUB_APP_INSTALLATION_ID: installation.id.toString()
     })
-
-    await this.createAppFromEnv();
-
-    return installUrl;
+    
+    return this.createAppFromEnv();
   }
 
   addToEnv = (obj: { [key: string]: string }) => {

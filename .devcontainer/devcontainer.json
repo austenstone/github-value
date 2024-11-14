@@ -2,18 +2,13 @@
   "name": "Austen",
   "dockerComposeFile": "./compose.yml",
   "service": "dev",
-  "shutdownAction": "stopCompose",
-  "workspaceFolder": "/workspaces/github-value",
-  "postCreateCommand": "./postCreateCommand.sh",
-  // "forwardPorts": [
-  //   4200,
-  //   80
-  // ],
+  "remoteUser": "node",
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "postCreateCommand": "cd /workspaces/${localWorkspaceFolderBasename}/frontend && npm install && npm run build && cd /workspaces/${localWorkspaceFolderBasename}/backend && npm install",
   "features": {
-    "ghcr.io/devcontainers/features/git:1": {
-      "version": "latest",
-      "ppa": "false"
-    }
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker": {}
   },
   "customizations": {
     "vscode": {

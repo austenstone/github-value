@@ -46,9 +46,9 @@ class SetupController {
         return res.status(400).json({ error: 'All fields are required' });
       }
 
-      const installUrl = await setup.createAppFromExisting(appId, privateKey, webhookSecret);
+      await setup.createAppFromExisting(appId, privateKey, webhookSecret);
 
-      res.json({ installUrl });
+      res.json({ installUrl: setup.installUrl });
     } catch (error) {
       res.status(500).json(error);
     }
