@@ -8,7 +8,9 @@
     "test": "jest",
     "build": "tsc",
     "dev": "nodemon src/app.ts | bunyan -o short",
-    "lint": "eslint src/**/*.ts"
+    "lint": "eslint src/**/*.ts",
+    "db:start": "docker-compose -f ../compose.yml up -d db",
+    "dotenv": "cp -u .env.example .env || if not exist .env copy .env.example .env"
   },
   "dependencies": {
     "bunyan": "^1.8.15",

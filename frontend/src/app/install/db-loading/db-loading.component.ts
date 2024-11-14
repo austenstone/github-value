@@ -106,6 +106,10 @@ export class DbLoadingComponent {
     this.statusSubscription = timer(0, 5000)
       .subscribe(() => {
         this.setupService.getSetupStatus().subscribe((response) => {
+          if (!response.isSetup) {
+            this.router.navigate(['/setup']);
+            return;
+          }
           if (response.dbsInitalized) {
             this.dbStatus = response.dbsInitalized;
             this.updateProgress();

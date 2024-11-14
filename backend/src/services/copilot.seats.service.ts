@@ -27,7 +27,7 @@ class SeatsService {
       include: [{
         model: Assignee,
         as: 'assignee',
-        attributes: ['login', 'id']
+        attributes: ['login', 'id', 'avatar_url']
       }],
       where: {
         id: {

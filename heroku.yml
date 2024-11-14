@@ -9,10 +9,5 @@ build:
     DOCKER_BUILDKIT: 1
     NODE_ENV: production
     MYSQL_DATABASE: value
-release:
-  image: web
-  command:
-    - echo "Setting BASE_URL..." 
-    - heroku config:set BASE_URL=$(heroku info -s | grep web_url | cut -d= -f2)
 run:
   web: npm run start

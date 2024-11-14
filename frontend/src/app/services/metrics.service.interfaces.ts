@@ -46,22 +46,29 @@ interface Repository {
 
 interface IdeCodeCompletions {
   total_engaged_users: number;
+  total_code_acceptances: number;
+  total_code_lines_accepted: number;
+  total_code_lines_suggested: number;
+  total_code_suggestions: number;
   languages: LanguageMetrics[];
   editors: Editor[];
 }
 
 interface IdeChat {
+  total_chats: number;
   total_engaged_users: number;
   editors: Editor[];
 }
 
 interface DotComChat {
   total_engaged_users: number;
+  total_chats: number;
   models: DotComChatModel[];
 }
 
 interface DotComPullRequests {
   total_engaged_users: number;
+  total_pr_summaries_created: number;
   repositories: Repository[];
 }
 

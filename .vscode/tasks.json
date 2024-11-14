@@ -1,0 +1,189 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Develop (No docker/Codespace)",
+			"detail": "Start the backend and frontend in development mode. Run this if you already have the database running or are running in a GitHub Codespace.",
+			"group": "build",
+			"icon": {
+				"id": "github"
+			},
+			"problemMatcher": [],
+			"dependsOn": [
+				"npm: start - frontend",
+				"npm: dev - backend",
+			]
+		},
+		{
+			"problemMatcher": [],
+			"label": "Develop",
+			"detail": "Start the backend and frontend in development mode",
+			"group": "build",
+			"icon": {
+				"id": "vm"
+			},
+			"dependsOn": [
+				"npm: db:start - backend",
+				"npm: start - frontend",
+				"npm: dev - backend with db"
+			]
+		},
+		{
+			"type": "npm",
+			"script": "db:start",
+			"path": "backend",
+			"problemMatcher": [],
+			"label": "npm: db:start - backend",
+      "icon": {
+        "id": "database"
+      },
+			"detail": "docker-compose -f ../compose.yml up -d db",
+			"presentation": {
+					"revealProblems": "onProblem",
+					"close": true
+			}
+		},
+		{
+			"type": "npm",
+			"script": "dotenv",
+			"path": "backend",
+			"problemMatcher": [],
+			"label": "npm: dotenv - backend",
+			"detail": "cp .env.example .env",
+			"icon": {
+				"id": "file-add"
+			},
+			"presentation": {
+					"reveal": "silent",
+					"revealProblems": "onProblem",
+					"close": true
+			}
+		},
+		{
+			"type": "npm",
+			"script": "install",
+			"path": "backend",
+			"label": "npm: install - backend",
+			"icon": {
+				"id": "desktop-download"
+			},
+			"presentation": {
+					"revealProblems": "onProblem",
+					"close": true
+			}
+		},
+		{
+			"type": "npm",
+			"script": "install",
+			"path": "frontend",
+			"label": "npm: install - frontend",
+			"icon": {
+				"id": "desktop-download"
+			},
+			"presentation": {
+					"revealProblems": "onProblem",
+					"close": true
+			}
+		},
+		{
+			"type": "npm",
+			"script": "build",
+			"path": "backend",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build - backend",
+			"icon": {
+				"id": "symbol-constructor"
+			},
+			"detail": "tsc",
+			"dependsOn": [
+				"npm: install - backend"
+			]
+		},
+		{
+			"type": "npm",
+			"script": "dev",
+			"path": "backend",
+      "isBackground": true,
+			"problemMatcher": [],
+			"label": "npm: dev - backend",
+			"detail": "nodemon src/app.ts | bunyan -o short",
+      "icon": {
+        "id": "server"
+      },
+			"dependsOn": [
+				"npm: install - backend"
+			],
+			"presentation": {
+				"group": "dev"
+			}
+		},
+		{
+			"type": "npm",
+			"script": "dev",
+			"path": "backend",
+      "isBackground": true,
+			"problemMatcher": [],
+			"label": "npm: dev - backend with db",
+			"detail": "nodemon src/app.ts | bunyan -o short",
+      "icon": {
+        "id": "server"
+      },
+			"dependsOn": [
+				"npm: install - backend",
+				"npm: db:start - backend"
+			],
+			"presentation": {
+				"group": "dev"
+			}
+		},
+		{
+			"type": "npm",
+			"script": "start",
+			"path": "backend",
+			"problemMatcher": [],
+			"label": "npm: start - backend",
+			"detail": "node dist/app.js | bunyan -o short",
+      "icon": {
+        "id": "server"
+      },
+			"dependsOn": [
+				"npm: build - backend",
+				"npm: build - frontend"
+			]
+		},
+		{
+			"type": "npm",
+			"script": "build",
+			"path": "frontend",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build - frontend",
+			"icon": {
+				"id": "symbol-constructor"
+			},
+			"detail": "ng build",
+			"dependsOn": [
+				"npm: install - frontend"
+			]
+		},
+		{
+			"type": "npm",
+			"script": "start",
+			"path": "frontend",
+      "isBackground": true,
+			"problemMatcher": [],
+			"label": "npm: start - frontend",
+      "icon": {
+        "id": "dashboard"
+      },
+			"detail": "npm run start",
+			"dependsOn": [
+				"npm: install - frontend"
+			],
+			"presentation": {
+				"group": "dev"
+			}
+		}
+	]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "Austen",
+  "dockerComposeFile": "./compose.yml",
+  "service": "dev",
+  "remoteUser": "node",
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "postCreateCommand": "cd /workspaces/${localWorkspaceFolderBasename}/frontend && npm install && npm run build && cd /workspaces/${localWorkspaceFolderBasename}/backend && npm install",
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/docker-outside-of-docker": {}
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "extensions.ignoreRecommendations": true,
+        "gitlens.showWelcomeOnInstall": false,
+        "gitlens.showWhatsNewAfterUpgrades": false
+      },
+      "extensions": [
+        "eamodio.gitlens",
+        "ms-vscode.vscode-typescript-next",
+        "dbaeumer.vscode-eslint",
+        "visualstudioexptteam.vscodeintellicode",
+        "Angular.ng-template",
+        "sibiraj-s.vscode-scss-formatter",
+        "ms-azuretools.vscode-docker",
+        "ms-vsliveshare.vsliveshare",
+        "Github.vscode-github-actions",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "GitHub.vscode-pull-request-github"
+      ]
+    }
+  }
+}
