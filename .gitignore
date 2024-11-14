@@ -1,4 +1,7 @@
+.git
 node_modules
+/package-lock.json
+/packge.json
 db/**/*
 .env
 logs/**/*

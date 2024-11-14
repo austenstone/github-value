@@ -27,11 +27,13 @@ export class SetupGuard implements CanActivate, CanActivateChild {
         this.cache = response;
         if (!response.isSetup) {
           this.router.navigate(['/setup'])
+          return false;
         }
         if (!response.dbInitialized && !isDevMode()) {
           this.router.navigate(['/setup/loading']);
+          return false;
         }
-        return (response.isSetup && response.dbInitialized) || true;
+        return true;
       }),
       catchError(() => {
         this.router.navigate(['/setup']);

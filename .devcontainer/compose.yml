@@ -1,37 +1,36 @@
 services:
-  backend:
-    restart: always
+  dev:
     build:
-      dockerfile: Dockerfile
-    ports:
-      - "80:80"
+      dockerfile: ./Dockerfile
+    volumes:
+      - ../..:/workspaces:cached   
+    network_mode: service:db
+    command: sleep infinity
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       MYSQL_HOST: db
       MYSQL_PORT: 3306
       MYSQL_USER: root
       MYSQL_PASSWORD: octocat
       MYSQL_DATABASE: value
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - ./:/src
 
   db:
     image: mysql
-    restart: always
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: octocat
       MYSQL_DATABASE: value
-      # TZ: UTC
-    ports:
-      - '3306:3306'
     volumes:
       - db:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-      interval: 1s
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
 volumes:
   db:

@@ -1,6 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import Highcharts from 'highcharts/es-modules/masters/highcharts.src';
 import { HighchartsChartModule } from 'highcharts-angular';
+import { ActivityResponse } from '../../../../services/seat.service';
+import { CopilotMetrics } from '../../../../services/metrics.service.interfaces';
+import { HighchartsService } from '../../../../services/highcharts.service';
 
 @Component({
   selector: 'app-daily-activity-chart',
@@ -11,10 +14,12 @@ import { HighchartsChartModule } from 'highcharts-angular';
   templateUrl: './daily-activity-chart.component.html',
   styleUrl: './daily-activity-chart.component.scss'
 })
-export class DailyActivityChartComponent {
+export class DailyActivityChartComponent implements OnChanges {
   Highcharts: typeof Highcharts = Highcharts;
   updateFlag = false;
   totalUsers = 500;
+  @Input() activity?: ActivityResponse;
+  @Input() metrics?: CopilotMetrics[];
   data = [
     // April 2023
     [1680307200000, 265],  // Week 1 
@@ -100,16 +105,16 @@ export class DailyActivityChartComponent {
     },
     yAxis: {
       title: {
-        text: 'Daily Activity (%)'
+        text: 'Average Activity Per User'
       },
       min: 0,
-      max: 100,
-      labels: {
-        format: '{value}%'
-      },
+      // max: 100,
+      // labels: {
+      //   format: '{value}%'
+      // },
       plotBands: [{
-        from: 50,
-        to: 90,
+        from: 500,
+        to: 750,
         color: 'var(--sys-surface-variant)',
         label: {
           text: 'Typical Range',
@@ -119,7 +124,7 @@ export class DailyActivityChartComponent {
         }
       }],
       plotLines: [{
-        value: 75,
+        value: 1000,
         color: 'var(--sys-primary)',
         dashStyle: 'Dash',
         width: 2,
@@ -135,38 +140,33 @@ export class DailyActivityChartComponent {
     },
     tooltip: {
       headerFormat: '<b>{point.x:%b %d, %Y}</b><br/>',
-      pointFormat: [
-        '{series.name}: ',
-        '<b>{point.raw}</b>',
-        '(<b>{point.y:.1f}%</b>)'
-      ].join(''),
+      pointFormatter: function () {
+        const point: any = this;
+        return [
+          `${point.series.name}: `,
+          '<b>' + Math.round(point.y) + '</b>'
+        ].join('');
+      },
       style: {
         fontSize: '14px'
       }
     },
     series: [{
-      name: 'Active Users',
+      name: 'IDE Completions',
       type: 'spline',
-      data: this.data.map(point => ({
-        x: point[0],
-        y: (point[1] / this.totalUsers) * 100,
-        raw: point[1]  // Store original value for tooltip
-      })),
-      lineWidth: 2,
-      marker: {
-        enabled: true,
-        radius: 4,
-        symbol: 'circle'
-      },
-      states: {
-        hover: {
-          lineWidth: 3
-        }
-      }
+    }, {
+      name: 'IDE Chats',
+      type: 'spline',
+    }, {
+      name: '.COM Chats',
+      type: 'spline',
+    }, {
+      name: '.COM Pull Requests',
+      type: 'spline',
     }],
-    legend: {
-      enabled: false
-    },
+    // legend: {
+    //   enabled: false
+    // },
     plotOptions: {
       series: {
         animation: {
@@ -175,7 +175,23 @@ export class DailyActivityChartComponent {
       }
     }
   };
+  _chartOptions?: any; // Highcharts.Options;
 
-  constructor() {
+  constructor(
+    private highchartsService: HighchartsService
+  ) {
+  }
+
+  ngOnChanges() {
+    console.log('old', this.chartOptions);
+    if (this.activity && this.metrics) {
+      this._chartOptions = this.highchartsService.transformMetricsToDailyActivityLine(this.activity, this.metrics);
+      this.chartOptions = {
+        ...this.chartOptions,
+        ...this._chartOptions
+      };
+      console.log('new', this.chartOptions);
+      this.updateFlag = true;
+    }
   }
 }
