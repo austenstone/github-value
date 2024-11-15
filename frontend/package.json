@@ -1,5 +1,5 @@
 {
-  "name": "github-value",
+  "name": "github-value-frontend",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
@@ -13,38 +13,35 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "^18.2.11",
-    "@angular/cdk": "^18.2.12",
-    "@angular/common": "^18.2.11",
-    "@angular/compiler": "^18.2.11",
-    "@angular/core": "^18.2.11",
-    "@angular/forms": "^18.2.11",
-    "@angular/material": "^18.2.12",
-    "@angular/platform-browser": "^18.2.11",
-    "@angular/platform-browser-dynamic": "^18.2.11",
-    "@angular/router": "^18.2.11",
+    "@angular/animations": "^18.2.12",
+    "@angular/cdk": "^18.2.13",
+    "@angular/common": "^18.2.12",
+    "@angular/compiler": "^18.2.12",
+    "@angular/core": "^18.2.12",
+    "@angular/forms": "^18.2.12",
+    "@angular/material": "^18.2.13",
+    "@angular/platform-browser": "^18.2.12",
+    "@angular/platform-browser-dynamic": "^18.2.12",
+    "@angular/router": "^18.2.12",
     "@octokit/types": "^13.6.1",
     "highcharts": "^11.4.8",
     "highcharts-angular": "^4.0.1",
-    "rxjs": "~7.8.0",
-    "smee-client": "^2.0.3",
-    "tslib": "^2.3.0",
-    "zone.js": "~0.14.10"
+    "rxjs": "~7.8.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^18.2.11",
-    "@angular/cli": "^18.2.11",
-    "@angular/compiler-cli": "^18.2.11",
+    "@angular-devkit/build-angular": "^18.2.12",
+    "@angular/cli": "^18.2.12",
+    "@angular/compiler-cli": "^18.2.12",
     "@types/jasmine": "~5.1.0",
     "angular-eslint": "18.4.0",
     "eslint": "^9.13.0",
-    "jasmine-core": "~5.2.0",
+    "jasmine-core": "~5.4.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.5.2",
-    "typescript-eslint": "8.10.0"
+    "typescript": "~5.5.4",
+    "typescript-eslint": "8.14.0"
   }
 }

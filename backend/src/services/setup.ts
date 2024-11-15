@@ -9,8 +9,9 @@ import logger from "./logger";
 import updateDotenv from 'update-dotenv';
 import settingsService from './settings.service';
 import { Express } from 'express';
+import { Endpoints } from '@octokit/types';
 
-interface SetupStatusDbsInitalized {
+interface SetupStatusDbsInitialized {
   usage?: boolean;
   metrics?: boolean;
   copilotSeats?: boolean;
@@ -18,10 +19,10 @@ interface SetupStatusDbsInitalized {
   [key: string]: boolean | undefined;
 }
 export interface SetupStatus {
-  isSetup: boolean;
-  dbInitialized: boolean;
-  dbsInitalized: SetupStatusDbsInitalized,
-  installation: any;
+  isSetup?: boolean;
+  dbInitialized?: boolean;
+  dbsInitialized?: SetupStatusDbsInitialized,
+  installation?: Endpoints["GET /app"]["response"]['data'];
 }
 
 class Setup {
@@ -29,12 +30,12 @@ class Setup {
   app?: App;
   webhooks?: Express;
   installationId?: number;
-  installation?: any;
+  installation?: Endpoints["GET /app"]["response"]['data'];
   installUrl: string | undefined;
   setupStatus: SetupStatus = {
     isSetup: false,
     dbInitialized: false,
-    dbsInitalized: {
+    dbsInitialized: {
       usage: false,
       metrics: false,
       copilotSeats: false,
@@ -55,7 +56,7 @@ class Setup {
     dotenv.config();
     const _octokit = new Octokit();
     const response = await _octokit.rest.apps.createFromManifest({
-      code: code as string,
+      code,
     })
     const data = response.data;
 
@@ -169,7 +170,9 @@ class Setup {
   }
 
   createWebhookMiddleware = () => {
-    const webhookMiddlewearIndex = expressApp._router.stack.findIndex((layer: any) => layer.name === 'bound middleware');
+    const webhookMiddlewearIndex = expressApp._router.stack.findIndex((layer: {
+      name: string;
+    }) => layer.name === 'bound middleware');
     if (webhookMiddlewearIndex > -1) {
       expressApp._router.stack.splice(webhookMiddlewearIndex, 1);
     }
@@ -195,6 +198,7 @@ class Setup {
     if (!this.installationId) throw new Error('Installation ID is not set');
     const octokit = await this.getOctokit();
     const authenticated = await octokit.rest.apps.getAuthenticated();
+    if (!authenticated.data) throw new Error('Failed to get app');
     this.installation = authenticated.data;
     this.webhooks = this.createWebhookMiddleware();
 
@@ -221,17 +225,18 @@ class Setup {
     };
   }
 
-  setSetupStatus = (obj: any) => {
+  setSetupStatus = (obj: SetupStatus) => {
     this.setupStatus = {
       ...this.setupStatus,
       ...obj
     };
   }
 
-  setSetupStatusDbInitialized = (dbsInitalized: SetupStatusDbsInitalized) => {
+  setSetupStatusDbInitialized = (dbsInitalized: SetupStatusDbsInitialized) => {
     Object.entries(dbsInitalized).forEach(([key, value]) => {
+      if (!this.setupStatus?.dbsInitialized) return;
       if (value) {
-        this.setupStatus.dbsInitalized[key] = value;
+        this.setupStatus.dbsInitialized[key] = value;
       }
     });
   }
@@ -247,7 +252,7 @@ class Setup {
     return manifest;
   };
 
-  _findFirstInstallation = async (_app: App) => (new Promise<any>((resolve, reject) => {
+  _findFirstInstallation = async (_app: App) => (new Promise<Endpoints["GET /app/installations"]["response"]["data"][0]>((resolve, reject) => {
     _app.eachInstallation((install) => {
       if (install && install.installation && install.installation.id) {
         resolve(install.installation);

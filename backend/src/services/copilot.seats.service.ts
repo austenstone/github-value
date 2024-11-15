@@ -2,7 +2,10 @@ import { Endpoints } from '@octokit/types';
 import { Assignee, AssigningTeam, Seat } from "../models/copilot.seats.model";
 import { Op, Sequelize } from 'sequelize';
 
-export type seatEntry = NonNullable<Endpoints["GET /orgs/{org}/copilot/billing/seats"]["response"]["data"]["seats"]>[0];
+type _Seat = NonNullable<Endpoints["GET /orgs/{org}/copilot/billing/seats"]["response"]["data"]["seats"]>[0];
+export interface SeatEntry extends _Seat {
+  plan_type: string;
+}
 
 type AssigneeDailyActivity = {
   [date: string]: {
@@ -42,7 +45,7 @@ class SeatsService {
     });
   }
 
-  async insertSeats(data: seatEntry[]) {
+  async insertSeats(data: SeatEntry[]) {
     for (const seat of data) {
       const assignee = await Assignee.findOrCreate({
         where: { id: seat.assignee.id },
@@ -91,7 +94,7 @@ class SeatsService {
         pending_cancellation_date: seat.pending_cancellation_date,
         last_activity_at: seat.last_activity_at,
         last_activity_editor: seat.last_activity_editor,
-        plan_type: (seat as any).plan_type,
+        plan_type: seat.plan_type,
         assignee_id: assignee[0].id,
         assigning_team_id: assigningTeam?.[0].id
       });

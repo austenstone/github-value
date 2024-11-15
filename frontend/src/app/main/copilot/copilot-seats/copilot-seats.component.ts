@@ -1,9 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ColumnOptions, TableComponent } from '../../../shared/table/table.component';
-import { SeatService } from '../../../services/seat.service';
+import { Seat, SeatService } from '../../../services/seat.service';
 import { SortDirection } from '@angular/material/sort';
-
-type Seat = any;
 
 @Component({
   selector: 'app-seats',
@@ -14,7 +12,7 @@ type Seat = any;
   templateUrl: './copilot-seats.component.html',
   styleUrl: './copilot-seats.component.scss'
 })
-export class CopilotSeatsComponent {
+export class CopilotSeatsComponent implements OnInit {
   seats?: Seat[];
   tableColumns: ColumnOptions[] = [
     { 
@@ -37,7 +35,7 @@ export class CopilotSeatsComponent {
     { 
       columnDef: 'last_activity_at', 
       header: 'Last Active', 
-      cell: (element: Seat) => new Date(element.last_activity_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
+      cell: (element: Seat) => element.last_activity_at ? new Date(element.last_activity_at).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : '-'
     },
     { 
       columnDef: 'created_at', 
@@ -51,15 +49,16 @@ export class CopilotSeatsComponent {
     }
   ];
   defaultSort = {id: 'last_activity_at', start: 'desc' as SortDirection, disableClear: false};
-  sortingDataAccessor = (item: any, property: string) => {
+  sortingDataAccessor = (item: Seat, property: string) => {
     switch(property) {
       case 'login':
-        return item.assignee.login.toLowerCase();
+        return (item.assignee as { login: string })?.login.toLowerCase();
       default:
-        return item[property];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return (item as any)[property];
     }
   };
-  filterPredicate = (data: any, filter: string) => {
+  filterPredicate = (data: Seat, filter: string) => {
     const searchStr = JSON.stringify(data).toLowerCase();
     return searchStr.includes(filter);
   };
@@ -70,7 +69,7 @@ export class CopilotSeatsComponent {
 
   ngOnInit() {
     this.seatsService.getAllSeats().subscribe(seats => {
-      this.seats = seats;
+      this.seats = seats as Seat[];
     });
   }
 }

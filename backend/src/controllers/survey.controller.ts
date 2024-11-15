@@ -15,7 +15,11 @@ class SurveyController {
           repo: survey.repo,
           issue_number: survey.prNumber
         });
-        const comment = comments.data.find(comment => comment.user?.login.startsWith(setup.installation.slug));
+        if (!setup.installation?.slug) {
+          logger.warn('Cannot process survey comment: GitHub App installation or slug not found');
+          return;
+        }
+        const comment = comments.data.find(comment => comment.user?.login.startsWith(setup.installation!.slug!));
         if (comment) {
           octokit.rest.issues.updateComment({
             owner: survey.owner,
@@ -24,7 +28,7 @@ class SurveyController {
             body: `Thanks for filling out the copilot survey @${survey.userId}!`
           });
         } else {
-          logger.info(`No comment found for survey from ${setup.installation.slug}`)
+          logger.info(`No comment found for survey from ${setup.installation?.slug}`)
         }
       } catch (error) {
         logger.error('Error updating survey comment', error);

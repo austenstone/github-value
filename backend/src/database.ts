@@ -10,9 +10,7 @@ const sequelize = process.env.JAWSDB_URL ?
       acquire: 30000,
       idle: 10000
     },
-    logging: (sql: string, timing?: number) => {
-      logger.info(sql);
-    }
+    logging: (sql: string) => logger.debug(sql)
   }) :
   new Sequelize({
     dialect: 'mysql',
@@ -21,9 +19,7 @@ const sequelize = process.env.JAWSDB_URL ?
     username: process.env.MYSQL_USER || 'root',
     password: process.env.MYSQL_PASSWORD || 'octocat',
     database: process.env.MYSQL_DATABASE || 'value',
-    logging: (sql: string, timing?: number) => {
-      logger.debug(sql);
-    }
+    logging: (sql: string) => logger.debug(sql)
   });
 
 const dbConnect = async () => {

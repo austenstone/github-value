@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, OnDestroy, Output } from '@angular/core';
 import { provideNativeDateAdapter } from '@angular/material/core';
-import { MatSelectChange, MatSelectModule } from '@angular/material/select';
+import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';

@@ -37,8 +37,8 @@ class SettingsController {
 
   async updateSettings(req: Request, res: Response) {
     try {
-      const updatedSettings = await SettingsService.updateSettings(req.body);
-      res.json(updatedSettings);
+      await SettingsService.updateSettings(req.body);
+      res.status(200).end();
     } catch (error) {
       res.status(500).json(error);
     }
@@ -47,8 +47,8 @@ class SettingsController {
   async deleteSettings(req: Request, res: Response) {
     try {
       const { name } = req.params;
-      const message = await SettingsService.deleteSettings(name);
-      res.json({ message });
+      await SettingsService.deleteSettings(name);
+      res.status(200).end();
     } catch (error) {
       res.status(500).json(error);
     }

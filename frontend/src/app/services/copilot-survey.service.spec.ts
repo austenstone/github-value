@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { CopilotSurveyService } from '../services/copilot-survery.service';
+import { CopilotSurveyService } from './copilot-survey.service';
 
-describe('CopilotSurveryService', () => {
+describe('CopilotSurveyService', () => {
   let service: CopilotSurveyService;
 
   beforeEach(() => {

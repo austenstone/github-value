@@ -55,10 +55,9 @@ class SettingsService {
     const deleted = await Settings.destroy({
       where: { name }
     });
-    if (deleted) {
-      return 'Settings deleted';
+    if (!deleted) {
+      throw new Error('Settings not found');
     }
-    throw new Error('Settings not found');
   }
 }
 

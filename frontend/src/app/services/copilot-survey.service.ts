@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
 import { serverUrl } from './server.service';
+
 export interface Survey {
   id?: number;
   dateTime: Date;
@@ -27,19 +27,15 @@ export class CopilotSurveyService {
     return this.http.post(this.apiUrl, survey);
   }
 
-  getAllSurveys(): Observable<Survey[]> {
-    return this.http.get<any[]>(this.apiUrl);
+  getAllSurveys() {
+    return this.http.get<Survey[]>(this.apiUrl);
   }
 
-  getSurveyById(id: number): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/${id}`);
+  getSurveyById(id: number) {
+    return this.http.get<Survey>(`${this.apiUrl}/${id}`);
   }
 
-  updateSurvey(id: number, survey: any): Observable<any> {
-    return this.http.put(`${this.apiUrl}/${id}`, survey);
-  }
-
-  deleteSurvey(id: number): Observable<any> {
+  deleteSurvey(id: number) {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
 

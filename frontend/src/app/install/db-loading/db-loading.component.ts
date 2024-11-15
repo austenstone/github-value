@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { SetupService } from '../../services/setup.service';
 import { Router } from '@angular/router';
 import { Subscription, timer } from 'rxjs';
@@ -86,7 +86,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
     }
   `]
 })
-export class DbLoadingComponent {
+export class DbLoadingComponent implements OnInit, OnDestroy {
   private statusSubscription?: Subscription;
   statusText = 'Please wait while we set up your database...';
   statusProgress = 0;
@@ -110,8 +110,8 @@ export class DbLoadingComponent {
             this.router.navigate(['/setup']);
             return;
           }
-          if (response.dbsInitalized) {
-            this.dbStatus = response.dbsInitalized;
+          if (response.dbsInitialized) {
+            this.dbStatus = response.dbsInitialized;
             this.updateProgress();
           }
 

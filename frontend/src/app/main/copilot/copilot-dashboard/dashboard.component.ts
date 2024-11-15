@@ -1,14 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { AppModule } from '../../../app.module';
-import { DashboardCardBarsComponent, DashboardCardBarsInput } from "./dashboard-card/dashboard-card-bars/dashboard-card-bars.component";
+import { DashboardCardBarsComponent } from "./dashboard-card/dashboard-card-bars/dashboard-card-bars.component";
 import { DashboardCardValueComponent } from './dashboard-card/dashboard-card-value/dashboard-card-value.component';
-import { DashboardCardSunburstComponent } from "./dashboard-card/dashboard-card-sunburst/dashboard-card-sunburst.component";
 import { DashboardCardDrilldownBarChartComponent } from './dashboard-card/dashboard-card-drilldown-bar-chart/dashboard-card-drilldown-bar-chart.component';
 import { MetricsService } from '../../../services/metrics.service';
 import { CopilotMetrics } from '../../../services/metrics.service.interfaces';
 import { SeatService } from '../../../services/seat.service';
 import { MembersService } from '../../../services/members.service';
-import { CopilotSurveyService } from '../../../services/copilot-survery.service';
+import { CopilotSurveyService } from '../../../services/copilot-survey.service';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -18,7 +17,6 @@ import { forkJoin } from 'rxjs';
     AppModule,
     DashboardCardValueComponent,
     DashboardCardBarsComponent,
-    DashboardCardSunburstComponent,
     DashboardCardDrilldownBarChartComponent
   ],
   templateUrl: './dashboard.component.html',

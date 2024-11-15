@@ -1,6 +1,7 @@
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../database';
 import logger from '../services/logger';
+import { Endpoints } from '@octokit/types';
 
 const Usage = sequelize.define('Usage', {
   day: {
@@ -92,7 +93,7 @@ const UsageBreakdown = sequelize.define('UsageBreakdown', {
 Usage.hasMany(UsageBreakdown, { foreignKey: 'usage_day' });
 UsageBreakdown.belongsTo(Usage, { foreignKey: 'usage_day' });
 
-async function insertUsage(data: any[]) {
+async function insertUsage(data: Endpoints["GET /orgs/{org}/copilot/usage"]["response"]["data"]) {
   for (const metrics of data) {
     const [createdMetrics, created] = await Usage.findOrCreate({
       where: { day: metrics.day },

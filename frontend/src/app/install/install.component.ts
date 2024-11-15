@@ -96,7 +96,7 @@ export class DialogAppComponent {
     private setupService: SetupService
   ) {
     this.existingApp = data;
-    this.setupService.getManifest().subscribe((manifest: any) => {
+    this.setupService.getManifest().subscribe((manifest) => {
       this.manifest = manifest;
       this.manifestString = JSON.stringify(manifest);
     });

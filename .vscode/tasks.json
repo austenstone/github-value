@@ -23,9 +23,9 @@
 				"id": "vm"
 			},
 			"dependsOn": [
-				"npm: dotenv - backend",
+				"npm: db:start - backend",
 				"npm: start - frontend",
-				"npm: dev - backend",
+				"npm: dev - backend with db"
 			]
 		},
 		{
@@ -49,7 +49,7 @@
 			"path": "backend",
 			"problemMatcher": [],
 			"label": "npm: dotenv - backend",
-			"detail": "cp .env.example .env",
+			"detail": "cp -n .env.example .env",
 			"icon": {
 				"id": "file-add"
 			},
@@ -111,7 +111,28 @@
       "icon": {
         "id": "server"
       },
-			"dependsOn": [],
+			"dependsOn": [
+				"npm: install - backend"
+			],
+			"presentation": {
+				"group": "dev"
+			}
+		},
+		{
+			"type": "npm",
+			"script": "dev",
+			"path": "backend",
+      "isBackground": true,
+			"problemMatcher": [],
+			"label": "npm: dev - backend with db",
+			"detail": "nodemon src/app.ts | bunyan -o short",
+      "icon": {
+        "id": "server"
+      },
+			"dependsOn": [
+				"npm: install - backend",
+				"npm: db:start - backend"
+			],
 			"presentation": {
 				"group": "dev"
 			}
@@ -128,8 +149,7 @@
       },
 			"dependsOn": [
 				"npm: build - backend",
-				"npm: build - frontend",
-				"npm: db:start - backend"
+				"npm: build - frontend"
 			]
 		},
 		{

@@ -66,7 +66,6 @@ class SmeeService {
       url: string;
       port?: number;
       path?: string;
-      fetch?: Function;
     },
   ): Promise<EventSource | undefined> => {
     try {
@@ -75,8 +74,8 @@ class SmeeService {
         source: opts.url,
         target: `http://localhost:${opts.port}${opts.path}`,
         logger: {
-          info: (msg: string, ...args: any[]) => logger.info('Smee', msg, ...args),
-          error: (msg: string, ...args: any[]) => logger.error('Smee', msg, ...args),
+          info: (msg: string, ...args) => logger.info('Smee', msg, ...args),
+          error: (msg: string, ...args) => logger.error('Smee', msg, ...args),
         }
       });
       return smee.start() as EventSource;

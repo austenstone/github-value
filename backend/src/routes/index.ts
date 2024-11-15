@@ -26,6 +26,7 @@ router.get('/metrics/totals', metricsController.getMetricsTotals);
 
 router.get('/seats', SeatsController.getAllSeats);
 router.get('/seats/activity', SeatsController.getActivity);
+// TODO - remove this route
 router.get('/seats/activity/highcharts', SeatsController.getActivityHighcharts);
 
 router.get('/teams', TeamsController.getAllTeams);
@@ -33,8 +34,8 @@ router.get('/members', TeamsController.getAllMembers);
 
 router.get('/settings', settingsController.getAllSettings);
 router.post('/settings', settingsController.createSettings);
+router.put('/settings', settingsController.updateSettings);
 router.get('/settings/:name', settingsController.getSettingsByName);
-router.put('/settings/:name', settingsController.updateSettings);
 router.delete('/settings/:name', settingsController.deleteSettings);
 
 router.get('/setup/registration/complete', setupController.registrationComplete);

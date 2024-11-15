@@ -13,19 +13,19 @@ class QueryService {
   private cronJob: CronJob;
 
   private constructor(cronExpression: string, timeZone: string) {
-    this.cronJob = new CronJob(DEFAULT_CRON_EXPRESSION, this.task, null, true);
+    this.cronJob = new CronJob(cronExpression || DEFAULT_CRON_EXPRESSION, this.task, null, true, timeZone);
     this.task();
   }
 
   private async task() {
     await Promise.all([
-      this.queryCopilotUsageMetrics().then(() => 
+      this.queryCopilotUsageMetrics().then(() =>
         setup.setSetupStatusDbInitialized({ usage: true })),
-      this.queryCopilotUsageMetricsNew().then(() => 
+      this.queryCopilotUsageMetricsNew().then(() =>
         setup.setSetupStatusDbInitialized({ metrics: true })),
-      this.queryCopilotSeatAssignments().then(() => 
+      this.queryCopilotSeatAssignments().then(() =>
         setup.setSetupStatusDbInitialized({ copilotSeats: true })),
-      this.queryTeamsAndMembers().then(() => 
+      this.queryTeamsAndMembers().then(() =>
         setup.setSetupStatusDbInitialized({ teamsAndMembers: true })),
     ]);
     setup.setSetupStatus({
@@ -45,6 +45,7 @@ class QueryService {
   }
 
   public async queryCopilotUsageMetricsNew() {
+    if (!setup.installation?.owner?.login) throw new Error('No installation found')
     try {
       const octokit = await setup.getOctokit();
       const response = await octokit.paginate<CopilotMetrics>('GET /orgs/{org}/copilot/metrics', {
@@ -61,6 +62,7 @@ class QueryService {
   }
 
   public async queryCopilotUsageMetrics() {
+    if (!setup.installation?.owner?.login) throw new Error('No installation found')
     try {
       const octokit = await setup.getOctokit();
       const response = await octokit.rest.copilot.usageMetricsForOrg({
@@ -76,6 +78,7 @@ class QueryService {
   }
 
   public async queryCopilotSeatAssignments() {
+    if (!setup.installation?.owner?.login) throw new Error('No installation found')
     try {
       const octokit = await setup.getOctokit();
       const _seatAssignments = await octokit.paginate(octokit.rest.copilot.listCopilotSeats, {
@@ -102,12 +105,13 @@ class QueryService {
   }
 
   public async queryTeamsAndMembers() {
+    if (!setup.installation?.owner?.login) throw new Error('No installation found')
     try {
       const octokit = await setup.getOctokit();
       const teams = await octokit.paginate(octokit.rest.teams.list, {
         org: setup.installation.owner?.login
       });
-      
+
       // First pass: Create all teams without parent relationships 🏗️
       for (const team of teams) {
         await Team.upsert({
@@ -125,7 +129,7 @@ class QueryService {
           repositories_url: team.repositories_url
         });
       }
-  
+
       // Second pass: Update parent relationships 👨‍👦
       for (const team of teams) {
         if (team.parent?.id) {
@@ -135,14 +139,14 @@ class QueryService {
           );
         }
       }
-  
+
       // Third pass: Add team members 👥
       for (const team of teams) {
         const members = await octokit.paginate(octokit.rest.teams.listMembersInOrg, {
           org: setup.installation.owner?.login,
           team_slug: team.slug
         });
-        
+
         if (members?.length) {
           await Promise.all(members.map(async member => {
             const [dbMember] = await Member.upsert({
@@ -165,7 +169,7 @@ class QueryService {
               type: member.type,
               site_admin: member.site_admin
             });
-          
+
             // Create team-member association 🤝
             await TeamMemberAssociation.upsert({
               TeamId: team.id,
@@ -177,7 +181,7 @@ class QueryService {
         logger.info(`Team ${team.name} successfully updated! ✏️`);
       }
 
-      
+
       await Team.upsert({
         name: 'No Team',
         slug: 'no-team',
@@ -186,7 +190,7 @@ class QueryService {
       });
 
       const members = await octokit.paginate(octokit.rest.orgs.listMembers, {
-        org: setup.installation.owner?.login
+        org: setup.installation?.owner?.login
       });
       if (members?.length) {
         await Promise.all(members.map(async member => {
@@ -210,7 +214,7 @@ class QueryService {
             type: member.type,
             site_admin: member.site_admin
           });
-        
+
           // Create team-member association 🤝
           await TeamMemberAssociation.upsert({
             TeamId: -1,
@@ -218,7 +222,7 @@ class QueryService {
           });
         }));
       }
-  
+
       logger.info("Teams & Members successfully updated! 🧑‍🤝‍🧑");
     } catch (error) {
       logger.error('Error querying teams', error);

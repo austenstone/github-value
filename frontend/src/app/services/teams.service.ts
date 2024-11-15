@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
 import { serverUrl } from './server.service';
+import { Endpoints } from '@octokit/types';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +11,7 @@ export class TeamsService {
 
   constructor(private http: HttpClient) { }
 
-  getAllTeams(): Observable<any[]> {
-    return this.http.get<any[]>(`${this.apiUrl}`);
+  getAllTeams() {
+    return this.http.get<Endpoints['GET /orgs/{org}/teams']['response']['data']>(`${this.apiUrl}`);
   }
 }

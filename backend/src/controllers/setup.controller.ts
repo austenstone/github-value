@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import setup from '../services/setup';
+import setup, { SetupStatus } from '../services/setup';
 
 class SetupController {
   async registrationComplete(req: Request, res: Response) {
@@ -21,8 +21,7 @@ class SetupController {
       if (isNaN(Number(installation_id))) {
         throw new Error('installation_id must be a number');
       }
-      const app = await setup.createAppFromInstallationId(Number(installation_id));
-
+      await setup.createAppFromInstallationId(Number(installation_id));
       res.redirect(process.env.WEB_URL || '/');
     } catch (error) {
       res.status(500).json(error);
@@ -69,13 +68,21 @@ class SetupController {
          if (!requestedFields.length) {
              return res.json(fullStatus);
          }
-         const filteredStatus: Record<string, any> = {};
+         const filteredStatus: SetupStatus = {};
          requestedFields.forEach(field => {
-             if (field in fullStatus) {
-                 filteredStatus[field] = (fullStatus as any)[field];
-             }
+          if (field === 'isSetup') {
+            filteredStatus.isSetup = fullStatus.isSetup;
+          }
+          if (field === 'dbInitialized') {
+            filteredStatus.dbInitialized = fullStatus.dbInitialized;
+          }
+          if (field === 'dbsInitialized') {
+            filteredStatus.dbsInitialized = fullStatus.dbsInitialized;
+          }
+          if (field === 'installation') {
+            filteredStatus.installation = fullStatus.installation;
+          }
          });
- 
          return res.json(filteredStatus);
     } catch (error) {
       res.status(500).json(error);

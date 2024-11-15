@@ -4,19 +4,19 @@
     <span class="spacer"></span>
   </div>
   <div class="cards-grid">
-    <mat-card class="chart-card" appearance="outlined">
+    <mat-card class="chart-card" id="adoption" appearance="outlined">
       <mat-card-header>
         <mat-card-title>Adoption</mat-card-title>
       </mat-card-header>
-      <app-adoption-chart></app-adoption-chart>
+      <app-adoption-chart [data]="activityData"></app-adoption-chart>
     </mat-card>
-    <mat-card class="chart-card" appearance="outlined">
+    <mat-card class="chart-card" id="activity" appearance="outlined">
       <mat-card-header>
         <mat-card-title>Daily Activity (Usage)</mat-card-title>
       </mat-card-header>
-      <app-daily-activity-chart></app-daily-activity-chart>
+      <app-daily-activity-chart [activity]="activityData" [metrics]="metricsData"></app-daily-activity-chart>
     </mat-card>
-    <mat-card class="chart-card" appearance="outlined">
+    <mat-card class="chart-card" id="time-saved" appearance="outlined">
       <mat-card-header>
         <mat-card-title>Time Saved</mat-card-title>
       </mat-card-header>

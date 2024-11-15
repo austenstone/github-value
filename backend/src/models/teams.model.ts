@@ -1,9 +1,5 @@
 import { Model, DataTypes } from 'sequelize';
 import { sequelize } from '../database';
-import { Endpoints } from '@octokit/types';
-
-type teamEntry = NonNullable<Endpoints["GET /orgs/{org}/teams"]["response"]["data"]>[0];
-type memberEntry = NonNullable<Endpoints["GET /teams/{team_id}/members"]["response"]["data"]>[0];
 
 class Team extends Model {
   public id!: number;

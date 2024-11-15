@@ -9,7 +9,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { Observable } from 'rxjs';
 import { filter, map, shareReplay, tap } from 'rxjs/operators';
 import { AppModule } from '../app.module';
-import { MetricsService } from '../services/metrics.service';
 import { ThemeService } from '../services/theme.service';
 import { NavigationEnd, Router } from '@angular/router';
 
@@ -42,7 +41,6 @@ export class MainComponent {
   );
 
   constructor(
-    private metricsService: MetricsService,
     public themeService: ThemeService,
     private router: Router
   ) {

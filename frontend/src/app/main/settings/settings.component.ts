@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 import { SetupService } from '../../services/setup.service';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ThemeService } from '../../services/theme.service';
+import { Endpoints } from '@octokit/types';
 
 export class MyErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -59,7 +60,7 @@ export class SettingsComponent implements OnInit {
     ]),
     webhookSecret: new FormControl('', [])
   });
-  install: any;
+  install?: Endpoints["GET /app"]["response"]['data'];
 
   constructor(
     private settingsService: SettingsHttpService,

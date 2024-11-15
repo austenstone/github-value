@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { MaterialModule } from '../../../material.module';
 import { AppModule } from '../../../app.module';
-import { CopilotSurveyService, Survey } from '../../../services/copilot-survery.service';
+import { CopilotSurveyService, Survey } from '../../../services/copilot-survey.service';
 import { ColumnOptions } from '../../../shared/table/table.component';
 
 @Component({

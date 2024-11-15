@@ -1,7 +1,7 @@
 import { Component, forwardRef, OnInit } from '@angular/core';
 import { AppModule } from '../../../../app.module';
 import { FormBuilder, FormControl, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
-import { CopilotSurveyService } from '../../../../services/copilot-survery.service';
+import { CopilotSurveyService } from '../../../../services/copilot-survey.service';
 import { ActivatedRoute, Params } from '@angular/router';
 
 @Component({

@@ -2,13 +2,13 @@ import { Injectable, isDevMode } from '@angular/core';
 import { CanActivate, CanActivateChild, GuardResult, MaybeAsync, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { SetupService, SetupStausResponse } from '../services/setup.service';
+import { SetupService, SetupStatusResponse } from '../services/setup.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SetupGuard implements CanActivate, CanActivateChild {
-  cache: SetupStausResponse = {
+  cache: SetupStatusResponse = {
     isSetup: false,
     dbInitialized: false
   };

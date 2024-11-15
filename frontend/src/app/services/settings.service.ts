@@ -1,7 +1,19 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
 import { serverUrl } from './server.service';
+
+export interface Settings {
+  devCostPerYear?: string | null;
+  developerCount?: string | null;
+  hoursPerYear?: string | null;
+  percentCoding?: string | null;
+  percentTimeSaved?: string | null;
+  metricsCronExpression?: string | null;
+  baseUrl?: string | null;
+  webhookProxyUrl?: string | null;
+  webhookSecret?: string | null;
+  [key: string]: string | null | undefined;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -11,23 +23,23 @@ export class SettingsHttpService {
 
   constructor(private http: HttpClient) { }
 
-  getAllSettings(): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}`);
+  getAllSettings() {
+    return this.http.get<Settings>(`${this.apiUrl}`);
   }
 
-  getSettingsByName(name: string): Observable<any> {
-    return this.http.get<any>(`${this.apiUrl}/${name}`);
+  getSettingsByName(name: string) {
+    return this.http.get<Settings>(`${this.apiUrl}/${name}`);
   }
 
-  createSettings(data: any): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}`, data);
-  }
-  
-  updateSettings(name: string, data: any): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/${name}`, data);
+  createSettings(data: Settings) {
+    return this.http.post<void>(`${this.apiUrl}`, data);
   }
 
-  deleteSettings(name: string): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/${name}`);
+  updateSettings(name: string, data: Settings) {
+    return this.http.put<void>(`${this.apiUrl}/${name}`, data);
+  }
+
+  deleteSettings(name: string) {
+    return this.http.delete<void>(`${this.apiUrl}/${name}`);
   }
 }

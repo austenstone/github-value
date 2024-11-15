@@ -1,5 +1,4 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { SunburstChartComponent } from '../../../../../shared/sunburst-chart/sunburst-chart.component';
 import { MatCardModule } from '@angular/material/card';
 import Highcharts from 'highcharts/es-modules/masters/highcharts.src';
 import 'highcharts/es-modules/masters/modules/drilldown.src';
@@ -13,7 +12,6 @@ import { LoadingSpinnerComponent } from '../../../../../shared/loading-spinner/l
   selector: 'app-dashboard-card-drilldown-bar-chart',
   standalone: true,
   imports: [
-    SunburstChartComponent,
     MatCardModule,
     CommonModule,
     HighchartsChartModule,
