@@ -14,7 +14,7 @@
     <mat-nav-list [ngClass]="{'hide-nav-text': hideNavText && (isHandset$ | async) === false }">
       <a mat-list-item routerLink="/copilot">
         <mat-icon matListItemIcon>home</mat-icon>
-        <span>Home</span>
+        <span>System Health Status</span>
       </a>
       <!-- <div mat-subheader>Pages</div> -->
       <a mat-list-item routerLink="/copilot/value">
@@ -23,25 +23,25 @@
       </a>
       <a mat-list-item routerLink="/copilot/metrics">
         <mat-icon matListItemIcon>assessment</mat-icon>
-        <span>Metrics</span>
+        <span>Filter Settings</span>
       </a>
       <a mat-list-item routerLink="/copilot/seats">
         <mat-icon matListItemIcon>people</mat-icon>
-        <span>Seats</span>
+        <span>Seat Details</span>
       </a>
       <a mat-list-item routerLink="/copilot/surveys">
         <mat-icon matListItemIcon>merge</mat-icon>
         <!-- <mat-icon matListItemIcon>feedback</mat-icon> -->
-        <span>Surveys</span>
+        <span>Survey Data</span>
       </a>
       <a mat-list-item routerLink="/copilot/calculator">
         <mat-icon matListItemIcon>calculate</mat-icon>
-        <span>Calculator</span>
+        <span>Predictive Modeling</span>
       </a>
       <mat-divider></mat-divider>
       <a mat-list-item routerLink="/settings">
         <mat-icon matListItemIcon>settings</mat-icon>
-        <span>Settings</span>
+        <span>Config Settings</span>
       </a>
     </mat-nav-list>
   </mat-sidenav>

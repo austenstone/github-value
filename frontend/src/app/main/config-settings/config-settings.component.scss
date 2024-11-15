@@ -1,0 +1,47 @@
+.full-width {
+  width: 100%;
+}
+
+form {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr; /* Left header, right content */
+  gap: 24px;
+  align-items: start;
+}
+
+.settings-header {
+  grid-column: 1;
+  max-width: 200px;
+}
+
+h4, h3 {
+  margin: 0;
+}
+
+.settings-content {
+  grid-column: 2;
+  width: 100%;
+  mat-form-field {
+    width: 100%;
+  }
+  max-width: 599px;
+}
+
+.settings-divider {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 768px) {
+  form {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .settings-header,
+  .settings-content {
+    grid-column: 1;
+    width: 100%;
+    max-width: 100%;
+  }
+}

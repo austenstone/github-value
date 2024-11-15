@@ -1,0 +1,138 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Settings</h1>
+    <span class="spacer"></span>
+  </div>
+  <form class="example-form" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div class="settings-header">
+      <h3>Assumptions</h3>
+    </div>
+    <div class="settings-content">
+      <mat-form-field>
+        <mat-label>Number of Developers</mat-label>
+        <input type="number" matInput formControlName="developerCount" placeholder="Ex: 100">
+        <mat-error *ngIf="form.controls.developerCount.hasError('required')">
+          Number of developers is <strong>required</strong>
+        </mat-error>
+      </mat-form-field>
+    
+      <mat-form-field>
+        <mat-label>Total Loaded Cost per Developer per Year ($)</mat-label>
+        <input type="number" matInput formControlName="devCostPerYear" placeholder="Ex: 150000">
+        <mat-error *ngIf="form.controls.devCostPerYear.hasError('required')">
+          Developer cost is <strong>required</strong>
+        </mat-error>
+      </mat-form-field>
+    
+      <mat-form-field>
+        <mat-label>Total Hours Available per Developer per Year</mat-label>
+        <input type="number" matInput formControlName="hoursPerYear" placeholder="Ex: 2080">
+        <mat-error *ngIf="form.controls.hoursPerYear.hasError('required')">
+          Hours per year is <strong>required</strong>
+        </mat-error>
+        <mat-hint>Standard work year is 2080 hours (52 weeks × 40 hours)</mat-hint>
+      </mat-form-field>
+    
+      <mat-form-field>
+        <mat-label>Percent of Time Spent Coding (%)</mat-label>
+        <input type="number" matInput formControlName="percentCoding" placeholder="Ex: 60" min="0" max="100">
+        <mat-error *ngIf="form.controls.percentCoding.hasError('required')">
+          Coding percentage is <strong>required</strong>
+        </mat-error>
+        <mat-error *ngIf="form.controls.percentCoding.hasError('min') || form.controls.percentCoding.hasError('max')">
+          Must be between 0 and 100
+        </mat-error>
+      </mat-form-field>
+    
+      <mat-form-field>
+        <mat-label>Expected Time Savings per Task (%)</mat-label>
+        <input type="number" matInput formControlName="percentTimeSaved" placeholder="Ex: 20" min="0" max="100">
+        <mat-error *ngIf="form.controls.percentTimeSaved.hasError('required')">
+          Time savings is <strong>required</strong>
+        </mat-error>
+        <mat-error *ngIf="form.controls.percentTimeSaved.hasError('min') || form.controls.percentTimeSaved.hasError('max')">
+          Must be between 0 and 100
+        </mat-error>
+      </mat-form-field>
+    </div>
+    <div class="settings-header">
+      <h3>Metrics</h3>
+    </div>
+    <div class="settings-content">
+      <mat-form-field>
+        <mat-label>Metrics Polling Rate</mat-label>
+        <input type="text" matInput [formControl]="form.controls.metricsCronExpression" placeholder="Ex: 0 0 * * *">
+        <mat-error *ngIf="form.controls.metricsCronExpression.hasError('required')">Repository is
+          <strong>required</strong></mat-error>
+        <!-- <mat-hint><a href="https://crontab.guru/">crontab.guru</a></mat-hint> -->
+      </mat-form-field>
+    </div>
+
+    <div class="settings-header">
+      <h3>Theme</h3>
+    </div>
+    <div class="settings-content">
+      <mat-form-field>
+        <mat-label>Theme</mat-label>
+        <mat-select [value]="themeService.getTheme() | async" (selectionChange)="themeService.saveThemePreference($event.value)">
+          <mat-option value="light-theme">Light</mat-option>
+          <mat-option value="dark-theme">Dark</mat-option>
+          <mat-option value="system">System</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="settings-divider">
+      <mat-divider></mat-divider>
+    </div>
+
+    <ng-container *ngIf="install">
+      <div class="settings-header">
+        <h3>GitHub App Installation</h3>
+      </div>
+      <div class="settings-content">
+        
+          <h3><a [href]="install.html_url" target="_blank">{{install.name}}</a></h3>
+        
+        <p>{{install.description}}</p>
+        <h4 *ngIf="install.owner">Owner: <a [href]="install.owner.html_url">{{install.owner.login}}</a></h4>
+        <!-- <h6>Permissions:</h6>
+        @for (permission of install.permissions | keyvalue; track $index) {
+        <div class="permission">
+          <span>{{permission.key}}</span>
+          <span>{{permission.value}}</span>
+        </div>
+        } -->
+      </div>
+    </ng-container>
+
+    <div class="settings-header">
+      <h3>Advanced</h3>
+    </div>
+    <div class="settings-content">
+      <mat-form-field>
+        <mat-label>Base URL</mat-label>
+        <input type="email" matInput [formControl]="form.controls.baseUrl" placeholder="Ex: https://localhost">
+        <mat-error *ngIf="form.controls.baseUrl.hasError('required')">Base URL is <strong>required</strong></mat-error>
+        <mat-error *ngIf="form.controls.baseUrl.hasError('pattern')">Please enter a valid URL</mat-error>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Webhook URL</mat-label>
+        <input type="email" matInput [formControl]="form.controls.webhookProxyUrl"
+          placeholder="Ex: https://smee.io/ZzmdZIYqsXt7RHS5">
+        <mat-error *ngIf="form.controls.webhookProxyUrl.hasError('required')">Webhook URL is
+          <strong>required</strong></mat-error>
+        <mat-error *ngIf="form.controls.webhookProxyUrl.hasError('pattern')">Please enter a valid URL</mat-error>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Webhook Secret</mat-label>
+        <input type="password" matInput [formControl]="form.controls.webhookSecret" placeholder="Ex: password">
+      </mat-form-field>
+    </div>
+    <div class="settings-content">
+      <button mat-flat-button color="primary" type="submit">Save</button>
+    </div>
+  </form>
+</div>
