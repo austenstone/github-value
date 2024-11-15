@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { SettingsHttpService } from '../../../services/settings.service';
 
 @Component({
   selector: 'app-calculator',
@@ -8,5 +9,12 @@ import { Component } from '@angular/core';
   styleUrl: './copilot-calculator.component.scss'
 })
 export class CopilotCalculatorComponent {
+  constructor(
+    private settingsService: SettingsHttpService,
 
+  ) {
+    settingsService.getAllSettings().subscribe(settings => {
+      console.log(settings);
+    });
+  }
 }
