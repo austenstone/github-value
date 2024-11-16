@@ -12,7 +12,7 @@ import SmeeService from './services/smee.js';
 import logger, { expressLoggerMiddleware } from './services/logger.js';
 import { fileURLToPath } from 'url';
 
-const PORT = Number(process.env.PORT) || 80;
+const PORT: any = Number(process.env.PORT) || 80;
 
 export const app = express();
 app.use(cors());
@@ -26,6 +26,9 @@ app.use(expressLoggerMiddleware);
   await SmeeService.createSmeeWebhookProxy(PORT);
   logger.info('Created Smee webhook proxy ✅');
 
+  if (true === true) {
+    throw new Error('Test error');
+  }
   try {
     await setup.createAppFromEnv();
     logger.info('Created GitHub App from environment ✅');
