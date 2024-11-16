@@ -1,0 +1,31 @@
+name: Lint
+
+on:
+  push:
+    paths:
+      - 'frontend/**/*'
+      - 'backend/**/*'
+      - '.github/workflows/lint.yml'
+    branches:
+      - main
+  pull_request:
+    paths:
+      - 'frontend/**/*'
+      - 'backend/**/*'
+      - '.github/workflows/lint.yml'
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/eslint
+        with:
+          working-directory: ./backend
+          category: backend
+      - uses: ./.github/actions/eslint
+        with:
+          working-directory: ./frontend
+          category: frontend
