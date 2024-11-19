@@ -2,15 +2,9 @@ name: Backend
 
 on:
   push:
-    paths:
-      - '.github/workflows/backend.yml'
-      - 'backend/**/*'
     branches:
       - main
   pull_request:
-    paths:
-      - '.github/workflows/backend.yml'
-      - 'backend/**/*'
     branches:
       - main
 
