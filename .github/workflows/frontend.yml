@@ -2,15 +2,9 @@ name: Frontend
 
 on:
   push:
-    paths:
-      - 'frontend/**/*'
-      - '.github/workflows/frontend.yml'
     branches:
       - main
   pull_request:
-    paths:
-      - 'frontend/**/*'
-      - '.github/workflows/frontend.yml'
     branches:
       - main
 
