@@ -2,17 +2,9 @@ name: Lint
 
 on:
   push:
-    paths:
-      - 'frontend/**/*'
-      - 'backend/**/*'
-      - '.github/workflows/lint.yml'
     branches:
       - main
   pull_request:
-    paths:
-      - 'frontend/**/*'
-      - 'backend/**/*'
-      - '.github/workflows/lint.yml'
     branches:
       - main
 
