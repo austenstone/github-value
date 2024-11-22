@@ -14,6 +14,8 @@ import { DailyActivityChartComponent } from '../copilot-value/daily-activity-cha
 import { TimeSavedChartComponent } from '../copilot-value/time-saved-chart/time-saved-chart.component';
 import { LoadingSpinnerComponent } from '../../../shared/loading-spinner/loading-spinner.component';
 import { ActiveUsersChartComponent } from './dashboard-card/active-users-chart/active-users-chart.component';
+import { MatGridListModule } from '@angular/material/grid-list';
+import { MatTabsModule } from '@angular/material/tabs';
 
 @Component({
   selector: 'app-dashboard',
@@ -27,7 +29,10 @@ import { ActiveUsersChartComponent } from './dashboard-card/active-users-chart/a
     DailyActivityChartComponent,
     TimeSavedChartComponent,
     LoadingSpinnerComponent,
-    ActiveUsersChartComponent
+    ActiveUsersChartComponent,
+    MatGridListModule,
+    MatTabsModule,
+
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
@@ -86,6 +91,21 @@ export class CopilotDashboardComponent implements OnInit {
 
   activityTotals?: Record<string, number>;
 
+  tiles = [
+    {text: 'One', cols: 1, rows: 1},
+    {text: 'Two', cols: 1, rows: 1},
+    {text: 'Three', cols: 1, rows: 1},
+    {text: 'Four', cols: 1, rows: 1},
+    {text: 'Five', cols: 1, rows: 1},
+    {text: 'Six', cols: 1, rows: 1},
+    {text: 'Seven', cols: 1, rows: 1},
+    {text: 'Eight', cols: 1, rows: 1},
+    {text: 'Nine', cols: 1, rows: 1},
+    {text: 'Ten', cols: 1, rows: 1},
+    {text: 'Eleven', cols: 1, rows: 1},
+    {text: 'Twelve', cols: 1, rows: 1},
+  ];
+
   constructor(
     private metricsService: MetricsService,
     private membersService: MembersService,
@@ -94,6 +114,10 @@ export class CopilotDashboardComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    console.log('Tiles:', this.tiles);
+    console.log('Activity Data:', this.activityData);
+    console.log('Metrics Data:', this.metricsData);
+
     const since = new Date();
     since.setDate(since.getDate() - 30);
     const formattedSince = since.toISOString().split('T')[0];

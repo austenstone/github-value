@@ -1,9 +1,14 @@
 @use '@angular/material' as mat;
 
+.page-container {
+  width: 100%;
+}
+
 .cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
+  grid-template-columns: 1fr;
+  grid-gap: 16px;
+  width: 100%;
 
   mat-card-content {
     min-height: 400px;
@@ -48,4 +53,27 @@
 
 .dashboard-card:hover {
   @include mat.elevation(2);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.first-row-grid {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.first-row-grid mat-card {
+  flex: 1;
+  max-width: calc(33.33% - 16px); /* Adjust the width as needed */
+}
+
+.status-grid {
+  width: 100%;
+}
+
+.status-grid mat-card {
+  width: 100%;
 }

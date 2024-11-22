@@ -3,67 +3,99 @@
     <h1>Dashboard</h1>
     <span class="spacer"></span>
   </div> -->
-  <div class="cards-grid">
-    <app-dashboard-card-value routerLink="/copilot/seats" title="Seats" [value]="totalSeats" [change]="seatPercentage"
-      changeSuffix="" icon="" changeDescription="% have Copilot"
-      subtitle="Total Copilot Seats"></app-dashboard-card-value>
-    <app-dashboard-card-value title="Active Users" [value]="activeCurrentWeekAverage"
-      [change]="activeWeeklyChangePercent" changeSuffix="" changeDescription="% since last"
-      subtitle="Average activity for last 7 days"></app-dashboard-card-value>
-    <app-dashboard-card-value routerLink="/copilot/surveys" title="Surveys Complete" icon="" [value]="totalSurveys"
-      [change]="totalSurveysThisWeek" changeSuffix="" changeDescription=" this week"></app-dashboard-card-value>
-    <mat-card id="adoption" appearance="outlined" routerLink="/copilot/value" fragment="adoption">
-      <mat-card-header>
-        <mat-card-title>Adoption</mat-card-title>
-      </mat-card-header>
-      <ng-container *ngIf="activityData; else loading">
-      <app-adoption-chart [data]="activityData" [chartOptions]="chartOptions"></app-adoption-chart>
-      </ng-container>
-    </mat-card>
-    <mat-card id="activity" appearance="outlined" routerLink="/copilot/value" fragment="activity">
-      <mat-card-header>
-        <mat-card-title>Daily Activity</mat-card-title>
-      </mat-card-header>
-      <ng-container *ngIf="activityData && metricsData; else loading">
-        <app-daily-activity-chart [activity]="activityData" [metrics]="metricsData"
-        [chartOptions]="chartOptions"></app-daily-activity-chart>      </ng-container>
-    </mat-card>
-    <mat-card id="time-saved" appearance="outlined" routerLink="/copilot/value" fragment="time-saved">
-      <mat-card-header>
-        <mat-card-title>Time Saved</mat-card-title>
-      </mat-card-header>
-      <ng-container *ngIf="surveysData && activityData; else loading">
-        <app-time-saved-chart [surveys]="surveysData" [activity]="activityData" [chartOptions]="chartOptions"></app-time-saved-chart>
-      </ng-container>
-    </mat-card>
-    <mat-card appearance="outlined" id="card-bars">
-      <mat-card-header>
-        <mat-card-title>Engagement</mat-card-title>
-      </mat-card-header>
-      <mat-card-content *ngIf="metricsData; else loading">
-        <app-dashboard-card-bars title="Engagement" [data]="metricsData ? metricsData[metricsData.length - 1] : undefined"
-      [totalSeats]="totalSeats"></app-dashboard-card-bars>
-      </mat-card-content>
-    </mat-card>
-    <mat-card appearance="outlined" id="drilldown-bar-chart">
-      <mat-card-header>
-        <mat-card-title>Engagement Breakdown</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <ng-container *ngIf="metricsData; else loading">
-          <app-dashboard-card-drilldown-bar-chart [data]="metricsData"></app-dashboard-card-drilldown-bar-chart>
-        </ng-container>
-      </mat-card-content>
-    </mat-card>
-    <mat-card id="active-users" appearance="outlined">
-      <mat-card-header>
-        <mat-card-title>Most Active Users</mat-card-title>
-      </mat-card-header>
-      <ng-container *ngIf="activityTotals; else loading">
-        <app-active-users-chart [data]="activityTotals" [chartOptions]="chartOptions"></app-active-users-chart>
-      </ng-container>
-    </mat-card>
-  </div>
+  <mat-tab-group>
+    <mat-tab label="Overview">
+      <div class="cards-grid">
+        <!-- First row grid -->
+        <div class="first-row-grid">
+          <mat-card id="adoption" appearance="outlined" routerLink="/copilot/value" fragment="adoption">
+            <mat-card-header>
+              <mat-card-title>Adoption</mat-card-title>
+            </mat-card-header>
+            <ng-container *ngIf="activityData; else loading">
+              <app-adoption-chart [data]="activityData" [chartOptions]="chartOptions"></app-adoption-chart>
+            </ng-container>
+          </mat-card>
+          <mat-card id="activity" appearance="outlined" routerLink="/copilot/value" fragment="activity">
+            <mat-card-header>
+              <mat-card-title>Daily Activity</mat-card-title>
+            </mat-card-header>
+            <ng-container *ngIf="activityData && metricsData; else loading">
+              <app-daily-activity-chart [activity]="activityData" [metrics]="metricsData" [chartOptions]="chartOptions"></app-daily-activity-chart>
+            </ng-container>
+          </mat-card>
+          <mat-card id="time-saved" appearance="outlined" routerLink="/copilot/value" fragment="time-saved">
+            <mat-card-header>
+              <mat-card-title>Time Saved</mat-card-title>
+            </mat-card-header>
+            <ng-container *ngIf="surveysData && activityData; else loading">
+              <app-time-saved-chart [surveys]="surveysData" [activity]="activityData" [chartOptions]="chartOptions"></app-time-saved-chart>
+            </ng-container>
+          </mat-card>
+        </div>
+        <!-- Status grid list -->
+        <div class="status-grid">
+          <mat-card appearance="outlined" id="status-card" class="full-width">
+            <mat-card-header>
+              <mat-card-title>Status</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <mat-grid-list cols="3" rowHeight="100px">
+                <!-- Nested grid list -->
+                <mat-grid-tile *ngFor="let tile of tiles; let i = index" [colspan]="tile.cols" [rowspan]="tile.rows">
+                  <ng-container *ngIf="i !== 7">
+                    {{tile.text}}
+                  </ng-container>
+                  <ng-container *ngIf="i === 7">
+                    <app-dashboard-card-value routerLink="/copilot/surveys" title="Surveys Complete" icon="" [value]="totalSurveys"
+                      [change]="totalSurveysThisWeek" changeSuffix="" changeDescription=" this week"></app-dashboard-card-value>
+                  </ng-container>
+                </mat-grid-tile>
+              </mat-grid-list>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </mat-tab>
+    <mat-tab label="Details">
+      <div class="cards-grid">
+        <app-dashboard-card-value routerLink="/copilot/seats" title="Seats" [value]="totalSeats" [change]="seatPercentage"
+          changeSuffix="" icon="" changeDescription="% have Copilot"
+          subtitle="Total Copilot Seats"></app-dashboard-card-value>
+        <app-dashboard-card-value title="Active Users" [value]="activeCurrentWeekAverage"
+          [change]="activeWeeklyChangePercent" changeSuffix="" changeDescription="% since last"
+          subtitle="Average activity for last 7 days"></app-dashboard-card-value>
+        <mat-card appearance="outlined" id="card-bars">
+          <mat-card-header>
+            <mat-card-title>Engagement</mat-card-title>
+          </mat-card-header>
+          <mat-card-content *ngIf="metricsData; else loading">
+            <app-dashboard-card-bars title="Engagement" [data]="metricsData ? metricsData[metricsData.length - 1] : undefined"
+          [totalSeats]="totalSeats"></app-dashboard-card-bars>
+          </mat-card-content>
+        </mat-card>
+        <mat-card appearance="outlined" id="drilldown-bar-chart">
+          <mat-card-header>
+            <mat-card-title>Engagement Breakdown</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <ng-container *ngIf="metricsData; else loading">
+              <app-dashboard-card-drilldown-bar-chart [data]="metricsData"></app-dashboard-card-drilldown-bar-chart>
+            </ng-container>
+          </mat-card-content>
+        </mat-card>
+        <mat-card id="active-users" appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>Most Active Users</mat-card-title>
+          </mat-card-header>
+          <ng-container *ngIf="activityTotals; else loading">
+            <app-active-users-chart [data]="activityTotals" [chartOptions]="chartOptions"></app-active-users-chart>
+          </ng-container>
+        </mat-card>
+        <!-- Add content for the Details tab here -->
+      </div>
+    </mat-tab>
+  </mat-tab-group>
 </div>
 <ng-template #loading>
   <app-loading-spinner></app-loading-spinner>
