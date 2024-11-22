@@ -5,15 +5,35 @@
   </div>
   <form class="example-form" [formGroup]="form" (ngSubmit)="onSubmit()">
     <div class="settings-header">
-      <h3>Assumptions</h3>
+      <h3>Basic Assumptions</h3>
     </div>
     <div class="settings-content auto-fit-grid">
       <mat-form-field>
-        <mat-label>Number of Developers</mat-label>
+        <mat-label>Total Developers</mat-label>
         <input type="number" matInput formControlName="developerCount" placeholder="Ex: 100">
         <mat-error *ngIf="form.controls.developerCount.hasError('required')">
           Number of developers is <strong>required</strong>
         </mat-error>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Number of Copilot Licenses</mat-label>
+        <input type="number" matInput formControlName="copilotLicenseCount" placeholder="Ex: 50">
+        <mat-error *ngIf="form.controls.copilotLicenseCount.hasError('required')">
+          Number of Copilot licenses is <strong>required</strong>
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Percent of Devs Adopted</mat-label>
+        <input type="number" matInput formControlName="percentDevsAdopted" placeholder="Ex: 75" min="0" max="100" step="10">
+        <mat-error *ngIf="form.controls.percentDevsAdopted.hasError('required')">
+          Percent of devs adopted is <strong>required</strong>
+        </mat-error>
+        <mat-error *ngIf="form.controls.percentDevsAdopted.hasError('min') || form.controls.percentDevsAdopted.hasError('max')">
+          Must be between 0 and 100
+        </mat-error>
+        <span matTextSuffix>%</span>
       </mat-form-field>
 
       <mat-form-field floatLabel="always">
@@ -51,7 +71,7 @@
       </mat-form-field>
 
       <mat-form-field>
-        <mat-label>Time Savings per Task</mat-label>
+        <mat-label>Copilot Time Savings per Task</mat-label>
         <input type="number" matInput formControlName="percentTimeSaved" placeholder="Ex: 20" min="0" max="100"
           step="10" class="example-right-align">
         <mat-error *ngIf="form.controls.percentTimeSaved.hasError('required')">
@@ -65,7 +85,7 @@
       </mat-form-field>
     </div>
     <div class="settings-header">
-      <h3>Metrics</h3>
+      <h3>Polling</h3>
     </div>
     <div class="settings-content">
       <mat-form-field>
@@ -125,7 +145,7 @@
     </ng-container>
 
     <div class="settings-header">
-      <h3>Advanced</h3>
+      <h3>Integration Settings</h3>
     </div>
     <div class="settings-content auto-fit-grid">
       <mat-form-field>

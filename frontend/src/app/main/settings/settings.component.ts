@@ -36,6 +36,13 @@ export class SettingsComponent implements OnInit {
     developerCount: new FormControl('', [
       Validators.min(1)
     ]),
+    copilotLicenseCount: new FormControl('', [
+      Validators.min(0)
+    ]),
+    percentDevsAdopted: new FormControl('', [
+      Validators.min(0),
+      Validators.max(100)
+    ]),
     devCostPerYear: new FormControl('', [
       Validators.min(0)
     ]),
@@ -93,6 +100,8 @@ export class SettingsComponent implements OnInit {
         webhookSecret: settings.webhookSecret || '',
         devCostPerYear: settings.devCostPerYear || '',
         developerCount: settings.developerCount || '',
+        copilotLicenseCount: settings.copilotLicenseCount || '',
+        percentDevsAdopted: settings.percentDevsAdopted || '',
         hoursPerYear: settings.hoursPerYear || '',
         percentCoding: settings.percentCoding || '',
         percentTimeSaved: settings.percentTimeSaved || ''

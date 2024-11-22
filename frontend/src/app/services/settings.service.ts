@@ -18,6 +18,8 @@ export interface Settings {
   perDevCostPerYear?: string | null;
   perDevHoursPerYear?: string | null;
   percentofHoursCoding?: string | null;
+  copilotLicenseCount?: string | null;
+  percentDevsAdopted?: string | null;
   [key: string]: string | null | undefined;
 }
 
