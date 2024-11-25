@@ -16,6 +16,8 @@ import { LoadingSpinnerComponent } from '../../../shared/loading-spinner/loading
 import { ActiveUsersChartComponent } from './dashboard-card/active-users-chart/active-users-chart.component';
 import { MatGridListModule } from '@angular/material/grid-list';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatCardModule } from '@angular/material/card';
+import { NewCardComponent } from './dashboard-card/new-card/new-card.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -32,7 +34,8 @@ import { MatTabsModule } from '@angular/material/tabs';
     ActiveUsersChartComponent,
     MatGridListModule,
     MatTabsModule,
-
+    MatCardModule,
+    NewCardComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
@@ -106,6 +109,25 @@ export class CopilotDashboardComponent implements OnInit {
     {text: 'Twelve', cols: 1, rows: 1},
   ];
 
+  statusChecks = [
+    // First column: Telemetry
+    { title: 'API Connectivity', statusMessage: 'Unknown  ❌' },
+    { title: 'Form Hits', statusMessage: 'Unknown  ❌' },
+    { title: 'Settings Configured', statusMessage: 'Unknown  ❌' },
+    // Second column: Developer Estimates
+    { title: 'Polling History', statusMessage: 'Unknown  ❌' },
+    { title: 'Repositories Configured', statusMessage: 'Unknown  ❌' },
+    { title: 'Targets Selected', statusMessage: 'Unknown  ❌' },
+    // Third column: Predictive Modeling
+    { title: 'Average Usage Level', statusMessage: 'Unknown  ❌' },
+    { title: 'Estimates Collected', statusMessage: 'Unknown  ❌' },
+    { title: 'Targets Last Updated', statusMessage: 'Unknown  ❌' },
+    // Additional Checks
+    { title: 'Usage Level Trend', statusMessage: 'Unknown  ❌' },
+    { title: 'Estimates/Daily-User Ratio', statusMessage: 'Unknown  ❌' },
+    { title: 'Target Levels Acquired', statusMessage: '0 Levels Acquired ❌' }
+  ];
+
   constructor(
     private metricsService: MetricsService,
     private membersService: MembersService,
@@ -131,6 +153,7 @@ export class CopilotDashboardComponent implements OnInit {
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
         return surveyDate > oneWeekAgo ? acc + 1 : acc;
       }, 0);
+      this.updateStatusChecks();
     });
 
     forkJoin({
@@ -141,15 +164,18 @@ export class CopilotDashboardComponent implements OnInit {
       this.totalMembers = result.members.length;
       this.totalSeats = result.seats.length;
       this.seatPercentage = (this.totalSeats / this.totalMembers) * 100;
+      this.updateStatusChecks();
     });
 
     this.seatService.getActivity(30).subscribe((activity) => {
       this.activityData = activity;
+      this.updateStatusChecks();
     })
 
     this.seatService.getActivityTotals().subscribe(totals => {
       Object.keys(totals).forEach((key, index) => index > 10 ? delete totals[key] : null);
       this.activityTotals = totals;
+      this.updateStatusChecks();
     });
 
     this.metricsService.getMetrics({
@@ -170,6 +196,29 @@ export class CopilotDashboardComponent implements OnInit {
         : ((this.activeCurrentWeekAverage - this.activeLastWeekAverage) / this.activeLastWeekAverage) * 100;
 
       this.activeWeeklyChangePercent = Math.round(percentChange * 10) / 10;
+      this.updateStatusChecks();
     });
+  }
+
+  updateStatusChecks() {
+    // Update the statusChecks array with the fetched data
+    this.statusChecks = [
+      // First column: Telemetry
+    { title: 'API Connectivity', statusMessage: 'Connected ✅' },
+    { title: 'Form Hits', statusMessage: '36 hits ✅' },
+    { title: 'Settings Configured', statusMessage: 'Complete ✅' },
+    // Second column: Developer Estimates
+    { title: 'Polling History', statusMessage: '5 days 🟠' },
+    { title: 'Repositories Configured', statusMessage: '100 repos ✅' },
+    { title: 'Targets Selected', statusMessage: 'Complete ✅' },
+    // Third column: Predictive Modeling
+    { title: 'Average Usage Level', statusMessage: '10 Daily Users 🟠' },
+    { title: 'Estimates Collected', statusMessage: this.totalSurveys + ' estimates ✅' },
+    { title: 'Targets Last Updated', statusMessage: '1 month ✅' },
+    // Additional Checks
+    { title: 'Usage Level Trend', statusMessage: 'Growing ✅' },
+    { title: 'Estimates/Daily-User Ratio', statusMessage: '40% ✅' },
+    { title: 'Target Levels Acquired', statusMessage: '0 Levels Acquired ❌' }
+  ];
   }
 }

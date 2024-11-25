@@ -1,0 +1,11 @@
+<mat-card appearance="outlined" class="dashboard-card fixed-width-card">
+  <mat-card-header *ngIf="title">
+    <mat-card-title>{{title}}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <div class="value-container">
+      <p>{{title}}</p>
+      <p>{{statusMessage}}</p>
+    </div>
+  </mat-card-content>
+</mat-card>

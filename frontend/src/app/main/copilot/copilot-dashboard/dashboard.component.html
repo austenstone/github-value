@@ -41,15 +41,13 @@
             </mat-card-header>
             <mat-card-content>
               <mat-grid-list cols="3" rowHeight="100px">
+                <!-- Column titles -->
+                <mat-grid-tile colspan="1" rowspan="1" class="column-title"><b>Telemetry</b></mat-grid-tile>
+                <mat-grid-tile colspan="1" rowspan="1" class="column-title"><b>Developer Estimates</b></mat-grid-tile>
+                <mat-grid-tile colspan="1" rowspan="1" class="column-title"><b>Predictive Modeling</b></mat-grid-tile>
                 <!-- Nested grid list -->
                 <mat-grid-tile *ngFor="let tile of tiles; let i = index" [colspan]="tile.cols" [rowspan]="tile.rows">
-                  <ng-container *ngIf="i !== 7">
-                    {{tile.text}}
-                  </ng-container>
-                  <ng-container *ngIf="i === 7">
-                    <app-dashboard-card-value routerLink="/copilot/surveys" title="Surveys Complete" icon="" [value]="totalSurveys"
-                      [change]="totalSurveysThisWeek" changeSuffix="" changeDescription=" this week"></app-dashboard-card-value>
-                  </ng-container>
+                  <app-new-card [title]="statusChecks[i].title" [statusMessage]="statusChecks[i].statusMessage"></app-new-card>
                 </mat-grid-tile>
               </mat-grid-list>
             </mat-card-content>

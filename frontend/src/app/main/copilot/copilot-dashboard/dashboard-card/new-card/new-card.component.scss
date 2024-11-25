@@ -1,0 +1,20 @@
+@use '@angular/material' as mat;
+
+.primary-value {
+  font-size: 48px;
+  margin: 0;
+}
+
+.fixed-width-card {
+  width: 300px; // Set your desired width here
+}
+
+.dashboard-card {
+  @include mat.elevation-transition();
+  user-select: none;
+  height: 100%;
+}
+
+.dashboard-card:hover {
+  @include mat.elevation(2);
+}
