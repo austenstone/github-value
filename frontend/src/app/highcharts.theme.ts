@@ -278,8 +278,8 @@ const theme: Highcharts.Options = {
             }
           }
         },
-      } as any
-    },
+      }
+    } as Highcharts.NavigationButtonOptions,
     menuStyle: {
       background: 'var(--sys-surface-container)',
       color: 'var(--sys-on-surface)',

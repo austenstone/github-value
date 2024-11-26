@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { serverUrl } from './server.service';
+import { serverUrl } from '../server.service';
 import { Endpoints } from "@octokit/types";
 
 type _Seat = NonNullable<Endpoints["GET /orgs/{org}/copilot/billing/seats"]["response"]["data"]["seats"]>[0];
@@ -23,26 +23,31 @@ export class SeatService {
 
   constructor(private http: HttpClient) { }
 
-  getAllSeats() {
-    return this.http.get<Seat[]>(`${this.apiUrl}`);
+  getAllSeats(org?: string) {
+    return this.http.get<Seat[]>(`${this.apiUrl}`, {
+      params: org ? { org } : undefined
+    });
   }
 
   getSeat(id: number | string) {
     return this.http.get<Seat[]>(`${this.apiUrl}/${id}`);
   }
 
-  getActivity(daysInactive = 30, precision: 'hour' | 'day' = 'day') {
+  getActivity(org?: string, daysInactive = 30, precision: 'hour' | 'day' = 'day') {
     return this.http.get<ActivityResponse>(`${this.apiUrl}/activity`,
       {
         params: {
           precision,
-          daysInactive: daysInactive.toString()
+          daysInactive: daysInactive.toString(),
+          ...org ? { org } : undefined
         }
       }
     );
   };
 
-  getActivityTotals() {
-    return this.http.get<Record<string, number>>(`${this.apiUrl}/activity/totals`);
+  getActivityTotals(org?: string) {
+    return this.http.get<Record<string, number>>(`${this.apiUrl}/activity/totals`, {
+      params: org ? { org } : undefined
+    });
   }
 }

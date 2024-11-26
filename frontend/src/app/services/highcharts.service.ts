@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
-import { ChatModel, CodeModel, CopilotMetrics, DotComChatShared, DotComPullRequestsShared, IdeChatShared, IdeCodeCompletionsShared } from './metrics.service.interfaces';
+import { ChatModel, CodeModel, CopilotMetrics, DotComChatShared, DotComPullRequestsShared, IdeChatShared, IdeCodeCompletionsShared } from './api/metrics.service.interfaces';
 import { DashboardCardBarsInput } from '../main/copilot/copilot-dashboard/dashboard-card/dashboard-card-bars/dashboard-card-bars.component';
-import { ActivityResponse, Seat } from './seat.service';
+import { ActivityResponse, Seat } from './api/seat.service';
 import * as Highcharts from 'highcharts';
-import { Survey } from './copilot-survey.service';
+import { Survey } from './api/copilot-survey.service';
 import { DatePipe, DecimalPipe } from '@angular/common';
 
 interface CustomHighchartsPoint extends Highcharts.Point {
@@ -474,7 +474,6 @@ export class HighchartsService {
 
   transformSurveysToScatter(surveys: Survey[], activity?: ActivityResponse): Highcharts.Options {
     surveys = surveys.filter(survey => survey.status !== 'pending');
-    console.log(surveys, activity);
     if (!activity) return { series: [] };
 
     const surveyAverages = Object.keys(activity).reduce((acc, activityDate) => {

@@ -3,14 +3,14 @@ import { MaterialModule } from '../../material.module';
 import { AppModule } from '../../app.module';
 import { AbstractControl, FormControl, FormGroup, FormGroupDirective, NgForm, ValidationErrors, Validators } from '@angular/forms';
 import { ErrorStateMatcher } from '@angular/material/core';
-import { SettingsHttpService } from '../../services/settings.service';
+import { SettingsHttpService } from '../../services/api/settings.service';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { SetupService } from '../../services/setup.service';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { ThemeService } from '../../services/theme.service';
 import { Endpoints } from '@octokit/types';
 import cronstrue from 'cronstrue';
+import { InstallationsService } from '../../services/api/installations.service';
 
 export class MyErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -69,18 +69,17 @@ export class SettingsComponent implements OnInit {
       Validators.pattern(/^(https?:\/\/)[^\s/$.?#].[^\s]*$/)
     ]),
     webhookProxyUrl: new FormControl('', [
-      Validators.required,
       Validators.pattern(/^(https?:\/\/)[^\s/$.?#].[^\s]*$/)
     ]),
     webhookSecret: new FormControl('', [])
   });
   cronString = '';
-  install?: Endpoints["GET /app"]["response"]['data'];
+  installs?: Endpoints["GET /app/installations"]["response"]["data"];
 
   constructor(
     private settingsService: SettingsHttpService,
     private router: Router,
-    private setupService: SetupService,
+    public installationsService: InstallationsService,
     public themeService: ThemeService
   ) { }
 
@@ -97,10 +96,6 @@ export class SettingsComponent implements OnInit {
         percentCoding: settings.percentCoding || 0,
         percentTimeSaved: settings.percentTimeSaved || 0
       });
-    });
-
-    this.setupService.getInstall().subscribe((install) => {
-      this.install = install;
     });
   }
 

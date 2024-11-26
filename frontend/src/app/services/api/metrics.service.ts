@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { serverUrl } from './server.service';
+import { serverUrl } from '../server.service';
 import { CopilotMetrics } from './metrics.service.interfaces';
 
 @Injectable({
@@ -12,6 +12,7 @@ export class MetricsService {
   constructor(private http: HttpClient) { }
 
   getMetrics(queryParams?: {
+    org?: string | undefined;
     type?: 'none' | 'copilot_ide_code_completions' | 'copilot_ide_chat' | 'copilot_dotcom_chat' | 'copilot_dotcom_pull_requests';
     since?: string;
     until?: string;
@@ -19,12 +20,14 @@ export class MetricsService {
     language?: string;
     model?: 'default' | string;
   }) {
+    if (!queryParams?.org) delete queryParams?.org;
     return this.http.get<CopilotMetrics[]>(this.apiUrl, {
       params: queryParams
     });
   }
 
   getMetricsTotals(queryParams?: {
+    org?: string;
     type?: 'none' | 'copilot_ide_code_completions' | 'copilot_ide_chat' | 'copilot_dotcom_chat' | 'copilot_dotcom_pull_requests';
     since?: string;
     until?: string;
@@ -32,6 +35,7 @@ export class MetricsService {
     language?: string;
     model?: 'default' | string;
   }) {
+    if (!queryParams?.org) delete queryParams?.org;
     return this.http.get<CopilotMetrics>(`${this.apiUrl}/totals`, {
       params: queryParams
     });

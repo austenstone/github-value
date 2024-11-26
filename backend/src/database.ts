@@ -1,63 +1,118 @@
-import { Sequelize } from 'sequelize';
+import { Options, Sequelize } from 'sequelize';
 import mysql2 from 'mysql2/promise';
+import updateDotenv from 'update-dotenv';
 import logger from './services/logger.js';
+import { TargetValues } from './models/target-values.model.js';
+import { Settings } from './models/settings.model.js';
+import { Usage } from './models/usage.model.js';
+import { Seat } from './models/copilot.seats.model.js';
+import { Team } from './models/teams.model.js';
+import { MetricDaily } from './models/metrics.model.js';
+import { Survey } from './models/survey.model.js';
 
-const sequelize = process.env.JAWSDB_URL ?
-  new Sequelize(process.env.JAWSDB_URL, {
+class Database {
+  sequelize?: Sequelize;
+  options: Options = {
     dialect: 'mysql',
-    pool: {
-      max: 10,
-      acquire: 30000,
-      idle: 10000
-    },
-    logging: (sql) => logger.debug(sql),
+    logging: (...sql) => logger.debug(sql),
     timezone: '+00:00', // Force UTC timezone
     dialectOptions: {
       timezone: '+00:00' // Force UTC for MySQL connection
-    },
-  }) :
-  new Sequelize({
-    dialect: 'mysql',
-    host: process.env.MYSQL_HOST || 'localhost',
-    port: parseInt(process.env.MYSQL_PORT || '3306'),
-    username: process.env.MYSQL_USER || 'root',
-    password: process.env.MYSQL_PASSWORD || 'octocat',
-    database: process.env.MYSQL_DATABASE || 'value',
-    logging: (sql) => logger.debug(sql),
-    timezone: '+00:00', // Force UTC timezone
-    dialectOptions: {
-      timezone: '+00:00' // Force UTC for MySQL connection
-    },
-  });
-
-const dbConnect = async () => {
-  try {
-    if (!process.env.JAWSDB_URL) { // If we are not using JAWSDB, we need to create the database
-      const connection = await mysql2.createConnection({
-        host: process.env.MYSQL_HOST || 'localhost',
-        port: parseInt(process.env.MYSQL_PORT || '3306'),
-        user: process.env.MYSQL_USER || 'root',
-        password: process.env.MYSQL_PASSWORD || 'octocat',
-      });
-  
-      await connection.query(`CREATE DATABASE IF NOT EXISTS \`${process.env.MYSQL_DATABASE}\`;`,);
-      await connection.end();
     }
-  } catch (error) {
-    logger.error('Unable to connect to the database', error);
-    throw error;
   }
-  try {
-    await sequelize.authenticate()
-    await sequelize.sync({ alter: true }).then(() => {
-      logger.info('All models were synchronized successfully. 🚀');
-    }).catch((error) => {
-      logger.error('Error synchronizing models', error);
-    });
-  } catch (error) {
-    logger.info('Unable to initialize the database', error);
-    throw error;
-  }
-};
+  input: string | Options;
 
-export { dbConnect, sequelize };
+  constructor(input: string | Options) {
+    this.input = input;
+  }
+
+  async connect(options?: Options) {
+    this.input = options || this.input;
+    if (typeof this.input !== 'string') {
+      if (this.input.host) await updateDotenv({ MYSQL_HOST: this.input.host })
+      if (this.input.port) await updateDotenv({ MYSQL_PORT: String(this.input.port) })
+      if (this.input.username) await updateDotenv({ MYSQL_USER: this.input.username })
+      if (this.input.password) await updateDotenv({ MYSQL_PASSWORD: this.input.password })
+      if (this.input.database) await updateDotenv({ MYSQL_DATABASE: this.input.database })
+    }
+    try {
+      let sequelize;
+      try {
+        sequelize = typeof this.input === 'string' ?
+          new Sequelize(this.input, {
+            pool: {
+              max: 10,
+              acquire: 30000,
+              idle: 10000
+            },
+            ...this.options
+          }) :
+          new Sequelize({
+            ...this.input,
+            ...this.options
+          });
+      } catch (error) {
+        logger.error('Unable to connect to the database');
+        throw error;
+      }
+      logger.info('Connection to the database has been established successfully');
+
+      if (typeof this.input !== 'string') {
+        try {
+          const connection = await mysql2.createConnection({
+            host: this.input.host,
+            port: this.input.port,
+            user: this.input.username,
+            password: this.input.password,
+          });
+
+          await connection.query('CREATE DATABASE IF NOT EXISTS ??', [this.input.database]);
+          await connection.end();
+          await connection.destroy();
+        } catch (error) {
+          logger.error('Unable to create the database');
+          throw error;
+        }
+        logger.info('Database created successfully');
+      }
+
+      try {
+        await sequelize.authenticate()
+        await this.initializeModels(sequelize);
+        this.sequelize = sequelize;
+        await sequelize.sync({ alter: true }).then(() => {
+          logger.info('Database models were synchronized successfully');
+        })
+      } catch (error) {
+        logger.info('Unable to initialize the database');
+        throw error;
+      }
+      logger.info('Database setup completed successfully');
+      return this.sequelize;
+    } catch (error) {
+      logger.debug(error);
+      if (error instanceof Error) {
+        logger.error(error.message);
+      }
+      throw error;
+    }
+  }
+
+  disconnect() {
+    this.sequelize?.connectionManager.close();
+    this.sequelize?.close();
+  }
+
+  initializeModels(sequelize: Sequelize) {
+    Settings.initModel(sequelize);
+    Team.initModel(sequelize);
+    Seat.initModel(sequelize);
+    Survey.initModel(sequelize);
+    Usage.initModel(sequelize);
+    MetricDaily.initModel(sequelize);
+    TargetValues.initModel(sequelize);
+  }
+
+}
+
+export default Database;

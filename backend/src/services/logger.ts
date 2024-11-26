@@ -9,7 +9,7 @@ const __dirname = dirname(__filename);
 const logsDir = path.resolve(__dirname, '../../logs');
 
 if (!existsSync(logsDir)) {
-    mkdirSync(logsDir, { recursive: true });
+  mkdirSync(logsDir, { recursive: true });
 }
 
 const packageJsonPath = path.resolve(__dirname, '../../package.json');
@@ -18,17 +18,18 @@ export const appName = packageJson.name || 'GitHub Value';
 
 const logger = bunyan.createLogger({
   name: appName,
+  level: 'debug',
   serializers: {
     ...bunyan.stdSerializers,
     req: (req: Request) => ({
       method: req.method,
       url: req.url,
-           remoteAddress: req.connection.remoteAddress,
+      remoteAddress: req.connection.remoteAddress,
       remotePort: req.connection.remotePort
     }),
     res: (res: Response) => ({
       statusCode: res.statusCode
-    })
+    }),
   },
   streams: [
     {
@@ -40,9 +41,10 @@ const logger = bunyan.createLogger({
       stream: process.stderr
     },
     {
-      path: `${logsDir}/app.log`,
+      path: `${logsDir}/debug.json`,
       period: '1d',
-      count: 14
+      count: 14,
+      level: 'debug'
     }
   ]
 });

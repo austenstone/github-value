@@ -1,8 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { SetupService } from '../../services/setup.service';
+import { InstallationStatus } from '../services/api/setup.service';
 import { Router } from '@angular/router';
-import { Subscription, timer } from 'rxjs';
+import { finalize, Subscription, takeWhile, timer } from 'rxjs';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { InstallationsService } from '../services/api/installations.service';
 
 @Component({
   selector: 'app-db-loading',
@@ -90,37 +91,47 @@ export class DbLoadingComponent implements OnInit, OnDestroy {
   private statusSubscription?: Subscription;
   statusText = 'Please wait while we set up your database...';
   statusProgress = 0;
-  dbStatus = {
+  dbStatus: InstallationStatus = {
     usage: false,
     metrics: false,
     copilotSeats: false,
-    teamsAndMembers: false
+    teamsAndMembers: false,
+    installation: undefined
   };
 
   constructor(
-    private setupService: SetupService,
+    private installationsService: InstallationsService,
     private router: Router
   ) { }
 
   ngOnInit(): void {
-    this.statusSubscription = timer(0, 5000)
-      .subscribe(() => {
-        this.setupService.getSetupStatus().subscribe((response) => {
-          if (!response.isSetup) {
-            this.router.navigate(['/setup']);
-            return;
-          }
-          if (response.dbsInitialized) {
-            this.dbStatus = response.dbsInitialized;
-            this.updateProgress();
-          }
+    this.statusSubscription = timer(0, 5000).pipe(
+      takeWhile(() => Object.values(this.dbStatus).every(value => value)),
+      finalize(() => this.router.navigate(['/']))
+    ).subscribe(() => {
+      this.installationsService.refreshStatus().subscribe((response) => {
+        if (!response.isSetup) {
+          this.statusSubscription?.unsubscribe();
+          this.router.navigate(['/setup/db']);
+          return;
+        }
 
-          if (response.dbInitialized) {
-            this.statusSubscription?.unsubscribe()
-            this.router.navigate(['/']); // 🚀 Navigate
-          }
-        });
+        this.dbStatus = response.installations.reduce((acc, intallation) => {
+          acc.usage = acc.usage || intallation.usage;
+          acc.metrics = acc.metrics || intallation.metrics;
+          acc.copilotSeats = acc.copilotSeats || intallation.copilotSeats;
+          acc.teamsAndMembers = acc.teamsAndMembers || intallation.teamsAndMembers;
+          return acc;
+        }, {
+          usage: false,
+          metrics: false,
+          copilotSeats: false,
+          teamsAndMembers: false
+        })
+
+        this.updateProgress();
       });
+    });
   }
 
   private updateProgress(): void {

@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { CopilotSurveyService, Survey } from '../../../../services/copilot-survey.service';
+import { CopilotSurveyService, Survey } from '../../../../services/api/copilot-survey.service';
 import { MatCardModule } from '@angular/material/card';
 import { CommonModule } from '@angular/common';
 import { MatChipsModule } from '@angular/material/chips';

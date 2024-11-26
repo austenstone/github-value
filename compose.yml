@@ -4,7 +4,7 @@ services:
     build:
       dockerfile: Dockerfile
     ports:
-      - "80:80"
+      - "8080:8080"
     environment:
       NODE_ENV: production
       NODE_OPTIONS: --enable-source-maps

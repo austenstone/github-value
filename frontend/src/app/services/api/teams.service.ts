@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { serverUrl } from './server.service';
+import { serverUrl } from '../server.service';
 import { Endpoints } from '@octokit/types';
 
 @Injectable({

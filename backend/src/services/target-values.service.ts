@@ -5,7 +5,11 @@ class TargetValuesService {
     return await TargetValues.findAll();
   }
 
-  async updateTargetValues(data: { targetedRoomForImprovement: number, targetedNumberOfDevelopers: number, targetedPercentOfTimeSaved: number }) {
+  async updateTargetValues(data: {
+    targetedRoomForImprovement: number,
+    targetedNumberOfDevelopers: number,
+    targetedPercentOfTimeSaved: number
+  }) {
     const [targetValues] = await TargetValues.findOrCreate({
       where: {},
       defaults: data

@@ -3,7 +3,7 @@ import * as Highcharts from 'highcharts';
 import HC_gantt from 'highcharts/modules/gantt';
 HC_gantt(Highcharts);
 import { HighchartsChartModule } from 'highcharts-angular';
-import { Seat, SeatService } from '../../../../services/seat.service';
+import { Seat, SeatService } from '../../../../services/api/seat.service';
 import { ActivatedRoute } from '@angular/router';
 import { HighchartsService } from '../../../../services/highcharts.service';
 import { MatCardModule } from '@angular/material/card';

@@ -1,11 +1,6 @@
 import { Survey, SurveyType } from "../models/survey.model.js";
 
 class SurveyService {
-
-  constructor() {
-    
-  }
-
   async createSurvey(survey: SurveyType) {
     return await Survey.create(survey);
   }

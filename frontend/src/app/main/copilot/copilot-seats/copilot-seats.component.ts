@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { ColumnOptions, TableComponent } from '../../../shared/table/table.component';
-import { Seat, SeatService } from '../../../services/seat.service';
+import { Seat, SeatService } from '../../../services/api/seat.service';
 import { SortDirection } from '@angular/material/sort';
 import { Router } from '@angular/router';
+import { InstallationsService } from '../../../services/api/installations.service';
+import { takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-seats',
@@ -70,12 +72,17 @@ export class CopilotSeatsComponent implements OnInit {
 
   constructor(
     private seatsService: SeatService,
-    private router: Router
+    private router: Router,
+    private installationsService: InstallationsService
   ) {}
 
   ngOnInit() {
-    this.seatsService.getAllSeats().subscribe(seats => {
-      this.seats = seats as Seat[];
+    this.installationsService.currentInstallation.pipe(
+      takeUntil(this.installationsService.destroy$)
+    ).subscribe(installation => {
+      this.seatsService.getAllSeats(installation?.account?.login).subscribe(seats => {
+        this.seats = seats as Seat[];
+      });
     });
   }
 

@@ -1,9 +1,9 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import * as Highcharts from 'highcharts';
 import { HighchartsChartModule } from 'highcharts-angular';
-import { Survey } from '../../../../services/copilot-survey.service';
+import { Survey } from '../../../../services/api/copilot-survey.service';
 import { HighchartsService } from '../../../../services/highcharts.service';
-import { ActivityResponse } from '../../../../services/seat.service';
+import { ActivityResponse } from '../../../../services/api/seat.service';
 
 @Component({
   selector: 'app-time-saved-chart',

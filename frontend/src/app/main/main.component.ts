@@ -10,10 +10,14 @@ import { Observable } from 'rxjs';
 import { filter, map, shareReplay, tap } from 'rxjs/operators';
 import { AppModule } from '../app.module';
 import { ThemeService } from '../services/theme.service';
-import { NavigationEnd, Router } from '@angular/router';
-import { Endpoints } from '@octokit/types';
-import { SetupService } from '../services/setup.service';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
+import { SetupService } from '../services/api/setup.service';
 import { MatCardModule } from '@angular/material/card';
+import { ConfettiService } from '../database/confetti.service';
+import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { InstallationsService } from '../services/api/installations.service';
 
 @Component({
   selector: 'app-main',
@@ -28,7 +32,10 @@ import { MatCardModule } from '@angular/material/card';
     MatIconModule,
     AsyncPipe,
     AppModule,
-    MatCardModule
+    MatCardModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    MatInputModule
   ]
 })
 export class MainComponent {
@@ -43,22 +50,26 @@ export class MainComponent {
     map(result => result.matches),
     shareReplay()
   );
-  installation?: any;
 
   constructor(
     public themeService: ThemeService,
+    private route: ActivatedRoute,
     private router: Router,
-    private setupService: SetupService
+    private confettiService: ConfettiService,
+    public setupService: SetupService,
+    public installationsService: InstallationsService
   ) {
     this.hideNavText = localStorage.getItem('hideNavText') === 'true';
-
+    this.route.queryParams.subscribe(params => {
+      if (params['celebrate'] === 'true') {
+        this.confettiService.celebrate()
+      }
+    });
     this.router.events.pipe(
       filter(event => event instanceof NavigationEnd)
     ).subscribe(() => {
       this.closeSidenav();
     });
-
-   this.installation = this.setupService.installation;
   }
 
   toggleNavText(): void {
@@ -69,6 +80,12 @@ export class MainComponent {
   closeSidenav(): void {
     if (this.isHandset && this.drawer) {
       this.drawer.close();
+    }
+  }
+
+  installationChanged(installation: number): void {
+    if (installation) {
+      this.installationsService.setInstallation(installation);
     }
   }
 }

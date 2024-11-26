@@ -3,7 +3,7 @@ import { Component, Input, OnChanges } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { CopilotMetrics } from '../../../../../services/metrics.service.interfaces';
+import { CopilotMetrics } from '../../../../../services/api/metrics.service.interfaces';
 import { HighchartsService } from '../../../../../services/highcharts.service';
 import { LoadingSpinnerComponent } from '../../../../../shared/loading-spinner/loading-spinner.component';
 
