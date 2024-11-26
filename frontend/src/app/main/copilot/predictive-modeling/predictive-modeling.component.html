@@ -10,24 +10,28 @@
         <h3>Settings</h3>
         <form [formGroup]="settingsForm">
           <mat-form-field>
-            <mat-label>Developer Count</mat-label>
-            <input matInput formControlName="developerCount" readonly>
+            <mat-label>Total Developer Count</mat-label>
+            <input matInput formControlName="developerCount" type="number">
           </mat-form-field>
           <mat-form-field>
             <mat-label>Dev Cost Per Year</mat-label>
-            <input matInput formControlName="devCostPerYear" readonly>
+            <input matInput formControlName="devCostPerYear" type="number">
           </mat-form-field>
           <mat-form-field>
             <mat-label>Hours Per Year</mat-label>
-            <input matInput formControlName="hoursPerYear" readonly>
+            <input matInput formControlName="hoursPerYear" type="number">
           </mat-form-field>
           <mat-form-field>
             <mat-label>Percent Coding</mat-label>
-            <input matInput formControlName="percentCoding" readonly>
+            <input matInput formControlName="percentCoding" type="number">
           </mat-form-field>
           <mat-form-field>
             <mat-label>Percent Time Saved</mat-label>
-            <input matInput formControlName="percentTimeSaved" readonly>
+            <input matInput formControlName="percentTimeSaved" type="number">
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Percent of Total Devs Adopting Copilot</mat-label>
+            <input matInput formControlName="percentDevsAdopting" type="number">
           </mat-form-field>
         </form>
       </div>
@@ -35,25 +39,30 @@
         <h3>Targets</h3>
         <form [formGroup]="targetForm">
           <mat-form-field>
-            <mat-label>Number of Developers</mat-label>
-            <input matInput formControlName="targetedNumberOfDevelopers">
+            <mat-label>Targeted Improvement</mat-label>
+            <input matInput type="number" formControlName="targetedRoomForImprovement">
           </mat-form-field>
           <mat-form-field>
-            <mat-label>Room for Improvement</mat-label>
-            <input matInput formControlName="targetedRoomForImprovement">
+            <mat-label>Targeted Count of Developers</mat-label>
+            <input matInput type="number" formControlName="targetedNumberOfDevelopers">
           </mat-form-field>
           <mat-form-field>
-            <mat-label>Time saved</mat-label>
-            <input matInput formControlName="targetedPercentOfTimeSaved">
+            <mat-label>Dev Hours Saved per Week</mat-label>
+            <input matInput type="number" formControlName="targetedPercentOfTimeSaved">
           </mat-form-field>
         </form>
       </div>
     </div>
     <div class="right-column">
       <h3>Calculated Fields</h3>
-      <!-- <div *ngFor="let field of calculatedFields">
-      <p>{{ field.name }}: {{ field.value }}</p>
-    </div> -->
+      <div>
+        <p>Max Time Savings: {{ calculatedFields.maxTimeSavings | number: '1.0-0' }}</p> <!-- Added maxTimeSavings -->
+        <p>Max Room for Improvement: {{ calculatedFields.roomForImprovement | number: '1.0-0' }}</p>
+        <p>Hours Coding per Week: {{ calculatedFields.hoursCodingPerWeek | number: '1.0-0' }}</p>
+        <p>Hours Saved per Week: {{ calculatedFields.hoursSavedPerWeek | number: '1.0-0' }}</p>
+        <p>Max Number of Copilot Users Active per Day: {{ calculatedFields.maxCopilotUsersActivePerDay | number: '1.0-0' }}</p> <!-- Added maxCopilotUsersActivePerDay -->
+        <p>Number of Copilot Users Active per Day: {{ calculatedFields.copilotUsersActivePerDay | number: '1.0-0' }}</p> <!-- Added copilotUsersActivePerDay -->
+      </div>
     </div>
   </div>
   <button mat-raised-button color="primary" (click)="saveTargets()">Save Targets to DB</button>

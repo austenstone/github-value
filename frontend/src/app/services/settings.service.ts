@@ -3,24 +3,22 @@ import { HttpClient } from '@angular/common/http';
 import { serverUrl } from './server.service';
 
 export interface Settings {
-  devCostPerYear?: string | null;
-  developerCount?: string | null;
-  hoursPerYear?: string | null;
-  percentCoding?: string | null;
-  percentTimeSaved?: string | null;
+  devCostPerYear?: number | null;
+  developerCount?: number | null;
+  hoursPerYear?: number | null;
+  percentCoding?: number | null;
+  percentTimeSaved?: number | null;
   metricsCronExpression?: string | null;
   baseUrl?: string | null;
   webhookProxyUrl?: string | null;
   webhookSecret?: string | null;
-  developerTotal?: string | null;
-  adopterCount?: string | null;
-  perLicenseCost?: string | null;
-  perDevCostPerYear?: string | null;
-  perDevHoursPerYear?: string | null;
-  percentofHoursCoding?: string | null;
-  copilotLicenseCount?: string | null;
-  percentDevsAdopted?: string | null;
-  [key: string]: string | null | undefined;
+  developerTotal?: number | null;
+  adopterCount?: number | null;
+  perLicenseCost?: number | null;
+  perDevCostPerYear?: number | null;
+  perDevHoursPerYear?: number | null;
+  percentofHoursCoding?: number | null;
+  [key: string]: string | number | null | undefined;
 }
 
 @Injectable({
@@ -43,8 +41,8 @@ export class SettingsHttpService {
     return this.http.post<void>(`${this.apiUrl}`, data);
   }
 
-  updateSettings(name: string, data: Settings) {
-    return this.http.put<void>(`${this.apiUrl}/${name}`, data);
+  updateSettings(data: Settings) {
+    return this.http.put<void>(`${this.apiUrl}`, data);
   }
 
   deleteSettings(name: string) {

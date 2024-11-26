@@ -33,28 +33,21 @@ export class MyErrorStateMatcher implements ErrorStateMatcher {
 })
 export class SettingsComponent implements OnInit {
   form = new FormGroup({
-    developerCount: new FormControl('', [
+    developerCount: new FormControl(0, [
       Validators.min(1)
     ]),
-    copilotLicenseCount: new FormControl('', [
+    devCostPerYear: new FormControl(0, [
       Validators.min(0)
     ]),
-    percentDevsAdopted: new FormControl('', [
-      Validators.min(0),
-      Validators.max(100)
-    ]),
-    devCostPerYear: new FormControl('', [
-      Validators.min(0)
-    ]),
-    hoursPerYear: new FormControl('2080', [
+    hoursPerYear: new FormControl(2080, [
       Validators.min(1),
       Validators.max(8760)
     ]),
-    percentCoding: new FormControl('', [
+    percentCoding: new FormControl(0, [
       Validators.min(0),
       Validators.max(100)
     ]),
-    percentTimeSaved: new FormControl('', [
+    percentTimeSaved: new FormControl(0, [
       Validators.min(0),
       Validators.max(100)
     ]),
@@ -98,13 +91,11 @@ export class SettingsComponent implements OnInit {
         baseUrl: settings.baseUrl || '',
         webhookProxyUrl: settings.webhookProxyUrl || '',
         webhookSecret: settings.webhookSecret || '',
-        devCostPerYear: settings.devCostPerYear || '',
-        developerCount: settings.developerCount || '',
-        copilotLicenseCount: settings.copilotLicenseCount || '',
-        percentDevsAdopted: settings.percentDevsAdopted || '',
-        hoursPerYear: settings.hoursPerYear || '',
-        percentCoding: settings.percentCoding || '',
-        percentTimeSaved: settings.percentTimeSaved || ''
+        devCostPerYear: settings.devCostPerYear || 0,
+        developerCount: settings.developerCount || 0,
+        hoursPerYear: settings.hoursPerYear || 0,
+        percentCoding: settings.percentCoding || 0,
+        percentTimeSaved: settings.percentTimeSaved || 0
       });
     });
 
