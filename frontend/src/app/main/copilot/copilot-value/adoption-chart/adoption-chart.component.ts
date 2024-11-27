@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import * as Highcharts from 'highcharts';
 import { HighchartsChartModule } from 'highcharts-angular';
-import { ActivityResponse } from '../../../../services/seat.service';
+import { ActivityResponse } from '../../../../services/api/seat.service';
 import { HighchartsService } from '../../../../services/highcharts.service';
 import { DatePipe } from '@angular/common';
 

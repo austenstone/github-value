@@ -1,10 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { serverUrl } from './server.service';
+import { serverUrl } from '../server.service';
 
 export interface Survey {
   id?: number;
-  owner: string;
+  org: string;
   repo: string;
   prNumber: number;
   status?: 'pending' | 'completed';
@@ -30,8 +30,10 @@ export class CopilotSurveyService {
     return this.http.post(this.apiUrl, survey);
   }
 
-  getAllSurveys() {
-    return this.http.get<Survey[]>(this.apiUrl);
+  getAllSurveys(org?: string) {
+    return this.http.get<Survey[]>(this.apiUrl, {
+      params: org ? { org } : undefined
+    });
   }
 
   getSurveyById(id: number) {

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges } from '@angular/core';
-import { CopilotMetrics } from '../../../../services/metrics.service.interfaces';
+import { CopilotMetrics } from '../../../../services/api/metrics.service.interfaces';
 import * as Highcharts from 'highcharts';
 import { HighchartsChartModule } from 'highcharts-angular';
 import { HighchartsService } from '../../../../services/highcharts.service';

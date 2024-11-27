@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
-import { PredictiveModelingService } from '../../../services/predictive-modeling.service';
+import { PredictiveModelingService } from '../../../services/api/predictive-modeling.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AppModule } from '../../../app.module';
 import { CommonModule } from '@angular/common';
-import { SettingsHttpService } from '../../../services/settings.service';
+import { SettingsHttpService } from '../../../services/api/settings.service';
 
 @Component({
   standalone: true,

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { HighchartsChartModule } from 'highcharts-angular';
 import * as Highcharts from 'highcharts';
 import { Router } from '@angular/router';
@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
     style="width: 200px; height: 200px;">
   </highcharts-chart>`
 })
-export class ActiveUsersChartComponent {
+export class ActiveUsersChartComponent implements OnChanges {
   @Input() data?: Record<string, number>;
   @Input() chartOptions?: Highcharts.Options;
   Highcharts: typeof Highcharts = Highcharts;

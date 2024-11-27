@@ -1,0 +1,25 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.stepper-container {
+  padding: 20px;
+}
+
+.mat-horizontal-stepper-header-container {
+  margin-bottom: 40px;
+}
+
+.stepper-content {
+  margin: 10px 0px;
+  width: 100%;
+  height: 100%;
+}
+
+.database-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}

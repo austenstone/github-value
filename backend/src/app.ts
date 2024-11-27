@@ -1,59 +1,170 @@
 import 'dotenv/config'
-import express from 'express';
+import express, { Express } from 'express';
 import rateLimit from 'express-rate-limit';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import path, { dirname } from 'path';
-import apiRoutes from "./routes/index.js"
-import { dbConnect } from './database.js';
-import setup from './services/setup.js';
-import settingsService from './services/settings.service.js';
-import SmeeService from './services/smee.js';
-import logger, { expressLoggerMiddleware } from './services/logger.js';
 import { fileURLToPath } from 'url';
+import * as http from 'http';
+import { AddressInfo } from 'net';
+import apiRoutes from "./routes/index.js"
+import Database from './database.js';
+import logger, { expressLoggerMiddleware } from './services/logger.js';
+import GitHub from './github.js';
+import WebhookService from './services/smee.js';
+import SettingsService from './services/settings.service.js';
+import whyIsNodeRunning from 'why-is-node-running';
 
-const PORT = Number(process.env.PORT) || 80;
+class App {
+  eListener?: http.Server;
+  baseUrl?: string;
 
-export const app = express();
-app.use(cors());
-app.use(expressLoggerMiddleware);
-
-(async () => {
-  await dbConnect();
-  logger.info('DB Connected ✅');
-  await settingsService.initializeSettings();
-  logger.info('Settings loaded ✅');
-  await SmeeService.createSmeeWebhookProxy(PORT);
-  logger.info('Created Smee webhook proxy ✅');
-
-  try {
-    await setup.createAppFromEnv();
-    logger.info('Created GitHub App from environment ✅');
-  } catch (error) {
-    logger.info('Failed to create app from environment. This is expected if the app is not yet installed.', error);
+  constructor(
+    public e: Express,
+    public port: number,
+    public database: Database,
+    public github: GitHub,
+    public settingsService: SettingsService
+  ) {
+    this.e = e;
+    this.port = port;
   }
 
-  app.use((req, res, next) => {
-    if (req.path === '/api/github/webhooks') {
-      return next();
+  public async start() {
+    try {
+      this.setupExpress();
+      await this.database.connect();
+
+      await this.initializeSettings();
+      logger.info('Settings initialized');
+
+      await this.github.connect();
+      logger.info('Created GitHub App from environment');
+
+      return this.e;
+    } catch (error) {
+      await this.github.smee.connect();
+      logger.debug(error);
+      logger.error('Failed to start application ❌');
+      if (error instanceof Error) {
+        logger.error(error.message);
+      }
     }
-    bodyParser.json()(req, res, next);
-  }, bodyParser.urlencoded({ extended: true }));
-  app.use('/api', apiRoutes);
+  }
 
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = dirname(__filename);
-  const frontendPath = path.resolve(__dirname, '../../frontend/dist/github-value/browser');
+  public stop() {
+    whyIsNodeRunning()
+    this.database.disconnect();
+    this.github.disconnect();
+    this.eListener?.close(() => {
+      logger.info('Server closed');
+      process.exit(0);
+    });
+  }
 
-  app.use(express.static(frontendPath));
-  app.get('*', rateLimit({
-    windowMs: 15 * 60 * 1000, max: 5000,
-  }), (_, res) => res.sendFile(path.join(frontendPath, 'index.html')));
+  private setupExpress() {
+    this.e.use(cors());
+    this.e.use(expressLoggerMiddleware);
+    this.e.use((req, res, next) => {
+      if (req.path === '/api/github/webhooks') {
+        return next();
+      }
+      bodyParser.json()(req, res, next);
+    }, bodyParser.urlencoded({ extended: true }));
 
-  app.listen(PORT, () => {
-    logger.info(`Server is running at http://localhost:${PORT} 🚀`);
-    if (process.env.WEB_URL) {
-      logger.debug(`Frontend is running at ${process.env.WEB_URL} 🚀`);
-    }
+    this.e.use('/api', apiRoutes);
+
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const frontendPath = path.resolve(__dirname, '../../frontend/dist/github-value/browser');
+    this.e.use(express.static(frontendPath));
+    this.e.get('*', rateLimit({
+      windowMs: 15 * 60 * 1000, max: 5000,
+    }), (_, res) => res.sendFile(path.join(frontendPath, 'index.html')));
+
+    const listener = this.e.listen(this.port, () => {
+      const address = listener.address() as AddressInfo;
+      logger.info(`Server is running at http://${address.address === '::' ? 'localhost' : address.address}:${address.port} 🚀`);
+    });
+    this.eListener = listener;
+  }
+
+  private initializeSettings() {
+    this.settingsService.initialize()
+      .then(async (settings) => {
+        if (settings.webhookProxyUrl) {
+          this.github.smee.options.url = settings.webhookProxyUrl
+        }
+        if (settings.webhookSecret) {
+          this.github.setInput({
+            webhooks: {
+              secret: settings.webhookSecret
+            }
+          });
+        }
+        if (settings.metricsCronExpression) {
+          this.github.cronExpression = settings.metricsCronExpression;
+        }
+        if (settings.baseUrl) {
+          this.baseUrl = settings.baseUrl;
+        }
+      })
+      .finally(async () => {
+        await this.github.smee.connect()
+        await this.settingsService.updateSetting('webhookSecret', this.github.input.webhooks?.secret || '');
+        await this.settingsService.updateSetting('webhookProxyUrl', this.github.smee.options.url!);
+        await this.settingsService.updateSetting('metricsCronExpression', this.github.cronExpression!);
+      });
+  }
+}
+
+const port = Number(process.env.PORT) || 80;
+const e = express();
+const app = new App(
+  e,
+  port,
+  new Database(process.env.JAWSDB_URL ? process.env.JAWSDB_URL : {
+    host: process.env.MYSQL_HOST,
+    port: Number(process.env.MYSQL_PORT) || 3306,
+    username: process.env.MYSQL_USER,
+    password: process.env.MYSQL_PASSWORD,
+    database: process.env.MYSQL_DATABASE || 'value'
+  }),
+  new GitHub(
+    {
+      appId: process.env.GITHUB_APP_ID,
+      privateKey: process.env.GITHUB_APP_PRIVATE_KEY,
+      webhooks: {
+        secret: process.env.GITHUB_WEBHOOK_SECRET
+      }
+    },
+    e,
+    new WebhookService({
+      url: process.env.WEBHOOK_PROXY_URL,
+      path: '/api/github/webhooks',
+      port
+    })
+  ), new SettingsService({
+    baseUrl: process.env.BASE_URL,
+    webhookProxyUrl: process.env.GITHUB_WEBHOOK_PROXY_URL,
+    webhookSecret: process.env.GITHUB_WEBHOOK_SECRET,
+    metricsCronExpression: '0 0 * * *',
+    devCostPerYear: '100000',
+    developerCount: '100',
+    hoursPerYear: '2080',
+    percentTimeSaved: '20',
+    percentCoding: '20'
+  })
+);
+app.start();
+logger.info('App started');
+
+export default app;
+
+['SIGTERM', 'SIGINT', 'SIGQUIT'].forEach(signal => {
+  process.on(signal, () => {
+    logger.info(`Received ${signal}. Stopping the app...`);
+    app.stop();
+    process.exit(signal === 'uncaughtException' ? 1 : 0);
   });
-})();
+});

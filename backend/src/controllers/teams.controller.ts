@@ -5,6 +5,9 @@ class TeamsController {
   async getAllTeams(req: Request, res: Response): Promise<void> {
     try {
       const teams = await Team.findAll({
+        where: {
+          ...req.query.org ? { '$Team.org$': req.query.org as string } : {}
+        },
         include: [
           {
             model: Member,
@@ -25,10 +28,10 @@ class TeamsController {
               },
               attributes: ['login', 'avatar_url']
             }],
-            attributes: ['name', 'slug', 'description', 'html_url']
+            attributes: ['name', 'org', 'slug', 'description', 'html_url']
           }
         ],
-        attributes: ['name', 'slug', 'description', 'html_url'],
+        attributes: ['name', 'org', 'slug', 'description', 'html_url'],
         order: [
           ['name', 'ASC'],
           [{ model: Member, as: 'members' }, 'login', 'ASC']

@@ -1,13 +1,17 @@
 import { Endpoints } from '@octokit/types';
-import { Assignee, AssigningTeam, Seat } from "../models/copilot.seats.model.js";
-import { Op, Sequelize } from 'sequelize';
+import { Seat } from "../models/copilot.seats.model.js";
+import { Sequelize } from 'sequelize';
+import { components } from "@octokit/openapi-types";
+import { Member, Team } from '../models/teams.model.js';
+import app from '../app.js';
 
 type _Seat = NonNullable<Endpoints["GET /orgs/{org}/copilot/billing/seats"]["response"]["data"]["seats"]>[0];
 export interface SeatEntry extends _Seat {
   plan_type: string;
+  assignee: components['schemas']['simple-user'];
 }
 
-type AssigneeDailyActivity = {
+type MemberDailyActivity = {
   [date: string]: {
     totalSeats: number,
     totalActive: number,
@@ -22,24 +26,23 @@ type AssigneeDailyActivity = {
 };
 
 class SeatsService {
-  async getAllSeats() {
+  async getAllSeats(org?: string) {
+    const latestQuery = await Seat.findOne({
+      attributes: [[Sequelize.fn('MAX', Sequelize.col('queryAt')), 'queryAt']],
+      where: {
+        ...(org ? { org } : {}),
+      }
+    });
+
     return Seat.findAll({
-      attributes: {
-        exclude: ['id', 'assignee_id', 'assigning_team_id']
-      },
       include: [{
-        model: Assignee,
+        model: Member,
         as: 'assignee',
         attributes: ['login', 'id', 'avatar_url']
       }],
       where: {
-        id: {
-          [Op.in]: Sequelize.literal(`(
-              SELECT MAX(id)
-              FROM Seats
-              GROUP BY assignee_id
-          )`)
-        }
+        ...(org ? { org } : {}),
+        queryAt: latestQuery?.queryAt
       },
       order: [['last_activity_at', 'DESC']]
     });
@@ -48,7 +51,7 @@ class SeatsService {
   async getAssignee(id: number) {
     return Seat.findAll({
       include: [{
-        model: Assignee,
+        model: Member,
         as: 'assignee'
       }],
       where: {
@@ -58,7 +61,7 @@ class SeatsService {
   }
 
   async getAssigneeByLogin(login: string) {
-    const assignee = await Assignee.findOne({
+    const assignee = await Member.findOne({
       where: {
         login
       }
@@ -66,7 +69,7 @@ class SeatsService {
     if (!assignee) throw new Error(`Assignee ${login} not found`);
     return Seat.findAll({
       include: [{
-        model: Assignee,
+        model: Member,
         as: 'assignee'
       }],
       where: {
@@ -75,15 +78,19 @@ class SeatsService {
     });
   }
 
-  async insertSeats(data: SeatEntry[]) {
+  async insertSeats(org: string, data: SeatEntry[], team?: string) {
+    const queryAt = new Date();
     for (const seat of data) {
-      const assignee = await Assignee.findOrCreate({
+      const [assignee] = await Member.findOrCreate({
         where: { id: seat.assignee.id },
         defaults: {
+          org,
+          ...team ? { team } : undefined,
+          id: seat.assignee.id,
           login: seat.assignee.login,
           node_id: seat.assignee.node_id,
           avatar_url: seat.assignee.avatar_url,
-          gravatar_id: seat.assignee.gravatar_id,
+          gravatar_id: seat.assignee.gravatar_id || '',
           url: seat.assignee.url,
           html_url: seat.assignee.html_url,
           followers_url: seat.assignee.followers_url,
@@ -100,9 +107,11 @@ class SeatsService {
         }
       });
 
-      const assigningTeam = seat.assigning_team ? await AssigningTeam.findOrCreate({
+      const [assigningTeam] = seat.assigning_team ? await Team.findOrCreate({
         where: { id: seat.assigning_team.id },
         defaults: {
+          org,
+          id: seat.assigning_team.id,
           node_id: seat.assigning_team.node_id,
           url: seat.assigning_team.url,
           html_url: seat.assigning_team.html_url,
@@ -113,41 +122,67 @@ class SeatsService {
           notification_setting: seat.assigning_team.notification_setting,
           permission: seat.assigning_team.permission,
           members_url: seat.assigning_team.members_url,
-          repositories_url: seat.assigning_team.repositories_url,
-          parent: seat.assigning_team.parent,
+          repositories_url: seat.assigning_team.repositories_url
         }
-      }) : null;
+      }) : [null];
 
       await Seat.create({
+        queryAt,
+        org,
+        team,
         created_at: seat.created_at,
         updated_at: seat.updated_at,
         pending_cancellation_date: seat.pending_cancellation_date,
         last_activity_at: seat.last_activity_at,
         last_activity_editor: seat.last_activity_editor,
         plan_type: seat.plan_type,
-        assignee_id: assignee[0].id,
-        assigning_team_id: assigningTeam?.[0].id
+        assignee_id: assignee.id,
+        assigning_team_id: assigningTeam?.id
       });
     }
   }
 
-  async getAssigneesActivity(daysInactive: number, precision: 'hour' | 'day' | 'minute' = 'day'): Promise<AssigneeDailyActivity> {
-    const assignees = await Assignee.findAll({
+  async getMembersActivity(org?: string, daysInactive = 30, precision = 'day' as 'hour' | 'day' | 'minute'): Promise<MemberDailyActivity> {
+    if (!app.database.sequelize) throw new Error('No database connection available');
+    // const assignees = await app.database.sequelize.query<Member>(
+    //   `SELECT 
+    //       Member.login,
+    //       Member.id,
+    //       activity.id AS 'activity.id',
+    //       activity.createdAt AS 'activity.createdAt',
+    //       activity.last_activity_at AS 'activity.last_activity_at',
+    //       activity.last_activity_editor AS 'activity.last_activity_editor'
+    //   FROM Members AS Member 
+    //   INNER JOIN Seats AS activity ON Member.id = activity.assignee_id
+    //   ${org ? 'WHERE activity.org = :org' : ''}
+    //   ORDER BY activity.last_activity_at ASC`,
+    //   {
+    //     replacements: {
+    //       org
+    //     },
+    //     type: QueryTypes.SELECT,
+    //     nest: true,
+    //     mapToModel: true // 🎯 Maps results to the Model
+    //   }
+    // );
+    const assignees = await Member.findAll({
       attributes: ['login', 'id'],
       include: [
         {
           model: Seat,
           as: 'activity',
-          required: false,
           attributes: ['createdAt', 'last_activity_at', 'last_activity_editor'],
           order: [['last_activity_at', 'ASC']],
+          where: {
+            ...(org ? { org } : {}),
+          }
         }
       ],
       order: [
         [{ model: Seat, as: 'activity' }, 'last_activity_at', 'ASC']
       ]
     });
-    const activityDays: AssigneeDailyActivity = {};
+    const activityDays: MemberDailyActivity = {};
     assignees.forEach((assignee) => {
       assignee.activity.forEach((activity) => {
         const fromTime = activity.last_activity_at?.getTime() || 0;
@@ -195,15 +230,17 @@ class SeatsService {
     return sortedActivityDays;
   }
 
-  async getAssigneesActivityTotals() {
-    // Get all assignees with their activity
-    const assignees = await Assignee.findAll({
+  async getMembersActivityTotals(org?: string) {
+    const assignees = await Member.findAll({
       attributes: ['login', 'id'],
       include: [{
         model: Seat,
         as: 'activity',
         attributes: ['last_activity_at'],
-        order: [['last_activity_at', 'ASC']]
+        order: [['last_activity_at', 'ASC']],
+        where: {
+          ...(org ? { org } : {}),
+        }
       }]
     });
 
@@ -229,6 +266,7 @@ class SeatsService {
 }
 
 export default new SeatsService();
+
 export {
-  AssigneeDailyActivity
+  MemberDailyActivity
 }

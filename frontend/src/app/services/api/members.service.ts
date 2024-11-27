@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { serverUrl } from './server.service';
+import { serverUrl } from '../server.service';
 import { HttpClient } from '@angular/common/http';
 import { Endpoints } from '@octokit/types';
 
@@ -11,7 +11,9 @@ export class MembersService {
 
   constructor(private http: HttpClient) { }
 
-  getAllMembers() {
-    return this.http.get<Endpoints["GET /orgs/{org}/members"]["response"]["data"]>(`${this.apiUrl}`);
+  getAllMembers(org?: string) {
+    return this.http.get<Endpoints["GET /orgs/{org}/members"]["response"]["data"]>(`${this.apiUrl}`, {
+      params: org ? { org } : undefined
+    });
   }
 }

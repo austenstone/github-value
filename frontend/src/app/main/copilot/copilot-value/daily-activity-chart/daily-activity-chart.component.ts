@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import * as Highcharts from 'highcharts';
 import { HighchartsChartModule } from 'highcharts-angular';
-import { ActivityResponse } from '../../../../services/seat.service';
-import { CopilotMetrics } from '../../../../services/metrics.service.interfaces';
+import { ActivityResponse } from '../../../../services/api/seat.service';
+import { CopilotMetrics } from '../../../../services/api/metrics.service.interfaces';
 import { HighchartsService } from '../../../../services/highcharts.service';
 
 @Component({

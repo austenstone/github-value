@@ -86,7 +86,15 @@ mat-divider {
       margin: 0;
     }
     h1 {
+      min-width: 200px;
+      .mat-mdc-select {
+        font-size: 32px;
+        line-height: 32px;
+      }
       padding: 0 16px;
       font-size: 32px;
+      ::ng-deep .mat-mdc-select-arrow-wrapper  {
+        margin-left: 10px !important;
+      }
     }
 }

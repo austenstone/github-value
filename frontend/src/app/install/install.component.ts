@@ -1,10 +1,9 @@
-import { Component, ElementRef, Inject, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Inject, Output, ViewChild } from '@angular/core';
 import { MaterialModule } from '../material.module';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { SetupService } from '../services/setup.service';
+import { SetupService } from '../services/api/setup.service';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { ThemeService } from '../services/theme.service';
 
@@ -20,31 +19,20 @@ import { ThemeService } from '../services/theme.service';
   templateUrl: './install.component.html',
   styleUrl: './install.component.scss'
 })
-export class InstallComponent implements OnInit {
+export class InstallComponent {
+  @Output() finishedChange = new EventEmitter<void>();
 
   constructor(
     public themeService: ThemeService,
-    public dialog: MatDialog,
-    private router: Router,
-    private setupService: SetupService
+    public dialog: MatDialog
   ) { }
-
-  ngOnInit(): void {
-    this.checkIfSetup();
-  }
-  
-  checkIfSetup(): void {
-    this.setupService.getSetupStatus().subscribe((response) => {
-      if (response.isSetup) this.router.navigate(['/']);
-    });
-  }
 
   openDialog(existingApp: boolean): void {
     this.dialog.open(DialogAppComponent, {
       width: '400px',
       data: existingApp
     }).afterClosed().subscribe(() => {
-      this.checkIfSetup();
+      this.finishedChange.emit();
     });
   }
 }
@@ -108,7 +96,7 @@ export class DialogAppComponent {
 
   registerNewApp() {
     if (this.organizationFormControl.value) {
-      this.form.nativeElement.action = `https://github.com/organizations/${this.organizationFormControl.value}/settings/apps/new?state=abc123`
+      this.form.nativeElement.action = `https://github.com/enterprises/${this.organizationFormControl.value}/settings/apps/new?state=abc123`
     }
     this.form.nativeElement.submit();
     this.dialogRef.close();

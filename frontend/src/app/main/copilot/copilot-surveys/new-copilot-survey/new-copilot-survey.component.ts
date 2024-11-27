@@ -1,7 +1,7 @@
 import { Component, forwardRef, OnInit } from '@angular/core';
 import { AppModule } from '../../../../app.module';
 import { FormBuilder, FormControl, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
-import { CopilotSurveyService } from '../../../../services/copilot-survey.service';
+import { CopilotSurveyService } from '../../../../services/api/copilot-survey.service';
 import { ActivatedRoute, Params } from '@angular/router';
 
 @Component({
@@ -65,22 +65,24 @@ export class NewCopilotSurveyComponent implements OnInit {
     try {
       urlObj = new URL(url);
     } catch {
-      return { owner: '', repo: '', prNumber: NaN };
+      return { org: '', repo: '', prNumber: NaN };
     }
     const pathSegments = urlObj.pathname.split('/');
-  
-    const owner = pathSegments[1];    const repo = pathSegments[2];    const prNumber = Number(pathSegments[4]);  
-    return { owner, repo, prNumber };
+
+    const org = pathSegments[1];
+    const repo = pathSegments[2];
+    const prNumber = Number(pathSegments[4]);
+    return { org, repo, prNumber };
   }
 
   onSubmit() {
-    const { owner, repo, prNumber } = this.parseGitHubPRUrl(this.params['url']);
+    const { org, repo, prNumber } = this.parseGitHubPRUrl(this.params['url']);
     this.copilotSurveyService.createSurvey({
       id: this.id,
       userId: this.params['author'],
-      owner: owner,
-      repo: repo,
-      prNumber: prNumber,
+      org,
+      repo,
+      prNumber,
       usedCopilot: this.surveyForm.value.usedCopilot,
       percentTimeSaved: Number(this.surveyForm.value.percentTimeSaved),
       reason: this.surveyForm.value.reason,

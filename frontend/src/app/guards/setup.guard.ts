@@ -1,48 +1,39 @@
 import { Injectable, isDevMode } from '@angular/core';
-import { CanActivate, CanActivateChild, GuardResult, MaybeAsync, Router } from '@angular/router';
+import { CanActivate, GuardResult, MaybeAsync, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { SetupService, SetupStatusResponse } from '../services/setup.service';
+import { InstallationsService } from '../services/api/installations.service';
 
 @Injectable({
   providedIn: 'root'
 })
-export class SetupGuard implements CanActivate, CanActivateChild {
-  cache: SetupStatusResponse = {
-    isSetup: false,
-    dbInitialized: false
-  };
-
+export class SetupStatusGuard implements CanActivate {
   constructor(
-    private setupService: SetupService,
+    private installationsService: InstallationsService,
     private router: Router
-  ) { }
+  ) {}
 
   canActivate(): MaybeAsync<GuardResult> {
-    if (this.cache.isSetup && this.cache.dbInitialized) {
-      return of(true);
-    }
-    return this.setupService.getSetupStatus().pipe(
+    return this.installationsService.getStatus().pipe(
       map((response) => {
-        this.cache = response;
-        if (!response.isSetup) {
-          this.router.navigate(['/setup'])
-          return false;
-        }
-        if (!response.dbInitialized && !isDevMode()) {
+        if (!response.dbConnected) throw new Error('DB not connected');
+        if (!response.installations?.some(i => Object.values(i).some(j => !j)) && !isDevMode()) {
           this.router.navigate(['/setup/loading']);
           return false;
+        }
+        if (!response.isSetup) {
+          throw new Error('Not setup');
         }
         return true;
       }),
       catchError(() => {
-        this.router.navigate(['/setup']);
+        this.router.navigate(['/setup/db']);
         return of(false);
       })
     );
   }
 
-  canActivateChild(): MaybeAsync<GuardResult> {
+  canActivateChild() {
     return this.canActivate();
   }
 }

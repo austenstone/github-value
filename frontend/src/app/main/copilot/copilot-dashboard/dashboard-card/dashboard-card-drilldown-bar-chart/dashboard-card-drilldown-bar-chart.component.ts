@@ -6,7 +6,7 @@ HC_drilldown(Highcharts);
 import { HighchartsChartModule } from 'highcharts-angular';
 import { CommonModule } from '@angular/common';
 import { HighchartsService } from '../../../../../services/highcharts.service';
-import { CopilotMetrics } from '../../../../../services/metrics.service.interfaces';
+import { CopilotMetrics } from '../../../../../services/api/metrics.service.interfaces';
 import { LoadingSpinnerComponent } from '../../../../../shared/loading-spinner/loading-spinner.component';
 
 @Component({

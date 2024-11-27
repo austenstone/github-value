@@ -1,8 +1,10 @@
 <mat-sidenav-container class="sidenav-container mat-typography" autosize>
-  <mat-sidenav #drawer class="sidenav" [class.full-width]="isHandset$ | async" fixedInViewport [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'"
-    [mode]="(isHandset$ | async) ? 'over' : 'side'" [opened]="(isHandset$ | async) === false">
+  <mat-sidenav #drawer class="sidenav" [class.full-width]="isHandset$ | async" fixedInViewport
+    [attr.role]="(isHandset$ | async) ? 'dialog' : 'navigation'" [mode]="(isHandset$ | async) ? 'over' : 'side'"
+    [opened]="(isHandset$ | async) === false">
     <mat-toolbar>
-      <button mat-icon-button (click)="toggleNavText();" aria-label="Toggle sidebar navigation" [style]="{ display: (isHandset$ | async) ? 'none' : 'inline-block' }">
+      <button mat-icon-button (click)="toggleNavText();" aria-label="Toggle sidebar navigation"
+        [style]="{ display: (isHandset$ | async) ? 'none' : 'inline-block' }">
         <mat-icon>menu</mat-icon>
       </button>
       <img *ngIf="!hideNavText || (isHandset$ | async)" routerLink="/" [src]="(themeService.isDarkTheme() | async) ? 
@@ -45,19 +47,26 @@
   </mat-sidenav>
   <mat-sidenav-content>
     <mat-toolbar color="primary">
-    @if (isHandset$ | async) {
+      @if (isHandset$ | async) {
       <button type="button" aria-label="Toggle sidenav" mat-icon-button (click)="drawer.toggle()">
         <mat-icon aria-label="Side nav toggle icon">menu</mat-icon>
       </button>
-    }
-    <ng-container *ngIf="installation.owner as owner">
+      }
       <div class="header">
-        <div class="mat-card-avatar" mat-card-avatar style="background-size: cover;" [style.background-image]="'url(' + owner.avatar_url + ')'"></div>
-        <h1>{{owner.login}}</h1>
+        <div *ngIf="installationsService.currentInstallation.asObservable() | async as installation" class="mat-card-avatar" mat-card-avatar style="background-size: cover;"
+          [style.background-image]="'url(' + installation?.account?.avatar_url + ')'">
+        </div>
+        <h1>
+          <mat-select [ngModel]="(installationsService.currentInstallation.asObservable() | async)?.id || 1" (ngModelChange)="installationsService.setInstallation($event)">
+            <mat-option [value]="1">Enterprise</mat-option>
+            @for (installation of installationsService.getInstallations() | async; track installation.id) {
+            <mat-option [value]="installation.id">{{ installation.account?.login }}</mat-option>
+            }
+          </mat-select>
+        </h1>
       </div>
-    </ng-container>
-    <span class="spacer"></span>
-  </mat-toolbar>
+      <span class="spacer"></span>
+    </mat-toolbar>
     <div class="sidenav-content">
       <router-outlet />
     </div>

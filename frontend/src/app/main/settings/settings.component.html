@@ -104,16 +104,23 @@
       <mat-divider></mat-divider>
     </div>
 
-    <ng-container *ngIf="install">
+    <ng-container *ngIf="installationsService.getInstallations() | async as installs">
       <div class="settings-header">
-        <h3>GitHub App Installation</h3>
+        <h3>GitHub App Installations</h3>
       </div>
       <div class="settings-content">
+        <mat-list>
+          @for (install of installs; track install) {
+            <mat-list-item>
+              <img matListItemAvatar [src]="install.account?.avatar_url" [alt]="install.app_slug">
+              <div matListItemTitle><a [href]="install.html_url" target="_blank">{{install.app_slug}}</a></div>
+              <div matListItemLine *ngIf="install.account">
+                <span>{{install.account.type}}: <a [href]="install.account.html_url" target="_blank">{{install.account.login}}</a></span>
+              </div>
+            </mat-list-item>
+          }
+        </mat-list>
 
-        <h3><a [href]="install.html_url" target="_blank">{{install.name}}</a></h3>
-
-        <p>{{install.description}}</p>
-        <h4 *ngIf="install.owner">Owner: <a [href]="install.owner.html_url">{{install.owner.login}}</a></h4>
         <!-- <h6>Permissions:</h6>
         @for (permission of install.permissions | keyvalue; track $index) {
         <div class="permission">
@@ -139,8 +146,6 @@
         <mat-label>Webhook URL</mat-label>
         <input type="email" matInput [formControl]="form.controls.webhookProxyUrl"
           placeholder="Ex: https://smee.io/ZzmdZIYqsXt7RHS5">
-        <mat-error *ngIf="form.controls.webhookProxyUrl.hasError('required')">Webhook URL is
-          <strong>required</strong></mat-error>
         <mat-error *ngIf="form.controls.webhookProxyUrl.hasError('pattern')">Please enter a valid URL</mat-error>
       </mat-form-field>
 

@@ -20,7 +20,7 @@
         <p><strong>Reason: </strong>{{ survey.reason }}</p>
         <p><strong>Time Used For: </strong>{{ survey.timeUsedFor }}</p>
       </ng-container>
-      <p><strong>PR: </strong><a [href]="'https://github.com/' + survey.owner + '/' + survey.repo + '/pull/' + survey.prNumber">{{ survey.repo }}#{{ survey.prNumber }}</a></p>
+      <p><strong>PR: </strong><a [href]="'https://github.com/' + survey.org + '/' + survey.repo + '/pull/' + survey.prNumber">{{ survey.repo }}#{{ survey.prNumber }}</a></p>
     </mat-card-content>
   </mat-card>
 </div>

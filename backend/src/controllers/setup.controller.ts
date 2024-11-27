@@ -1,14 +1,12 @@
 import { Request, Response } from 'express';
-import setup, { SetupStatus } from '../services/setup.js';
+import app from '../app.js';
 
 class SetupController {
   async registrationComplete(req: Request, res: Response) {
     try {
       const { code } = req.query;
-
-      const data = await setup.createFromManifest(code as string);
-
-      res.redirect(`${data.html_url}/installations/new`);
+      const { html_url } = await app.github.createAppFromManifest(code as string);
+      res.redirect(`${html_url}/installations/new`);
     } catch (error) {
       res.status(500).json(error);
     }
@@ -16,10 +14,9 @@ class SetupController {
 
   async installComplete(req: Request, res: Response) {
     try {
-      const { installation_id } = req.query;
-      setup.addToEnv({ GITHUB_APP_INSTALLATION_ID: installation_id as string });
-      await setup.createAppFromEnv();
-      res.redirect(process.env.WEB_URL || '/');
+      const installationUrl = await app.github.app?.getInstallationUrl();
+      if (!installationUrl) throw new Error('No installation URL found');
+      res.redirect(installationUrl);
     } catch (error) {
       res.status(500).json(error);
     }
@@ -27,7 +24,7 @@ class SetupController {
 
   getManifest(req: Request, res: Response) {
     try {
-      const manifest = setup.getManifest(`${req.protocol}://${req.hostname}`);
+      const manifest = app.github.getAppManifest(`${req.protocol}://${req.hostname}`);
       res.json(manifest);
     } catch (error) {
       res.status(500).json(error);
@@ -41,11 +38,16 @@ class SetupController {
       if (!appId || !privateKey || !webhookSecret) {
         return res.status(400).json({ error: 'All fields are required' });
       }
+      
+      await app.github.connect({
+        appId: appId,
+        privateKey: privateKey,
+        webhooks: {
+          secret: webhookSecret
+        }
+      });
 
-      await setup.findFirstInstallation(appId, privateKey, webhookSecret);
-      await setup.createAppFromEnv();
-
-      res.json({ installUrl: setup.installUrl });
+      res.json({ installUrl: await app.github.app?.getInstallationUrl() });
     } catch (error) {
       res.status(500).json(error);
     }
@@ -53,50 +55,56 @@ class SetupController {
 
   isSetup(req: Request, res: Response) {
     try {
-      res.json({ isSetup: setup.isSetup() });
+      res.json({ isSetup: app.github.app !== undefined });
     } catch (error) {
       res.status(500).json(error);
     }
   }
 
-  setupStatus(req: Request, res: Response) {
+  async setupStatus(req: Request, res: Response) {
     try {
-         const requestedFields = req.query.fields ? (req.query.fields as string).split(',') : [];
-         const fullStatus = setup.getSetupStatus();
-         if (!requestedFields.length) {
-             return res.json(fullStatus);
-         }
-         const filteredStatus: SetupStatus = {};
-         requestedFields.forEach(field => {
-          if (field === 'isSetup') {
-            filteredStatus.isSetup = fullStatus.isSetup;
-          }
-          if (field === 'dbInitialized') {
-            filteredStatus.dbInitialized = fullStatus.dbInitialized;
-          }
-          if (field === 'dbsInitialized') {
-            filteredStatus.dbsInitialized = fullStatus.dbsInitialized;
-          }
-          if (field === 'installation') {
-            filteredStatus.installation = fullStatus.installation;
-          }
-         });
-         return res.json(filteredStatus);
+      const status = {
+        dbConnected: await app.database.sequelize?.authenticate().then(() => true).catch(() => false),
+        isSetup: app.github.app !== undefined,
+        installations: app.github.installations.map(i => ({
+          installation: i.installation,
+          ...i.queryService.status
+        }))
+      };
+      return res.json(status);
     } catch (error) {
       res.status(500).json(error);
     }
   }
 
-  getInstall(req: Request, res: Response) {
+  async getInstall(req: Request, res: Response) {
     try {
-      if (!setup.installation) {
+      const { installation } = await app.github.getInstallation(req.body.id || req.body.owner)
+      if (!installation) {
         throw new Error('No installation found');
       }
-      res.json(setup.installation);
+      res.json(installation);
     } catch (error) {
       res.status(500).json(error);
     }
   }
+
+  async setupDB(req: Request, res: Response) {
+    try {
+      await app.database.connect(req.body.url || {
+        database: req.body.database || 'value',
+        host: req.body.host,
+        port: req.body.port,
+        username: req.body.username,
+        password: req.body.password
+      });
+      res.json({ message: 'DB setup started' });
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
+
+
 }
 
 export default new SetupController();
