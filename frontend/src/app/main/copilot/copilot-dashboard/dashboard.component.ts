@@ -87,6 +87,40 @@ export class CopilotDashboardComponent implements OnInit {
 
   activityTotals?: Record<string, number>;
 
+  tiles = [
+    { text: 'One', cols: 1, rows: 1 },
+    { text: 'Two', cols: 1, rows: 1 },
+    { text: 'Three', cols: 1, rows: 1 },
+    { text: 'Four', cols: 1, rows: 1 },
+    { text: 'Five', cols: 1, rows: 1 },
+    { text: 'Six', cols: 1, rows: 1 },
+    { text: 'Seven', cols: 1, rows: 1 },
+    { text: 'Eight', cols: 1, rows: 1 },
+    { text: 'Nine', cols: 1, rows: 1 },
+    { text: 'Ten', cols: 1, rows: 1 },
+    { text: 'Eleven', cols: 1, rows: 1 },
+    { text: 'Twelve', cols: 1, rows: 1 },
+  ];
+
+  statusChecks = [
+    // First column: Telemetry
+    { title: 'API Connectivity', statusMessage: 'Unknown  ❌' },
+    { title: 'Form Hits', statusMessage: 'Unknown  ❌' },
+    { title: 'Settings Configured', statusMessage: 'Unknown  ❌' },
+    // Second column: Developer Estimates
+    { title: 'Polling History', statusMessage: 'Unknown  ❌' },
+    { title: 'Repositories Configured', statusMessage: 'Unknown  ❌' },
+    { title: 'Targets Selected', statusMessage: 'Unknown  ❌' },
+    // Third column: Predictive Modeling
+    { title: 'Average Usage Level', statusMessage: 'Unknown  ❌' },
+    { title: 'Estimates Collected', statusMessage: 'Unknown  ❌' },
+    { title: 'Targets Last Updated', statusMessage: 'Unknown  ❌' },
+    // Additional Checks
+    { title: 'Usage Level Trend', statusMessage: 'Unknown  ❌' },
+    { title: 'Estimates/Daily-User Ratio', statusMessage: 'Unknown  ❌' },
+    { title: 'Target Levels Acquired', statusMessage: '0 Levels Acquired ❌' }
+  ];
+
   constructor(
     private metricsService: MetricsService,
     private membersService: MembersService,
@@ -97,6 +131,10 @@ export class CopilotDashboardComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    console.log('Tiles:', this.tiles);
+    console.log('Activity Data:', this.activityData);
+    console.log('Metrics Data:', this.metricsData);
+
     const since = new Date();
     since.setDate(since.getDate() - 30);
     const formattedSince = since.toISOString().split('T')[0];
@@ -118,7 +156,7 @@ export class CopilotDashboardComponent implements OnInit {
       this.metricsData = undefined;
       this.activityData = undefined;
       this.surveysData = undefined;
-      
+
       this.surveyService.getAllSurveys().subscribe(data => {
         this.surveysData = data;
         this.totalSurveys = data.length;
@@ -174,5 +212,27 @@ export class CopilotDashboardComponent implements OnInit {
         this.cdr.detectChanges();
       });
     });
+  }
+
+  updateStatusChecks() {
+    // Update the statusChecks array with the fetched data
+    this.statusChecks = [
+      // First column: Telemetry
+      { title: 'API Connectivity', statusMessage: 'Connected ✅' },
+      { title: 'Form Hits', statusMessage: '36 hits ✅' },
+      { title: 'Settings Configured', statusMessage: 'Complete ✅' },
+      // Second column: Developer Estimates
+      { title: 'Polling History', statusMessage: '5 days 🟠' },
+      { title: 'Repositories Configured', statusMessage: '100 repos ✅' },
+      { title: 'Targets Selected', statusMessage: 'Complete ✅' },
+      // Third column: Predictive Modeling
+      { title: 'Average Usage Level', statusMessage: '10 Daily Users 🟠' },
+      { title: 'Estimates Collected', statusMessage: this.totalSurveys + ' estimates ✅' },
+      { title: 'Targets Last Updated', statusMessage: '1 month ✅' },
+      // Additional Checks
+      { title: 'Usage Level Trend', statusMessage: 'Growing ✅' },
+      { title: 'Estimates/Daily-User Ratio', statusMessage: '40% ✅' },
+      { title: 'Target Levels Acquired', statusMessage: '0 Levels Acquired ❌' }
+    ];
   }
 }

@@ -24,7 +24,7 @@ export class DashboardCardValueComponent {
   @Input() value?: number;
   @Input() description?: string;
   @Input() change?: number;
-  @Input() changeSuffix?: string = '%';
+  @Input() changeSuffix?: string;
   @Input() changeDescription?: string;
   @Input() icon?: string;
   @Input() subtitle?: string;
