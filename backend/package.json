@@ -21,7 +21,7 @@
     "eventsource": "^2.0.2",
     "express": "^4.21.1",
     "express-rate-limit": "^7.4.1",
-    "mysql2": "^3.11.4",
+    "mysql2": "^3.11.5",
     "octokit": "^4.0.2",
     "sequelize": "^6.37.5",
     "smee-client": "^2.0.4",
