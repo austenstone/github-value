@@ -50,6 +50,14 @@ export class NewCopilotSurveyComponent implements OnInit {
         this.surveyForm.get('percentTimeSaved')?.setValue(this.defaultPercentTimeSaved);
       }
     });
+    this.surveyForm.get('percentTimeSaved')?.valueChanges.subscribe((value) => {
+      const reasonControl = this.surveyForm.get('reason');
+      if (reasonControl) {
+        reasonControl.setValue(
+          value ? `I chose ${value}% because Copilot enabled me to...` : `I didn't use Copilot because...`
+        );
+      }
+    });
   }
 
   parseGitHubPRUrl(url: string) {

@@ -1,6 +1,6 @@
 <div class="page-container">
   <div class="page-header">
-    <h1>Developer Survey</h1>
+    <h1>Estimate Time Saved and Share Expertise</h1>
   </div>
   <form [formGroup]="surveyForm" (ngSubmit)="onSubmit()">
     <label for="usedCopilot">Did you use Copilot for this PR?</label>
@@ -8,7 +8,7 @@
       <mat-radio-button class="example-radio-button" [value]="true">Yes</mat-radio-button>
       <mat-radio-button class="example-radio-button" [value]="false">No</mat-radio-button>
     </mat-radio-group>
-    <label for="percentTimeSavedSlider">How much less time did the actual coding take with Copilot?</label>
+    <label for="percentTimeSavedSlider">How much less time did the PR take with Copilot?</label>
     <div>
       <mat-slider class="example-mat-slider" id="percentTimeSavedSlider" [max]="100" [min]="0" [step]="5" discrete="true" tickInterval="5" showTickMarks  [displayWith]="formatPercent">
         <input matSliderThumb formControlName="percentTimeSaved">
