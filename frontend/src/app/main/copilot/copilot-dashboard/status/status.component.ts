@@ -16,12 +16,7 @@ import { MatIconModule } from '@angular/material/icon';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatusComponent {
-  @Input() status?: any[];
-
-  constructor() {
-  }
-
-  ngOnInit() {
-    console.log(this.status);
-  }
+  @Input() title?: string;
+  @Input() message?: string;
+  @Input() status?: 'success' | 'error' | 'warning' = 'error';
 }

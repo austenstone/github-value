@@ -45,9 +45,14 @@ export class SeatService {
     );
   };
 
-  getActivityTotals(org?: string) {
+  getActivityTotals(queryParams?: {
+    org?: string | undefined;
+    since?: string;
+    until?: string;
+  }) {
+    if (!queryParams?.org) delete queryParams?.org;
     return this.http.get<Record<string, number>>(`${this.apiUrl}/activity/totals`, {
-      params: org ? { org } : undefined
+      params: queryParams
     });
   }
 }

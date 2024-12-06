@@ -2,20 +2,24 @@ import { Injectable, isDevMode } from '@angular/core';
 import { CanActivate, GuardResult, MaybeAsync, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { InstallationsService } from '../services/api/installations.service';
+import { InstallationsService, statusResponse } from '../services/api/installations.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SetupStatusGuard implements CanActivate {
+  responseCache?: statusResponse;
+
   constructor(
     private installationsService: InstallationsService,
     private router: Router
   ) {}
 
   canActivate(): MaybeAsync<GuardResult> {
+    if (this.responseCache?.isSetup === true) return of(true);
     return this.installationsService.refreshStatus().pipe(
       map((response) => {
+        this.responseCache = response;
         if (!response.dbConnected) {
           this.router.navigate(['/setup/db']);
           return false;

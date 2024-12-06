@@ -1,6 +1,7 @@
 @use '@angular/material' as mat;
 
 .cards-grid {
+  margin-top:24px;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 24px;
@@ -28,9 +29,9 @@
     overflow: hidden;
   }
 
-  #status {
-    grid-column: span 3;
-  }
+  // #status {
+  //   grid-column: span 3;
+  // }
 }
 
 /* Add media query for smaller screens */

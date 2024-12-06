@@ -109,7 +109,6 @@ export class SettingsComponent implements OnInit {
       percentCoding: this.form.controls.percentCoding.value,
       percentTimeSaved: this.form.controls.percentTimeSaved.value
     };
-    console.log('Saving settings', settings)
   
     // Now you can store the settings object in the database
     this.settingsService.createSettings(settings).subscribe(() => {

@@ -64,7 +64,7 @@ export class DatabaseComponent implements AfterViewInit {
       }),
       finalize(async () => {
         await this.router.navigate(['/copilot'], {
-          queryParams: { celebrate: true }
+          // queryParams: { celebrate: true }
         })
       })
     ).subscribe(() => this.checkStatus());

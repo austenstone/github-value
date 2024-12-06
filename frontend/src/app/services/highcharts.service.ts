@@ -479,22 +479,22 @@ export class HighchartsService {
     const surveyAverages = Object.keys(activity).reduce((acc, activityDate) => {
       const dateKey = activityDate.split('T')[0];
       acc[dateKey] = {
-          sum: 0,
-          count: 0
+        sum: 0,
+        count: 0
       };
-  
-      const dateSurveys = surveys.filter(survey => 
-          new Date(survey.createdAt!).toISOString().split('T')[0] === dateKey
+
+      const dateSurveys = surveys.filter(survey =>
+        new Date(survey.createdAt!).toISOString().split('T')[0] === dateKey
       );
-  
+
       if (dateSurveys.length > 0) {
-          acc[dateKey].sum = dateSurveys.reduce((sum, survey) => 
-              sum + survey.percentTimeSaved, 0);
-          acc[dateKey].count = dateSurveys.length;
+        const avgPercentTimeSaved = dateSurveys.reduce((sum, survey) => sum + survey.percentTimeSaved, 0)
+        acc[dateKey].sum = avgPercentTimeSaved * 0.01 * 0.3 * 40; // TODO pull settings
+        acc[dateKey].count = dateSurveys.length;
       }
-  
+
       return acc;
-  }, {} as Record<string, { sum: number; count: number }>);
+    }, {} as Record<string, { sum: number; count: number }>);
 
 
     // Generate series with 7-day rolling average
@@ -524,48 +524,51 @@ export class HighchartsService {
       .sort((a, b) => a.x - b.x);
 
     return {
-      series: [{
-        name: 'Time Saved',
-        type: 'spline' as const,
-        data: seriesData,
-        lineWidth: 2,
-        marker: {
-          enabled: true,
-          radius: 4,
-          symbol: 'circle'
-        },
-        states: {
-          hover: {
-            lineWidth: 3
+      series: [
+        {
+          name: 'Time Saved',
+          type: 'spline' as const,
+          data: seriesData,
+          lineWidth: 2,
+          marker: {
+            enabled: true,
+            radius: 4,
+            symbol: 'circle'
+          },
+          states: {
+            hover: {
+              lineWidth: 3
+            }
           }
-        }
-      }, {
-        type: 'scatter' as const,
-        name: 'Survey',
-        data: surveys.map(survey => ({
-          x: new Date(survey.createdAt!).getTime(),
-          y: survey.percentTimeSaved,
-          raw: survey
-        })),
-        marker: {
-          enabled: true,
-          radius: 4,
-          symbol: 'triangle',
         },
-        tooltip: {
-          headerFormat: '<b>{point.x:%b %d, %Y}</b><br/>',
-          pointFormatter: function () {
-            return [
-              `User: `,
-              '<b>' + this.raw?.userId + '</b>',
-              `</br>Time saved: `,
-              '<b>' + Math.round(this.y || 0) + '%</b>',
-              `</br>PR: `,
-              '<b>#' + this.raw?.prNumber + '</b>',
-            ].join('');
-          } as Highcharts.FormatterCallbackFunction<CustomHighchartsPoint>
-        }
-      }]
+        // {
+        //   type: 'scatter' as const,
+        //   name: 'Survey',
+        //   data: surveys.map(survey => ({
+        //     x: new Date(survey.createdAt!).getTime(),
+        //     y: survey.percentTimeSaved,
+        //     raw: survey
+        //   })),
+        //   marker: {
+        //     enabled: true,
+        //     radius: 4,
+        //     symbol: 'triangle',
+        //   },
+        //   tooltip: {
+        //     headerFormat: '<b>{point.x:%b %d, %Y}</b><br/>',
+        //     pointFormatter: function () {
+        //       return [
+        //         `User: `,
+        //         '<b>' + this.raw?.userId + '</b>',
+        //         `</br>Time saved: `,
+        //         '<b>' + Math.round(this.y || 0) + '%</b>',
+        //         `</br>PR: `,
+        //         '<b>#' + this.raw?.prNumber + '</b>',
+        //       ].join('');
+        //     } as Highcharts.FormatterCallbackFunction<CustomHighchartsPoint>
+        //   }
+        // }
+      ]
     };
   }
 

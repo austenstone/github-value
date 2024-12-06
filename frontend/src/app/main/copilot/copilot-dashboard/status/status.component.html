@@ -1,14 +1,22 @@
-@for (s of status; track $index) {
-  <div class="status">
-    <div class="status-header">
-      <mat-card-title>{{s.title}}</mat-card-title>
-      <mat-card-subtitle>{{s.statusMessage}}</mat-card-subtitle>
-    </div>
-    <span class="spacer"></span>
-    <div class="status-icon">
-      <button mat-mini-fab [class]="1 ? 'success' : 'error'">
-        <mat-icon>checked</mat-icon>
-      </button>
-    </div>
+<div class="status">
+  <div class="status-header">
+    <mat-card-title>{{title}}</mat-card-title>
+    <mat-card-subtitle>{{message}}</mat-card-subtitle>
   </div>
-}
+  <span class="spacer"></span>
+  <div class="status-icon">
+    <button mat-mini-fab [class]="status">
+      @switch (status) {
+        @case ('error') {
+          <mat-icon>error</mat-icon>
+        }
+        @case ('success') {
+          <mat-icon>checked</mat-icon>
+        }
+        @case ('warning') {
+          <mat-icon>warning</mat-icon>
+        }
+      }
+    </button>
+  </div>
+</div>

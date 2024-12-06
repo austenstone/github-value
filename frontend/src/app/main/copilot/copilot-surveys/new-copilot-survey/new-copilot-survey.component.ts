@@ -98,7 +98,6 @@ export class NewCopilotSurveyComponent implements OnInit {
         kudos: survey.kudos ? survey.kudos + 1 : 1
       }).subscribe(() => {
         survey.kudos = (survey.kudos || 0) + 1;
-        console.log(`Kudos added to survey with id ${survey.id}. Total kudos: ${survey.kudos}`);
       });
     }
   }
