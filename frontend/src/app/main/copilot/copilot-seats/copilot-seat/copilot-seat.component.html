@@ -1,9 +1,11 @@
 <div class="page-container" *ngIf="seat && seat.assignee">
   <div class="page-header">
-    <h1>
-      <img [src]="seat.assignee.avatar_url" class="avatar" alt="User avatar" width="75" height="75">
-      {{ seat.assignee.login }}
-    </h1>
+    <a [href]="seat.assignee.html_url" target="_blank">
+      <h1>
+        <img [src]="seat.assignee.avatar_url" class="avatar" alt="User avatar" width="75" height="75">
+        {{ seat.assignee.login }}
+      </h1>
+    </a>
   </div>
   <mat-card appearance="outlined">
     <mat-card-content>

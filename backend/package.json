@@ -8,7 +8,7 @@
     "start": "node --enable-source-maps dist/index.js | bunyan -o short -l info",
     "test": "jest",
     "build": "tsc",
-    "dev": "tsx watch src/index.ts | bunyan -o short -l debug",
+    "dev": "tsx watch src/index.ts | bunyan -o short -l info",
     "lint": "eslint src/**/*.ts",
     "db:start": "docker-compose -f ../compose.yml up -d db",
     "dotenv": "cp -n .env.example .env || true"
@@ -19,7 +19,7 @@
     "cron": "^3.2.1",
     "dotenv": "^16.4.5",
     "eventsource": "^2.0.2",
-    "express": "^4.21.1",
+    "express": "^4.21.2",
     "express-rate-limit": "^7.4.1",
     "mysql2": "^3.11.4",
     "octokit": "^4.0.2",
@@ -29,17 +29,17 @@
     "why-is-node-running": "^3.2.1"
   },
   "devDependencies": {
-    "@eslint/js": "^9.14.0",
+    "@eslint/js": "^9.16.0",
     "@types/bunyan": "^1.8.11",
     "@types/cors": "^2.8.17",
     "@types/eventsource": "^1.1.15",
     "@types/express": "^4.17.21",
-    "eslint": "9.14",
-    "globals": "^15.12.0",
+    "eslint": "9.16",
+    "globals": "^15.13.0",
     "ts-jest": "^29.2.5",
     "tsx": "^4.19.2",
-    "typescript": "^5.6.3",
-    "typescript-eslint": "^8.14.0"
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.17.0"
   },
   "engines": {
     "node": ">=18.0.0"

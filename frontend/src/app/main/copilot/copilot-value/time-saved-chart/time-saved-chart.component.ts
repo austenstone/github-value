@@ -27,7 +27,7 @@ export class TimeSavedChartComponent implements OnInit, OnChanges {
         text: 'Time Saved (hrs per week)'
       },
       min: 0,
-      max: 12,
+      // max: 12,
       labels: {
         format: '{value}hrs'
       },
@@ -61,7 +61,7 @@ export class TimeSavedChartComponent implements OnInit, OnChanges {
       headerFormat: '<b>{point.x:%b %d, %Y}</b><br/>',
       pointFormat: [
         '{series.name}: ',
-        '<b>{point.y:.1f}%</b>'
+        '<b>{point.y:.1f}hrs</b>'
       ].join(''),
       style: {
         fontSize: '14px'

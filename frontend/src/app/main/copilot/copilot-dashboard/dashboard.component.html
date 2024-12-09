@@ -5,14 +5,14 @@
   </div> -->
   <div class="cards-grid">
     
-    <app-dashboard-card-value routerLink="/copilot/seats" title="Seats" [value]="totalSeats" [change]="seatPercentage"
+    <!-- <app-dashboard-card-value routerLink="/copilot/seats" title="Seats" [value]="totalSeats" [change]="seatPercentage"
       changeSuffix="" icon="" changeDescription="% have Copilot"
       subtitle="Total Copilot Seats"></app-dashboard-card-value>
     <app-dashboard-card-value title="Active Users" [value]="activeCurrentWeekAverage"
       [change]="activeWeeklyChangePercent" changeSuffix="" changeDescription="% since last"
       subtitle="Average activity for last 7 days"></app-dashboard-card-value>
     <app-dashboard-card-value routerLink="/copilot/surveys" title="Surveys Complete" icon="" [value]="totalSurveys"
-      [change]="totalSurveysThisWeek" changeSuffix="" changeDescription=" this week"></app-dashboard-card-value>
+      [change]="totalSurveysThisWeek" changeSuffix="" changeDescription=" this week"></app-dashboard-card-value> -->
 
     <mat-card id="adoption" appearance="outlined" routerLink="/copilot/value" fragment="adoption">
       <mat-card-header>
@@ -39,37 +39,12 @@
       </ng-container>
     </mat-card>
 
-    <!-- <mat-card id="status" appearance="outlined">
-      <app-status [status]="statusChecks"></app-status>
-    </mat-card> -->
+    @for (status of statuses; track $index) {
+      <mat-card id="status" appearance="outlined">
+        <app-status [title]="status?.title" [message]="status?.message" [status]="status?.status"></app-status>
+      </mat-card>
+    }
 
-    <mat-card appearance="outlined" id="card-bars">
-      <mat-card-header>
-        <mat-card-title>Engagement</mat-card-title>
-      </mat-card-header>
-      <mat-card-content *ngIf="metricsData; else loading">
-        <app-dashboard-card-bars title="Engagement" [data]="metricsData ? metricsData[metricsData.length - 1] : undefined"
-      [totalSeats]="totalSeats"></app-dashboard-card-bars>
-      </mat-card-content>
-    </mat-card>
-    <mat-card appearance="outlined" id="drilldown-bar-chart">
-      <mat-card-header>
-        <mat-card-title>Engagement Breakdown</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <ng-container *ngIf="metricsData; else loading">
-          <app-dashboard-card-drilldown-bar-chart [data]="metricsData"></app-dashboard-card-drilldown-bar-chart>
-        </ng-container>
-      </mat-card-content>
-    </mat-card>
-    <mat-card id="active-users" appearance="outlined">
-      <mat-card-header>
-        <mat-card-title>Most Active Users</mat-card-title>
-      </mat-card-header>
-      <ng-container *ngIf="activityTotals; else loading">
-        <app-active-users-chart [data]="activityTotals" [chartOptions]="chartOptions"></app-active-users-chart>
-      </ng-container>
-    </mat-card>
   </div>
 </div>
 <ng-template #loading>

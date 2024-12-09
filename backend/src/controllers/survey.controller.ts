@@ -58,7 +58,6 @@ class SurveyController {
       })
       res.status(201).json(survey);
     } catch (error) {
-      console.log(error);
       res.status(500).json(error);
       return;
     }
@@ -83,14 +82,6 @@ class SurveyController {
           } : {}
         } as WhereOptions
       });
-      console.log('test', JSON.stringify({
-        reason: {
-          [Op.and]: [
-            { [Op.ne]: '' },
-            { [Op.gte]: minReasonLength }
-          ]
-        }
-      }));
       res.status(200).json(surveys);
     } catch (error) {
       res.status(500).json(error);
