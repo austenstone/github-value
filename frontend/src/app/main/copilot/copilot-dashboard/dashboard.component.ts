@@ -16,6 +16,7 @@ import { LoadingSpinnerComponent } from '../../../shared/loading-spinner/loading
 import { ActiveUsersChartComponent } from './dashboard-card/active-users-chart/active-users-chart.component';
 import { InstallationsService } from '../../../services/api/installations.service';
 import { StatusComponent } from './status/status.component';
+import { BASE_URL } from '../../../services/server.service';
 
 @Component({
   selector: 'app-dashboard',

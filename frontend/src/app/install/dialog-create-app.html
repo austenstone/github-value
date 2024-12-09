@@ -12,8 +12,8 @@
         </p>
         <mat-form-field class="example-full-width" appearance="outline">
           <mat-label>Webhook URL</mat-label>
-          <input matInput #webhookInput [value]="manifest?.hook_attributes?.url" readonly>
-          <mat-icon matSuffix [cdkCopyToClipboard]="manifest?.hook_attributes?.url || ''" (click)="webhookInput.select()">content_copy</mat-icon>
+          <input matInput #webhookInput [value]="`${BASE_URL}/webhook`" readonly>
+          <mat-icon matSuffix [cdkCopyToClipboard]="`${BASE_URL}/webhook` || ''" (click)="webhookInput.select()">content_copy</mat-icon>
         </mat-form-field>
         <div>
           <a mat-raised-button href="https://github.com/settings/organizations" target="_blank">

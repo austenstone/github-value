@@ -13,6 +13,7 @@ import { Router } from '@angular/router';
 import { finalize, takeWhile, timer } from 'rxjs';
 import { InstallationsService, statusResponse } from '../services/api/installations.service';
 import { SetupService } from '../services/api/setup.service';
+import { BASE_URL } from '../services/server.service';
 
 @Component({
   selector: 'app-database',
@@ -63,7 +64,7 @@ export class DatabaseComponent implements AfterViewInit {
         return !this.status || !this.status.isSetup;
       }),
       finalize(async () => {
-        await this.router.navigate(['/copilot'], {
+        await this.router.navigate([`${BASE_URL}/copilot`], {
           queryParams: { celebrate: true }
         })
       })

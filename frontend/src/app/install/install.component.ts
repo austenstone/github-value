@@ -6,7 +6,7 @@ import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dial
 import { CommonModule } from '@angular/common';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { ThemeService } from '../services/theme.service';
-
+import { BASE_URL } from '../services/server.service';
 
 @Component({
   selector: 'app-install',
