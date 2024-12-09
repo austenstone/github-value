@@ -28,7 +28,7 @@ export class CopilotSeatsComponent implements OnInit {
       columnDef: 'login', 
       header: 'User', 
       cell: (element: Seat) => `${element.assignee.login}`,
-      link: (element: Seat) => `https://github.com/${element.assignee.login}`
+      // link: (element: Seat) => `https://github.com/${element.assignee.login}`
     },
     { 
       columnDef: 'last_activity_at', 

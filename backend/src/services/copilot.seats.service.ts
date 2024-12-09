@@ -1,6 +1,6 @@
 import { Endpoints } from '@octokit/types';
 import { Seat } from "../models/copilot.seats.model.js";
-import { QueryTypes, Sequelize } from 'sequelize';
+import { Op, QueryTypes, Sequelize } from 'sequelize';
 import { components } from "@octokit/openapi-types";
 import { Member, Team } from '../models/teams.model.js';
 import app from '../index.js';
@@ -142,7 +142,14 @@ class SeatsService {
     }
   }
 
-  async getMembersActivity(org?: string, daysInactive = 30, precision = 'day' as 'hour' | 'day' | 'minute'): Promise<MemberDailyActivity> {
+  async getMembersActivity(params: {
+    org?: string;
+    daysInactive?: number;
+    precision?: 'hour' | 'day' | 'minute';
+    since?: string;
+    until?: string;
+  } = {}): Promise<MemberDailyActivity> {
+    const { org, daysInactive = 30, precision = 'day', since, until } = params;
     if (!app.database.sequelize) throw new Error('No database connection available');
     // const assignees = await app.database.sequelize.query<Member>(
     //   `SELECT 
@@ -165,6 +172,11 @@ class SeatsService {
     //     mapToModel: true // 🎯 Maps results to the Model
     //   }
     // );
+    
+    const dateFilter = {
+      ...(since && { [Op.gte]: new Date(since as string) }),
+      ...(until && { [Op.lte]: new Date(until as string) })
+    };
     const assignees = await Member.findAll({
       attributes: ['login', 'id'],
       include: [
@@ -175,6 +187,7 @@ class SeatsService {
           order: [['last_activity_at', 'ASC']],
           where: {
             ...(org ? { org } : {}),
+            ...Object.getOwnPropertySymbols(dateFilter).length ? { createdAt: dateFilter } : {}
           }
         }
       ],
@@ -230,17 +243,24 @@ class SeatsService {
     return sortedActivityDays;
   }
 
-  async getMembersActivityTotals(org?: string) {
-    const assignees2 = await app.database.sequelize?.query(`
-      SELECT \`Member\`.\`login\`, \`Member\`.\`id\`, \`activity\`.\`id\` AS \`activity.id\`, \`activity\`.\`last_activity_at\` AS \`activity.last_activity_at\`
-      FROM \`Members\` AS \`Member\`
-      INNER JOIN \`Seats\` AS \`activity\` ON \`Member\`.\`id\` = \`activity\`.\`assignee_id\`
-    `, {
-      replacements: { org },
-      type: QueryTypes.SELECT
-    });
-    console.log(assignees2);
-    
+  async getMembersActivityTotals(params: {
+    org?: string;
+    since?: string;
+    until?: string;
+  }) {
+    // const assignees2 = await app.database.sequelize?.query(`
+    //   SELECT \`Member\`.\`login\`, \`Member\`.\`id\`, \`activity\`.\`id\` AS \`activity.id\`, \`activity\`.\`last_activity_at\` AS \`activity.last_activity_at\`
+    //   FROM \`Members\` AS \`Member\`
+    //   INNER JOIN \`Seats\` AS \`activity\` ON \`Member\`.\`id\` = \`activity\`.\`assignee_id\`
+    // `, {
+    //   replacements: { org },
+    //   type: QueryTypes.SELECT
+    // });
+    const { org, since, until } = params;    
+    const dateFilter = {
+      ...(since && { [Op.gte]: new Date(since as string) }),
+      ...(until && { [Op.lte]: new Date(until as string) })
+    };
     const assignees = await Member.findAll({
       attributes: ['login', 'id'],
       include: [{
@@ -250,6 +270,7 @@ class SeatsService {
         order: [['last_activity_at', 'ASC']],
         where: {
           ...(org ? { org } : {}),
+          ...Object.getOwnPropertySymbols(dateFilter).length ? { createdAt: dateFilter } : {}
         }
       }]
     });

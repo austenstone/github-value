@@ -3,7 +3,7 @@
     <h1>Metrics</h1>
   </div>
   <p>
-    <app-date-range-select (dateRangeChange)="dateRangeChange($event)"></app-date-range-select>
+    <app-date-range-select (dateRangeChange)="this.range = $event; dateRangeChange($event)"></app-date-range-select>
   </p>
    <!-- Make a chart that shows lines suggested each day and the activity rate on timeUsedForGroup
    Allow filter table by editor, model, and language. -->
@@ -14,8 +14,40 @@
           <mat-card-title>IDE Completions</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-          <app-copilot-metrics-ide-completion-pie-chart [metricsTotals]="metricsTotals"></app-copilot-metrics-ide-completion-pie-chart>
+          <ng-container *ngIf="metrics; else loading">
+            <app-copilot-metrics-ide-completion-pie-chart [metricsTotals]="metricsTotals"></app-copilot-metrics-ide-completion-pie-chart>
+          </ng-container>
+        </mat-card-content>
+      </mat-card>
+      <mat-card id="active-users" appearance="outlined">
+        <mat-card-header>
+          <mat-card-title>Most Active Users</mat-card-title>
+        </mat-card-header>
+        <ng-container *ngIf="activityTotals; else loading">
+          <app-active-users-chart [data]="activityTotals"></app-active-users-chart>
+        </ng-container>
+      </mat-card>
+      <!-- <mat-card appearance="outlined" id="card-bars">
+        <mat-card-header>
+          <mat-card-title>Engagement</mat-card-title>
+        </mat-card-header>
+        <mat-card-content *ngIf="metrics; else loading">
+          <app-dashboard-card-bars title="Engagement" [data]="metrics ? metrics[metrics.length - 1] : undefined"
+        [totalSeats]="totalSeats"></app-dashboard-card-bars>
+        </mat-card-content>
+      </mat-card> -->
+      <mat-card appearance="outlined" id="drilldown-bar-chart">
+        <mat-card-header>
+          <mat-card-title>Engagement Breakdown</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <ng-container *ngIf="metrics; else loading">
+            <app-dashboard-card-drilldown-bar-chart [data]="metrics"></app-dashboard-card-drilldown-bar-chart>
+          </ng-container>
         </mat-card-content>
       </mat-card>
     </div>
 </div>
+<ng-template #loading>
+  <app-loading-spinner></app-loading-spinner>
+</ng-template>

@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, OnInit } from '@angular/core';
 import { BehaviorSubject, of, Subject, tap } from 'rxjs';
 import { serverUrl } from '../server.service';
 import { Endpoints } from '@octokit/types';
@@ -38,7 +38,7 @@ export class InstallationsService implements OnDestroy {
     }
   }
 
-  public ngOnDestroy(): void {  
+  ngOnDestroy(): void {  
     this._destroy$.next();
     this._destroy$.complete();
   }
@@ -72,5 +72,8 @@ export class InstallationsService implements OnDestroy {
     localStorage.setItem('installation', id.toString());
   }
 
+  getStatus2() {
+    return this.http.get<any>(`${serverUrl}/api/status`);
+  }
   
 }
