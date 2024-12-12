@@ -4,6 +4,7 @@ import { MaterialModule } from '../../../material.module';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { HighchartsChartModule } from 'highcharts-angular';
 import * as Highcharts from 'highcharts';
+import { AppModule } from '../../../app.module';
 
 interface MetricState {
   adoption: string;
@@ -25,6 +26,7 @@ interface Metrics {
   selector: 'app-value-modeling',
   standalone: true,
   imports: [
+    AppModule,
     MaterialModule,
     CommonModule,
     ReactiveFormsModule,
@@ -108,11 +110,11 @@ export class ValueModelingComponent implements OnInit {
   }
 
   // call the API to get the model data
-  //get Count of users with a last activity date in the past 4 weeks(current adopted users)
-  //get max Suggestions per daily active user for the past 2/4 weeks (current activity per user)
-  //get max chat turns per daily active user for the past 2 weeks (current activity per user)
-  //get max Code reviews per daily active user for the past 2 weeks (current activity per user)
-  //get 7 day moving average time savings (current time saved)
+  // get Count of users with a last activity date in the past 4 weeks(current adopted users)
+  // get max Suggestions per daily active user for the past 2/4 weeks (current activity per user)
+  // get max chat turns per daily active user for the past 2 weeks (current activity per user)
+  // get max Code reviews per daily active user for the past 2 weeks (current activity per user)
+  // get 7 day moving average time savings (current time saved)
 
   // set up the initial model values based on the above and the settings from the API
   model = {
@@ -171,8 +173,6 @@ export class ValueModelingComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    // this.updateChartData();
-    // this.form.valueChanges.subscribe(() => this.updateChartData());
   }
 
   private calculateOverallImpact(level: 'current' | 'target' | 'max'): number {

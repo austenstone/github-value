@@ -12,7 +12,6 @@ import { CopilotSeatsComponent } from './main/copilot/copilot-seats/copilot-seat
 import { DbLoadingComponent } from './database/db-loading.component';
 import { CopilotSurveyComponent } from './main/copilot/copilot-surveys/copilot-survey-details/copilot-survey.component';
 import { CopilotSeatComponent } from './main/copilot/copilot-seats/copilot-seat/copilot-seat.component';
-import { PredictiveModelingComponent } from './main/copilot/predictive-modeling/predictive-modeling.component';
 import { DatabaseComponent } from './database/database.component';
 import { ValueModelingComponent } from './main/copilot/value-modeling/value-modeling.component';
 
