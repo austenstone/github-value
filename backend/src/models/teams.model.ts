@@ -173,6 +173,12 @@ class Member extends Model<MemberType> {
       updatedAt: DataTypes.DATE
     }, {
       sequelize,
+      indexes: [
+        {
+          unique: true,
+          fields: ['login']
+        },
+      ]
     });
   }
 }

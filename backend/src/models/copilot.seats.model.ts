@@ -56,7 +56,13 @@ class Seat extends Model<SeatType> {
       }
     }, {
       sequelize,
-      timestamps: true
+      timestamps: true,
+      indexes: [
+        {
+          unique: true,
+          fields: ['assignee_id', 'last_activity_at']
+        }
+      ]
     });
     
     Seat.belongsTo(Member, { 

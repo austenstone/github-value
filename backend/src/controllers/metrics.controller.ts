@@ -5,8 +5,10 @@ class MetricsController {
   async getMetrics(req: Request, res: Response): Promise<void> {
     try {
       const metrics = await MetricsService.getMetrics(req.query)
+      console.log(metrics);
       res.status(200).json(metrics);
     } catch (error) {
+      console.log('error', error)
       res.status(500).json(error);
     }
   }

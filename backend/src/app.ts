@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import express, { Express } from 'express';
+import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -104,6 +105,7 @@ class App {
   private setupExpress() {
     this.e.use(cors());
     this.e.use(expressLoggerMiddleware);
+    this.e.use(compression())
     this.e.use((req, res, next) => {
       if (req.path === '/api/github/webhooks') {
         return next();
