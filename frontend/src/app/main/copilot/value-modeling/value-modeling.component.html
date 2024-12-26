@@ -1,13 +1,18 @@
 <div class="page-container">
   <div class="page-header">
     <h1>Value Modeling and Targeting</h1>
+    <div class="button-group">
+      <button mat-raised-button color="primary" (click)="loadGridObject()">Load</button>
+      <button mat-raised-button color="accent" (click)="saveGridObject()">Save</button>
+      <mat-slide-toggle (change)="toggleInputs($event.checked)">Disable Current and Max Inputs</mat-slide-toggle>
+    </div>
   </div>
 
   <!-- Charts Section -->
   <div class="charts-grid">
     <mat-card>
       <mat-card-header>
-        <mat-card-title>Adopted Users</mat-card-title>
+        <mat-card-title>Org-Level Metrics</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <div class="chart-container">
@@ -21,7 +26,7 @@
     </mat-card>
     <mat-card>
       <mat-card-header>
-        <mat-card-title>Activity Per Daily User</mat-card-title>
+        <mat-card-title>Per Daily User Metrics</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <div class="chart-container">
@@ -33,98 +38,332 @@
         </div>
       </mat-card-content>
     </mat-card>
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Reported Weekly Time Savings per Dev</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="chart-container">
-          <highcharts-chart 
-            [Highcharts]="Highcharts"
-            [options]="timeSavingsChartOptions"
-            style="width: 100%; height: 100%; display: block;">
-          </highcharts-chart>
-        </div>
-      </mat-card-content>
-    </mat-card>
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Productivity Boost</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="chart-container">
-          <highcharts-chart 
-            [Highcharts]="Highcharts"
-            [options]="productivityChartOptions"
-            style="width: 100%; height: 100%; display: block;">
-          </highcharts-chart>
-        </div>
-      </mat-card-content>
-    </mat-card>
   </div>
 
-  <!-- Metrics Grid -->
-  <form [formGroup]="form" class="metrics-grid">
-    <!-- Headers -->
-    <div class="grid-header metrics-label"></div>
-    <div class="grid-header">Current Level</div>
-    <div class="grid-header">Target Level</div>
-    <div class="grid-header">Max Level</div>
+  <!-- Metrics Table -->
+  <form [formGroup]="form" class="metrics-table">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Org-Level Metrics</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Current Level</th>
+              <th>Target Level</th>
+              <th>Max Level</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Seats</td>
+              <td>
+                <mat-form-field [formGroupName]="'current'">
+                  <input matInput type="text" formControlName="seats" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'current', 'seats')" [attr.disabled]="disableInputs ? true : null">
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'target'">
+                  <input matInput type="text" formControlName="seats" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'target', 'seats')">
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'max'">
+                  <input matInput type="text" formControlName="seats" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'max', 'seats')" [attr.disabled]="disableInputs ? true : null">
+                </mat-form-field>
+              </td>
+            </tr>
+            <tr>
+              <td>Adopted Devs</td>
+              <td>
+                <mat-form-field [formGroupName]="'current'">
+                  <input matInput type="text" formControlName="adoptedDevs" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'current', 'adoptedDevs')" [attr.disabled]="disableInputs ? true : null">
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'target'">
+                  <input matInput type="text" formControlName="adoptedDevs" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'target', 'adoptedDevs')" >
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'max'">
+                  <input matInput type="text" formControlName="adoptedDevs" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'max', 'adoptedDevs')" [attr.disabled]="disableInputs ? true : null">
+                </mat-form-field>
+              </td>
+            </tr>
+            <tr>
+              <td>Monthly Devs reporting Time Savings</td>
+              <td>
+                <mat-form-field [formGroupName]="'current'">
+                  <input matInput type="text" formControlName="monthlyDevsReportingTimeSavings" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'current', 'monthlyDevsReportingTimeSavings')" [attr.disabled]="disableInputs ? true : null">
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'target'">
+                  <input matInput type="text" formControlName="monthlyDevsReportingTimeSavings" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'target', 'monthlyDevsReportingTimeSavings')" >
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'max'">
+                  <input matInput type="text" formControlName="monthlyDevsReportingTimeSavings" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'max', 'monthlyDevsReportingTimeSavings')" [attr.disabled]="disableInputs ? true : null">
+                </mat-form-field>
+              </td>
+            </tr>
+            <tr>
+              <td>% of Seats reporting Time Savings</td>
+              <td>
+                <mat-form-field [formGroupName]="'current'">
+                  <input matInput type="text" formControlName="percentSeatsReportingTimeSavings" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'current', 'percentSeatsReportingTimeSavings')" [attr.disabled]="disableInputs ? true : null">
+                  <span matTextSuffix>%</span>
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'target'">
+                  <input matInput type="text" formControlName="percentSeatsReportingTimeSavings" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'target', 'percentSeatsReportingTimeSavings')" matTooltip="Typical Range: 20-70%">
+                  <span matTextSuffix>%</span>
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'max'">
+                  <input matInput type="text" formControlName="percentSeatsReportingTimeSavings" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'max', 'percentSeatsReportingTimeSavings')" [attr.disabled]="disableInputs ? true : null">
+                  <span matTextSuffix>%</span>
+                </mat-form-field>
+              </td>
+            </tr>
+            <tr>
+              <td>% of Seats Adopted</td>
+              <td>
+                <mat-form-field [formGroupName]="'current'">
+                  <input matInput type="text" formControlName="percentSeatsAdopted" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'current', 'percentSeatsAdopted')" [attr.disabled]="disableInputs ? true : null">
+                  <span matTextSuffix>%</span>
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'target'">
+                  <input matInput type="text" formControlName="percentSeatsAdopted" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'target', 'percentSeatsAdopted')" matTooltip="Typical Range: 40-90%">
+                  <span matTextSuffix>%</span>
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'max'">
+                  <input matInput type="text" formControlName="percentSeatsAdopted" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'max', 'percentSeatsAdopted')" [attr.disabled]="disableInputs ? true : null">
+                  <span matTextSuffix>%</span>
+                </mat-form-field>
+              </td>
+            </tr>
+            <tr>
+              <td>% of Max Adopted</td>
+              <td>
+                <mat-form-field [formGroupName]="'current'">
+                  <input matInput type="text" formControlName="percentMaxAdopted" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'current', 'percentMaxAdopted')" [attr.disabled]="disableInputs ? true : null">
+                  <span matTextSuffix>%</span>
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'target'">
+                  <input matInput type="text" formControlName="percentMaxAdopted" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'target', 'percentMaxAdopted')" matTooltip="Typical Range: 40%">
+                  <span matTextSuffix>%</span>
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'max'">
+                  <input matInput type="text" formControlName="percentMaxAdopted" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'max', 'percentMaxAdopted')" [attr.disabled]="disableInputs ? true : null">
+                  <span matTextSuffix>%</span>
+                </mat-form-field>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </mat-card-content>
+    </mat-card>
 
-    <!-- Adoption -->
-    <div class="metrics-label">Adopted Users</div>
-    <mat-form-field *ngFor="let level of ['current', 'target', 'max']" [formGroupName]="level">
-      <input matInput
-             type="text"
-             formControlName="adoption"
-             [readonly]="level === 'max'"
-             class="example-right-align">
-      <span matTextSuffix>%</span>
-    </mat-form-field>
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Per Daily User Metrics</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Current Level</th>
+              <th>Target Level</th>
+              <th>Max Level</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Daily Suggestions</td>
+              <td>
+                <mat-form-field [formGroupName]="'current'">
+                  <input matInput type="text" formControlName="dailySuggestions" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'current', 'dailySuggestions')" [value]="form.get('current.dailySuggestions')?.value | number:'1.0-1'" [attr.disabled]="disableInputs ? true : null">
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'target'">
+                  <input matInput type="text" formControlName="dailySuggestions" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'target', 'dailySuggestions')" [value]="form.get('target.dailySuggestions')?.value | number:'1.0-1'" matTooltip="Typical Range: 50-90">
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'max'">
+                  <input matInput type="text" formControlName="dailySuggestions" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'max', 'dailySuggestions')" [value]="form.get('max.dailySuggestions')?.value | number:'1.0-1'" [attr.disabled]="disableInputs ? true : null">
+                </mat-form-field>
+              </td>
+            </tr>
+            <tr>
+              <td>Daily Chat Turns</td>
+              <td>
+                <mat-form-field [formGroupName]="'current'">
+                  <input matInput type="text" formControlName="dailyChatTurns" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'current', 'dailyChatTurns')" [value]="form.get('current.dailyChatTurns')?.value | number:'1.0-1'" [attr.disabled]="disableInputs ? true : null">
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'target'">
+                  <input matInput type="text" formControlName="dailyChatTurns" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'target', 'dailyChatTurns')" [value]="form.get('target.dailyChatTurns')?.value | number:'1.0-1'" matTooltip="Typical Range: 20-40">
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'max'">
+                  <input matInput type="text" formControlName="dailyChatTurns" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'max', 'dailyChatTurns')" [value]="form.get('max.dailyChatTurns')?.value | number:'1.0-1'" [attr.disabled]="disableInputs ? true : null">
+                </mat-form-field>
+              </td>
+            </tr>
+            <tr>
+              <td>Weekly PR Summaries</td>
+              <td>
+                <mat-form-field [formGroupName]="'current'">
+                  <input matInput type="text" formControlName="weeklyPRSummaries" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'current', 'weeklyPRSummaries')" [value]="form.get('current.weeklyPRSummaries')?.value | number:'1.0-1'" [attr.disabled]="disableInputs ? true : null">
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'target'">
+                  <input matInput type="text" formControlName="weeklyPRSummaries" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'target', 'weeklyPRSummaries')" [value]="form.get('target.weeklyPRSummaries')?.value | number:'1.0-1'">
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'max'">
+                  <input matInput type="text" formControlName="weeklyPRSummaries" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'max', 'weeklyPRSummaries')" [value]="form.get('max.weeklyPRSummaries')?.value | number:'1.0-1'" [attr.disabled]="disableInputs ? true : null">
+                </mat-form-field>
+              </td>
+            </tr>
+            <tr>
+              <td>Weekly Time Saved (hrs)</td>
+              <td>
+                <mat-form-field [formGroupName]="'current'">
+                  <input matInput type="text" formControlName="weeklyTimeSaved" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'current', 'weeklyTimeSaved')" [attr.disabled]="disableInputs ? true : null">
+                  <span matTextSuffix>hrs</span>
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'target'">
+                  <input matInput type="text" formControlName="weeklyTimeSaved" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'target', 'weeklyTimeSaved')" matTooltip="Typical Range: 3-8">
+                  <span matTextSuffix>hrs</span>
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'max'">
+                  <input matInput type="text" formControlName="weeklyTimeSaved" class="example-right-align" matThousandSeparator (blur)="onBlur($event, 'max', 'weeklyTimeSaved')" [attr.disabled]="disableInputs ? true : null">
+                  <span matTextSuffix>hrs</span>
+                </mat-form-field>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </mat-card-content>
+    </mat-card>
 
-    <!-- Usage & Time Savings -->
-    <div class="metrics-label">Activity Per Daily User</div>
-    <div *ngFor="let level of ['current', 'target', 'max']" [formGroupName]="level" class="usage-inputs">
-      <mat-form-field>
-        <mat-label>Activity</mat-label>
-        <input matInput
-               type="text"
-               formControlName="activityLevel"
-               [readonly]="level === 'max'"
-               class="example-right-align">
-        <span matTextSuffix>%</span>
-      </mat-form-field>
-      <mat-form-field>
-        <mat-label>Time Savings</mat-label>
-        <input matInput
-               type="text"
-               formControlName="timeSavings"
-               [readonly]="level === 'max'"
-               class="example-right-align">
-        <span matTextSuffix>%</span>
-      </mat-form-field>
-    </div>
-
-    <!-- Time Saved As Dollars -->
-    <div class="metrics-label">Total Time Saved</div>
-    <mat-form-field *ngFor="let level of ['current', 'target', 'max']" [formGroupName]="level">
-      <input matInput
-             type="text"
-             formControlName="timeSavedDollars"
-             [readonly]="level === 'max'"
-             class="example-right-align">
-      <span matTextPrefix>$&nbsp;</span>
-    </mat-form-field>
-
-    <!-- Downstream Productivity -->
-    <div class="metrics-label">Time Saved as Dollars</div>
-    <mat-form-field *ngFor="let level of ['current', 'target', 'max']" [formGroupName]="level">
-      <input matInput
-             type="text"
-             formControlName="downstreamProductivity"
-             [readonly]="level === 'max'"
-             class="example-right-align">
-      <span matTextSuffix>%</span>
-    </mat-form-field>
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Calculated Impacts</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Current Level</th>
+              <th>Target Level</th>
+              <th>Max Level</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Monthly Time Savings (hrs)</td>
+              <td>
+                <mat-form-field [formGroupName]="'current'">
+                  <input matInput type="text" formControlName="monthlyTimeSavings" class="example-right-align" [ngClass]="{'invalid': form.get('current.monthlyTimeSavings')?.invalid && form.get('current.monthlyTimeSavings')?.touched}" matThousandSeparator (blur)="onBlur($event, 'current', 'monthlyTimeSavings')" [attr.disabled]="disableInputs ? true : null">
+                  <span matTextSuffix>hrs</span>
+                  <mat-error *ngIf="form.get('current.monthlyTimeSavings')?.invalid">Invalid value</mat-error>
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'target'">
+                  <input matInput type="text" formControlName="monthlyTimeSavings" class="example-right-align" [ngClass]="{'invalid': form.get('target.monthlyTimeSavings')?.invalid && form.get('target.monthlyTimeSavings')?.touched}" matThousandSeparator (blur)="onBlur($event, 'target', 'monthlyTimeSavings')">
+                  <span matTextSuffix>hrs</span>
+                  <mat-error *ngIf="form.get('target.monthlyTimeSavings')?.invalid">Invalid value</mat-error>
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'max'">
+                  <input matInput type="text" formControlName="monthlyTimeSavings" class="example-right-align" [ngClass]="{'invalid': form.get('max.monthlyTimeSavings')?.invalid && form.get('max.monthlyTimeSavings')?.touched}" matThousandSeparator (blur)="onBlur($event, 'max', 'monthlyTimeSavings')" [attr.disabled]="disableInputs ? true : null">
+                  <span matTextSuffix>hrs</span>
+                  <mat-error *ngIf="form.get('max.monthlyTimeSavings')?.invalid">Invalid value</mat-error>
+                </mat-form-field>
+              </td>
+            </tr>
+            <tr>
+              <td>Annual Time Savings as Dollars ($)</td>
+              <td>
+                <mat-form-field [formGroupName]="'current'">
+                  <input matInput type="text" formControlName="annualTimeSavingsDollars" class="example-right-align" [ngClass]="{'invalid': form.get('current.annualTimeSavingsDollars')?.invalid && form.get('current.annualTimeSavingsDollars')?.touched}" [value]="form.get('current.annualTimeSavingsDollars')?.value || '' | matCurrencyPipe" (blur)="onBlur($event, 'current', 'annualTimeSavingsDollars')" [attr.disabled]="disableInputs ? true : null">
+                  <span matTextPrefix>$&nbsp;</span>
+                  <mat-error *ngIf="form.get('current.annualTimeSavingsDollars')?.invalid">Invalid value</mat-error>
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'target'">
+                  <input matInput type="text" formControlName="annualTimeSavingsDollars" class="example-right-align" [ngClass]="{'invalid': form.get('target.annualTimeSavingsDollars')?.invalid && form.get('target.annualTimeSavingsDollars')?.touched}" [value]="form.get('target.annualTimeSavingsDollars')?.value || '' | matCurrencyPipe" (blur)="onBlur($event, 'target', 'annualTimeSavingsDollars')">
+                  <span matTextPrefix>$&nbsp;</span>
+                  <mat-error *ngIf="form.get('target.annualTimeSavingsDollars')?.invalid">Invalid value</mat-error>
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'max'">
+                  <input matInput type="text" formControlName="annualTimeSavingsDollars" class="example-right-align" [ngClass]="{'invalid': form.get('max.annualTimeSavingsDollars')?.invalid && form.get('max.annualTimeSavingsDollars')?.touched}" [value]="form.get('max.annualTimeSavingsDollars')?.value || '' | matCurrencyPipe" (blur)="onBlur($event, 'max', 'annualTimeSavingsDollars')" [attr.disabled]="disableInputs ? true : null">
+                  <span matTextPrefix>$&nbsp;</span>
+                  <mat-error *ngIf="form.get('max.annualTimeSavingsDollars')?.invalid">Invalid value</mat-error>
+                </mat-form-field>
+              </td>
+            </tr>
+            <tr>
+              <td>Productivity or Throughput Boost (%)</td>
+              <td>
+                <mat-form-field [formGroupName]="'current'">
+                  <input matInput type="text" formControlName="productivityBoost" class="example-right-align" [ngClass]="{'invalid': form.get('current.productivityBoost')?.invalid && form.get('current.productivityBoost')?.touched}" matThousandSeparator (blur)="onBlur($event, 'current', 'productivityBoost')" [attr.disabled]="disableInputs ? true : null">
+                  <span matTextSuffix>%</span>
+                  <mat-error *ngIf="form.get('current.productivityBoost')?.invalid">Invalid value</mat-error>
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'target'">
+                  <input matInput type="text" formControlName="productivityBoost" class="example-right-align" [ngClass]="{'invalid': form.get('target.productivityBoost')?.invalid && form.get('target.productivityBoost')?.touched}" matThousandSeparator (blur)="onBlur($event, 'target', 'productivityBoost')">
+                  <span matTextSuffix>%</span>
+                  <mat-error *ngIf="form.get('target.productivityBoost')?.invalid">Invalid value</mat-error>
+                </mat-form-field>
+              </td>
+              <td>
+                <mat-form-field [formGroupName]="'max'">
+                  <input matInput type="text" formControlName="productivityBoost" class="example-right-align" [ngClass]="{'invalid': form.get('max.productivityBoost')?.invalid && form.get('max.productivityBoost')?.touched}" matThousandSeparator (blur)="onBlur($event, 'max', 'productivityBoost')" [attr.disabled]="disableInputs ? true : null">
+                  <span matTextSuffix>%</span>
+                  <mat-error *ngIf="form.get('max.productivityBoost')?.invalid">Invalid value</mat-error>
+                </mat-form-field>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </mat-card-content>
+    </mat-card>
   </form>
 </div>
