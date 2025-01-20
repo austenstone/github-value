@@ -34,20 +34,20 @@
     "rxjs": "~7.8.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^18.2.12",
-    "@angular/cli": "^18.2.12",
-    "@angular/compiler-cli": "^18.2.12",
-    "@types/canvas-confetti": "^1.6.4",
-    "@types/jasmine": "~5.1.0",
-    "angular-eslint": "18.4.0",
-    "eslint": "9.14",
-    "jasmine-core": "~5.4.0",
+    "@angular-devkit/build-angular": "^19.1.3",
+    "@angular/cli": "^19.1.3",
+    "@angular/compiler-cli": "^19.1.2",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/jasmine": "~5.1.5",
+    "angular-eslint": "19.0.2",
+    "eslint": "9.18",
+    "jasmine-core": "~5.5.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.5.4",
-    "typescript-eslint": "8.14.0"
+    "typescript": "~5.7.3",
+    "typescript-eslint": "8.21.0"
   }
 }
