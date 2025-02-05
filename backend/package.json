@@ -23,7 +23,7 @@
     "eventsource": "^2.0.2",
     "express": "^4.21.2",
     "express-rate-limit": "^7.4.1",
-    "mongoose": "^8.8.4",
+    "mongoose": "^8.9.5",
     "mysql2": "^3.11.4",
     "octokit": "4.1",
     "smee-client": "^2.0.4",
