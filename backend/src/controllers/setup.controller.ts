@@ -41,7 +41,7 @@ class SetupController {
       const { appId, privateKey, webhookSecret } = req.body;
 
       if (!appId || !privateKey || !webhookSecret) {
-        return res.status(400).json({ error: 'All fields are required' });
+        res.status(400).json({ error: 'All fields are required' });
       }
       
       await app.github.connect({
@@ -75,7 +75,7 @@ class SetupController {
           installation: i.installation,
         }))
       };
-      return res.json(status);
+      res.json(status);
     } catch (error) {
       res.status(500).json(error);
     }
@@ -85,7 +85,7 @@ class SetupController {
     try {
       const statusService = new StatusService();
       const status = await statusService.getStatus();
-      return res.json(status);
+      res.json(status);
     } catch (error) {
       res.status(500).json(error);
     }
