@@ -1,10 +1,10 @@
 {
-  "name": "Austen",
+  "name": "github-value-app",
   "dockerComposeFile": "./compose.yml",
   "service": "dev",
   "remoteUser": "node",
 	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-  "postCreateCommand": "cd /workspaces/${localWorkspaceFolderBasename}/frontend && npm install && npm run build && cd /workspaces/${localWorkspaceFolderBasename}/backend && npm install",
+  "postCreateCommand": "cd /workspaces/${localWorkspaceFolderBasename}/frontend && npm install && npm run build && cd /workspaces/${localWorkspaceFolderBasename}/backend && npm install && npm run build && echo 'use npm run dev to start the app'",
   "features": {
     "ghcr.io/devcontainers/features/git:1": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
@@ -15,21 +15,26 @@
       "settings": {
         "extensions.ignoreRecommendations": true,
         "gitlens.showWelcomeOnInstall": false,
-        "gitlens.showWhatsNewAfterUpgrades": false
+        "gitlens.showWhatsNewAfterUpgrades": false,
+        "mdb.showMongoDBHelpExplorer": false,
+        "mdb.presetConnections": [
+          {
+              "name": "mongo (github-value)",
+              "connectionString": "mongodb://root:octocat@mongo:27017"
+          }
+        ]
       },
       "extensions": [
-        "eamodio.gitlens",
         "ms-vscode.vscode-typescript-next",
         "dbaeumer.vscode-eslint",
-        "visualstudioexptteam.vscodeintellicode",
-        "Angular.ng-template",
+        "angular.ng-template",
         "sibiraj-s.vscode-scss-formatter",
         "ms-azuretools.vscode-docker",
-        "ms-vsliveshare.vsliveshare",
         "Github.vscode-github-actions",
         "GitHub.copilot",
         "GitHub.copilot-chat",
-        "GitHub.vscode-pull-request-github"
+        "GitHub.vscode-pull-request-github",
+        "mongodb.mongodb-vscode"
       ]
     }
   }

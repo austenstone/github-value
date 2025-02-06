@@ -1,7 +1,7 @@
 //Austen’s version
 import mongoose from 'mongoose';
 import logger from './logger.js';
-import { SeatEntry } from './copilot.seats.service.js';
+import { SeatEntry } from './seats.service.js';
 
 type AdoptionType = any;
 

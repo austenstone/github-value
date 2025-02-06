@@ -28,11 +28,10 @@ class App {
     this.e = express();
     this.port = port;
     logger.info(`Starting application on port ${this.port}`);
-    console.log(process.env)
-    if (!process.env.MONGODB_URI) {
-      throw new Error('MONGODB_URI must be set');
-    }
-    this.database = new Database(process.env.MONGODB_URI);
+    // if (!process.env.MONGODB_URI) {
+    //   throw new Error('MONGODB_URI must be set');
+    // }
+    this.database = new Database();
     const webhookService = new WebhookService({
       url: process.env.WEBHOOK_PROXY_URL,
       path: '/api/github/webhooks',
@@ -40,10 +39,11 @@ class App {
     });
     this.github = new GitHub(
       {
-        appId: process.env.GITHUB_APP_ID,
-        privateKey: process.env.GITHUB_APP_PRIVATE_KEY,
+        // adding GH_APP_* so you can set these as codespaces secrets, can't use GITHUB_* as a prefix for those
+        appId: process.env.GITHUB_APP_ID || process.env.GH_APP_ID,  
+        privateKey: process.env.GITHUB_APP_PRIVATE_KEY || process.env.GH_APP_PRIVATE_KEY,
         webhooks: {
-          secret: process.env.GITHUB_WEBHOOK_SECRET
+          secret: process.env.GITHUB_WEBHOOK_SECRET || process.env.GH_WEBHOOK_SECRET
         }
       },
       this.e,
@@ -54,7 +54,7 @@ class App {
       baseUrl: this.baseUrl,
       webhookProxyUrl: process.env.GITHUB_WEBHOOK_PROXY_URL,
       webhookSecret: process.env.GITHUB_WEBHOOK_SECRET,
-      metricsCronExpression: '0 0 * * *',
+      metricsCronExpression: process.env.CRON || '0 * * * *',
       devCostPerYear: '100000',
       developerCount: '100',
       hoursPerYear: '2080',
@@ -65,24 +65,25 @@ class App {
 
   public async start() {
     try {
-      logger.info(`Starting application on port ${this.port}`);
-      logger.info('Starting application');
+      logger.info('Starting application...');
 
       logger.info('Express setup...');
       this.setupExpress();
       logger.info('Express setup complete');
 
-      logger.info('Database connecting...');
-      await this.database.connect();
-      logger.info('Database connected');
+      if (process.env.MONGODB_URI) {
+        logger.info('Database connecting...');
+        await this.database.connect(process.env.MONGODB_URI);
+        logger.info('Database connected');
 
-      logger.info('Initializing settings...');
-      await this.initializeSettings();
-      logger.info('Settings initialized');
-
-      logger.info('GitHub App starting...');
-      await this.github.connect();
-      logger.info('GitHub App connected');
+        logger.info('Initializing settings...');
+        await this.initializeSettings();
+        logger.info('Settings initialized');
+  
+        logger.info('GitHub App starting...');
+        await this.github.connect();
+        logger.info('GitHub App connected');
+      }
 
       return this.e;
     } catch (error) {
@@ -91,7 +92,6 @@ class App {
         logger.error(error.message);
       }
       logger.debug(error);
-      process.exit(1);
     }
   }
 
@@ -103,7 +103,6 @@ class App {
 
   private setupExpress() {
     this.e.use(cors());
-    this.e.use(expressLoggerMiddleware);
     this.e.use((req, res, next) => {
       if (req.path === '/api/github/webhooks') {
         return next();
@@ -111,23 +110,22 @@ class App {
       bodyParser.json()(req, res, next);
     }, bodyParser.urlencoded({ extended: true }));
 
+    this.e.use(expressLoggerMiddleware);
+    this.e.use(rateLimit({
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 1000, // max 100 requests per windowMs
+      skip: (req) => req.path === '/api/github/webhooks'
+    }));
     this.e.use('/api', apiRoutes);
 
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
     const frontendPath = path.resolve(__dirname, '../../frontend/dist/github-value/browser');
     this.e.use(express.static(frontendPath));
-    this.e.get(
-      '*',
-      rateLimit({
-        windowMs: 15 * 60 * 1000, max: 5000,
-      }),
-      (_, res) => res.sendFile(path.join(frontendPath, 'index.html'))
-    );
+    this.e.get('*', (_, res) => res.sendFile(path.join(frontendPath, 'index.html')));
 
     this.eListener = this.e.listen(this.port, '0.0.0.0');
     logger.info(`eListener on port ${this.port}`);
-
   }
 
   private initializeSettings() {

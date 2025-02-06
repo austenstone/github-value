@@ -6,20 +6,9 @@
         <form [formGroup]="dbFormGroup" (ngSubmit)="dbConnect()" class="database-form">
           <ng-template matStepLabel>Database</ng-template>
           <mat-form-field>
-            <mat-label>Hostname</mat-label>
-            <input matInput formControlName="hostname" placeholder="127.0.0.1">
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>Port</mat-label>
-            <input type="number" formControlName="port" matInput placeholder="3306">
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>Username</mat-label>
-            <input matInput formControlName="username" placeholder="root">
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>Password</mat-label>
-            <input matInput formControlName="password" type="password">
+            <mat-label>Connection String URI</mat-label>
+            <input matInput formControlName="uri"
+              placeholder="mongodb://myDatabaseUser:P%40ssw0rd@cluster0.example.mongodb.net/?retryWrites=true&w=majority">
           </mat-form-field>
           <div>
           </div>

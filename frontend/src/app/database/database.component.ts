@@ -44,10 +44,7 @@ export class DatabaseComponent implements AfterViewInit {
   status?: statusResponse;
   isDbConnecting = false;
   dbFormGroup = new FormGroup({
-    hostname: new FormControl('', Validators.required),
-    port: new FormControl(3306, [Validators.required, Validators.min(1), Validators.max(65535)]),
-    username: new FormControl('root', Validators.required),
-    password: new FormControl(''),
+    uri: new FormControl('', Validators.required)
   });
 
   constructor(
@@ -74,10 +71,7 @@ export class DatabaseComponent implements AfterViewInit {
     if(this.dbFormGroup.invalid) return;
     this.isDbConnecting = true;
     this.setupService.setupDB({
-      host: this.dbFormGroup.value.hostname!,
-      port: this.dbFormGroup.value.port!,
-      username: this.dbFormGroup.value.username!,
-      password: this.dbFormGroup.value.password!,
+      uri: this.dbFormGroup.value.uri!
     }).subscribe(() => {
       this.isDbConnecting = false;
       this.cdr.detectChanges();

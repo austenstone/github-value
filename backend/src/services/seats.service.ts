@@ -1,5 +1,5 @@
 import { Endpoints } from '@octokit/types';
-import { SeatType } from "../models/copilot.seats.model.js";
+import { SeatType } from "../models/seats.model.js";
 import { components } from "@octokit/openapi-types";
 import mongoose from 'mongoose';
 import { MemberActivityType, MemberType } from 'models/teams.model.js';

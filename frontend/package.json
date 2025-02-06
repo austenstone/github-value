@@ -35,6 +35,7 @@
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^19.1.5",
+    "@angular-eslint/builder": "^19.0.2",
     "@angular/cli": "^19.1.5",
     "@angular/compiler-cli": "^19.1.4",
     "@types/canvas-confetti": "^1.6.4",

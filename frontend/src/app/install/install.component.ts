@@ -96,7 +96,7 @@ export class DialogAppComponent {
 
   registerNewApp() {
     if (this.organizationFormControl.value) {
-      this.form.nativeElement.action = `https://github.com/enterprises/${this.organizationFormControl.value}/settings/apps/new?state=abc123`
+      this.form.nativeElement.action = `https://github.com/organizations/${this.organizationFormControl.value}/settings/apps/new?state=abc123`
     }
     this.form.nativeElement.submit();
     this.dialogRef.close();

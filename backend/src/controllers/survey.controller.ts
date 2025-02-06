@@ -1,22 +1,28 @@
-import { application, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { SurveyType } from '../models/survey.model.js';
 import logger from '../services/logger.js';
 import surveyService from '../services/survey.service.js';
 import app from '../index.js';
 import mongoose from 'mongoose';
-import { MemberType } from 'models/teams.model.js';
-import { memoryUsage } from 'process';
-import validator from 'validator';
 
 class SurveyController {
   async updateSurveyGitHub(req: Request, res: Response): Promise<void> {
     let survey: SurveyType;
-    console.log(req);
     try {
       const _survey = await surveyService.updateSurvey({
-        ...req.body,
+        id: req.body.id,
+        userId: req.body.userId,
+        org: req.body.org,
+        repo: req.body.repo,
+        prNumber: req.body.prNumber,
+        usedCopilot: req.body.usedCopilot,
+        percentTimeSaved: req.body.percentTimeSaved,
+        reason: req.body.reason,
+        timeUsedFor: req.body.timeUsedFor,
+        kudos: req.body.kudos,
+        hits: 0,
         status: 'completed'
-      })
+      });
       if (!_survey) throw new Error('Survey not found');
       survey = _survey;
       res.status(201).json(survey);
@@ -57,11 +63,9 @@ class SurveyController {
   async createSurvey(req: Request, res: Response): Promise<void> {
     try {
       const newSurvey = req.body;
-      //const member = await this.getMemberByLogin(newSurvey.userId, newSurvey.org)|| true; //needs to be fixed :"Cannot read properties of undefined (reading 'getMemberByLogin')""
-      if (true) {
-        const survey = surveyService.createSurvey(newSurvey);
-        res.status(201).json(survey);
-      }
+      // TODO: validate the user belong to the org.
+      const survey = surveyService.createSurvey(newSurvey);
+      res.status(201).json(survey);
     } catch (error) {
       res.status(500).json((error as Error).message);
       return;
@@ -105,8 +109,12 @@ class SurveyController {
   async getSurveyById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
+      if (isNaN(Number(id))) {
+        res.status(400).json({ message: 'Invalid survey ID' });
+        return;
+      }
       const Survey = mongoose.model('Survey');
-      const survey = await Survey.findOne({ id: Number(id) }); // Cast `id` to Number
+      const survey = await Survey.findOne({ id: { $eq: Number(id) } }); // Use $eq operator
       if (!survey) {
         res.status(404).json({ message: 'Survey not found' });
         return;
@@ -122,8 +130,21 @@ class SurveyController {
       const Survey = mongoose.model('Survey');
       const { id } = req.params;
       const updated = await Survey.findOneAndUpdate({
-        id: Number(id) // Cast `id` to Number
-      }, req.body);
+        id: { $eq: Number(id) }
+      }, {
+        id: Number(req.body.id),
+        userId: String(req.body.userId),
+        org: String(req.body.org),
+        repo: String(req.body.repo),
+        prNumber: Number(req.body.prNumber),
+        usedCopilot: Boolean(req.body.usedCopilot),
+        percentTimeSaved: Number(req.body.percentTimeSaved),
+        reason: String(req.body.reason),
+        timeUsedFor: String(req.body.timeUsedFor),
+        kudos: String(req.body.kudos),
+        hits: 0,
+        status: 'completed'
+      });
       if (updated) {
         res.status(200).json({ _id: id, ...req.body });
       } else {
@@ -138,7 +159,11 @@ class SurveyController {
     try {
       const Survey = mongoose.model('Survey');
       const { id } = req.params;
-      const deleted = await Survey.findByIdAndDelete(id);
+      if (isNaN(Number(id))) {
+        res.status(400).json({ message: 'Invalid survey ID' });
+        return;
+      }
+      const deleted = await Survey.findOneAndDelete({ id: { $eq: Number(id) } }); // Use $eq operator
       if (deleted) {
         res.status(204).send();
       } else {
@@ -146,44 +171,6 @@ class SurveyController {
       }
     } catch (error) {
       res.status(500).json(error);
-    }
-    //create a helper function that calls this api
-    //router.get('/members/:login', teamsController.getMemberByLogin);
-  }
-
-  async getMemberByLogin(loginToFind: string, orgToMatch: string): Promise<MemberType> {
-    // Ensure both values are provided.
-    if (!loginToFind || !orgToMatch) {
-      throw new Error('Both login and org must be provided');
-    }
-
-    // Trim the login input and then validate.
-    const trimmedLogin = loginToFind.trim();
-    if (!validator.isAlphanumeric(trimmedLogin, 'en-US', { ignore: '-' })) {
-      throw new Error('Invalid login: Only alphanumeric characters and dashes are allowed');
-    }
-
-    // Optionally validate org if needed
-    const trimmedOrg = orgToMatch.trim();
-    if (!trimmedOrg) {
-      throw new Error('Invalid organization provided');
-    }
-
-    // Retrieve the Member model once instead of on every method call.
-    const Member = mongoose.model<MemberType>('Member');
-
-    try {
-      const member = await Member.findOne({ login: trimmedLogin, org: trimmedOrg })
-        .select('login name url avatar_url')
-        .exec();
-
-      if (member) {
-        return member;
-      } else {
-        throw new Error('User not found');
-      }
-    } catch (error) {
-      throw new Error('Member lookup failed with: ' + (error as Error).message);
     }
   }
 }

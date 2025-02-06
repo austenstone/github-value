@@ -1,6 +1,6 @@
 // combinedServiceTests.ts  run via "npx tsx src/__tests__/services/combinedServiceTests.ts"
 import SurveyService from '../../services/survey.service.js';
-import SeatService from '../../services/copilot.seats.service.js';
+import SeatService from '../../services/seats.service.js';
 import metricsService from '../../services/metrics.service.js';
 import { generateSurveys } from '../__mock__/survey-gen/runSurveyGenerator.js';
 import { MockSeatsGenerator } from '../__mock__/seats-gen/mockSeatsGenerator.js';

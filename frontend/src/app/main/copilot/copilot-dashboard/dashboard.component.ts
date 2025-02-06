@@ -19,7 +19,7 @@ import { StatusComponent } from './status/status.component';
   standalone: true,
   imports: [
     AppModule,
-    DashboardCardValueComponent,
+    // DashboardCardValueComponent,
     AdoptionChartComponent,
     DailyActivityChartComponent,
     TimeSavedChartComponent,

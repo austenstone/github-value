@@ -21,7 +21,7 @@ import { LoadingSpinnerComponent } from '../../../shared/loading-spinner/loading
     DateRangeSelectComponent,
     CopilotMetricsPieChartComponent,
     MatCardModule,
-    DashboardCardBarsComponent,
+    // DashboardCardBarsComponent,
     DashboardCardDrilldownBarChartComponent,
     ActiveUsersChartComponent,
     CommonModule,

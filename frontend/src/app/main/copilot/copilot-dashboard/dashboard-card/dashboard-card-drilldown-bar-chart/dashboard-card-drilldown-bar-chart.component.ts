@@ -16,7 +16,7 @@ import { LoadingSpinnerComponent } from '../../../../../shared/loading-spinner/l
     MatCardModule,
     CommonModule,
     HighchartsChartModule,
-    LoadingSpinnerComponent
+    // LoadingSpinnerComponent
   ],
   templateUrl: './dashboard-card-drilldown-bar-chart.component.html',
   styleUrls: [

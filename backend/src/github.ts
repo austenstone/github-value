@@ -45,7 +45,7 @@ class GitHub {
     octokit: Octokit
   }[];
   status = 'starting';
-  cronExpression = '0 * * * * *';
+  cronExpression = '0 0 * * * *';
 
   constructor(
     input: GitHubInput,
@@ -59,8 +59,8 @@ class GitHub {
 
   connect = async (input?: GitHubInput) => {
     if (input) this.setInput(input);
-    if (!this.input.appId) throw new Error('App ID is required');
-    if (!this.input.privateKey) throw new Error('Private key is required');
+    if (!this.input.appId) throw new Error('GITHUB_APP_ID is required');
+    if (!this.input.privateKey) throw new Error('GITHUB_APP_PRIVATE_KEY is required');
 
     this.app = new App({
       appId: this.input.appId,
@@ -92,10 +92,12 @@ class GitHub {
       logger.error('Failed to create webhook middleware')
     }
 
-    this.queryService = new QueryService(this.app, {
-      cronTime: this.cronExpression
-    });
-    logger.info(`CRON task ${this.cronExpression} started`);
+    if (!this.queryService) {
+      this.queryService = new QueryService(this.app, {
+        cronTime: this.cronExpression
+      });
+      logger.info(`CRON task ${this.cronExpression} started`);
+    }
     for await (const { octokit, installation } of this.app.eachInstallation.iterator()) {
       if (!installation.account?.login) return;
       this.installations.push({
@@ -114,7 +116,7 @@ class GitHub {
   getAppManifest(baseUrl: string) {
     const manifest = JSON.parse(readFileSync('github-manifest.json', 'utf8'));
     const base = new URL(baseUrl);
-    manifest.url = base.href;
+    manifest.url = base.href || 'localhost';
     manifest.hook_attributes.url = new URL('/api/github/webhooks', base).href;
     manifest.setup_url = new URL('/api/setup/install/complete', base).href;
     manifest.redirect_url = new URL('/api/setup/registration/complete', base).href;

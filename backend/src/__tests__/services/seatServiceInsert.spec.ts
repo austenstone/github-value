@@ -1,8 +1,8 @@
 //seatServiceInsert.spec.ts run via "npx tsx src/__tests__/services/seatServiceInsert.spec.ts"
 import { describe, expect, test, it, vi, beforeAll, afterAll, beforeEach } from 'vitest';
-import SeatService from '../../services/copilot.seats.service.js';
+import SeatService from '../../services/seats.service.js';
 import { SeatsMockConfig } from '../__mock__/types.js';
-import { SeatType } from '../../models/copilot.seats.model.js';
+import { SeatType } from '../../models/seats.model.js';
 import 'dotenv/config';
 import Database from '../../database.js';
 import { generateStatelessMetrics } from '../__mock__/seats-gen/runSeatsGenerator.js';

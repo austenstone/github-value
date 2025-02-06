@@ -55,11 +55,7 @@ export class SetupService {
   }
 
   setupDB(request: { // should be url or fields
-    host?: string;
-    port?: number;
-    username?: string;
-    password?: string;
-    url?: string;
+    uri: string;
   }) {
     return this.http.post(`${this.apiUrl}/db`, request);
   }

@@ -6,6 +6,7 @@ import { ColumnOptions } from '../../../shared/table/table.component';
 import { Router } from '@angular/router';
 import { InstallationsService } from '../../../services/api/installations.service';
 import { takeUntil } from 'rxjs';
+import { SortDirection } from '@angular/material/sort';
 
 @Component({
   selector: 'app-copilot-surveys',
@@ -30,6 +31,7 @@ export class CopilotSurveysComponent implements OnInit {
     { columnDef: 'status', header: 'Status', cell: (element: Survey) => `${element.status}`, chipList: true, chipListIcon: (el: Survey) => el.status === 'pending' ? 'pending' : el.status === 'completed' ? 'check' : 'close' },
     // { columnDef: 'reason', header: 'Reason', cell: (element: Survey) => element.reason || '-' },
   ];
+  defaultSort = { id: 'createdAt', start: 'desc' as SortDirection, disableClear: false };
 
   constructor(
     private copilotSurveyService: CopilotSurveyService,

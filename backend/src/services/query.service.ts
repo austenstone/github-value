@@ -1,15 +1,14 @@
 import { CronJob, CronJobParams, CronTime } from 'cron';
 import logger from './logger.js';
 import { insertUsage } from '../models/usage.model.js';
-import SeatService, { SeatEntry } from '../services/copilot.seats.service.js';
+import SeatService, { SeatEntry } from './seats.service.js';
 import { App, Octokit } from 'octokit';
 import { MetricDailyResponseType } from '../models/metrics.model.js';
-import mongoose from 'mongoose';
 import metricsService from './metrics.service.js';
 import teamsService from './teams.service.js';
 import adoptionService from './adoption.service.js';
 
-const DEFAULT_CRON_EXPRESSION = '0 * * * *';
+const DEFAULT_CRON_EXPRESSION = '0 0 * * * *';
 class QueryService {
   cronJob: CronJob;
   status = {
@@ -26,9 +25,8 @@ class QueryService {
     options?: Partial<CronJobParams>
   ) {
     this.app = app;
-    // Consider Timezone
     const _options: CronJobParams = {
-      cronTime: DEFAULT_CRON_EXPRESSION,
+      cronTime: options?.cronTime || DEFAULT_CRON_EXPRESSION,
       onTick: () => {
         this.task();
       },
@@ -45,6 +43,7 @@ class QueryService {
 
   private async task() {
     const queryAt = new Date();
+    logger.info(`Task started. Last ran at `, this.cronJob.lastDate());
     const tasks = [];
     for await (const { octokit, installation } of this.app.eachInstallation.iterator()) {
       if (!installation.account?.login) return;
@@ -81,6 +80,7 @@ class QueryService {
   }
 
   private async orgTask(octokit: Octokit, queryAt: Date, org: string) {
+    logger.info(`Task started for ${org}`);
     try {
       let teamsAndMembers = null;
       const mostRecentEntry = await teamsService.getLastUpdatedAt();
@@ -185,6 +185,11 @@ class QueryService {
 
   public async queryTeamsAndMembers(octokit: Octokit, org: string) {
     try {
+      const members = await octokit.paginate(octokit.rest.orgs.listMembers, {
+        org
+      });
+      await teamsService.updateMembers(org, members);
+
       const teams = await octokit.paginate(octokit.rest.teams.list, {
         org
       });
@@ -203,23 +208,6 @@ class QueryService {
           })
         )
       )
-
-      const members = await octokit.paginate("GET /orgs/{org}/members", {
-        org
-      });
-
-      const Members = mongoose.model('Member');
-
-      // Use bulkWrite with updateOne operations
-      const bulkOps = members.map((member) => ({
-        updateOne: {
-          filter: { org, id: member.id },
-          update: { $set: member },
-          upsert: true
-        }
-      }));
-
-      await Members.bulkWrite(bulkOps, { ordered: false });
 
       logger.info(`${org} teams and members updated`);
     } catch (error) {

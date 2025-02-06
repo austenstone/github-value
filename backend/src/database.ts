@@ -1,24 +1,18 @@
 import updateDotenv from 'update-dotenv';
 import logger from './services/logger.js';
-import mongoose, { mongo, Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import util from 'util';
-import { da } from 'date-fns/locale';
 
 class Database {
   mongoose: mongoose.Mongoose | null = null;
-  mongodbUri: string;
+  mongodbUri?: string;
 
-  constructor(mongodbUri: string) {
-    this.mongodbUri = mongodbUri;
-  }
+  constructor() { }
 
-  async connect() {
-    //improve the logger message  @12:12
-
-    logger.info('Connecting to the database', this.mongodbUri);
-    if (this.mongodbUri) await updateDotenv({ MONGODB_URI: this.mongodbUri });
+  async connect(mongodbUri: string) {
+    logger.info('Connecting to the database', mongodbUri);
     try {
-      this.mongoose = await mongoose.connect(this.mongodbUri, {
+      this.mongoose = await mongoose.connect(mongodbUri, {
         socketTimeoutMS: 90000,
         connectTimeoutMS: 60000,
         serverSelectionTimeoutMS: 30000,
@@ -41,7 +35,13 @@ class Database {
         // logger.debug(`\x1B[0;36mMongoose:\x1B[0m: ${collectionName}.${methodName}` + `(${methodArgs.map(msgMapper).join(', ')})`);
         logger.debug(`[Mongoose] ${collectionName}.${methodName}(${methodArgs.map(msgMapper).join(', ')})`);
       });
-
+      
+      if (mongodbUri) await updateDotenv({ MONGODB_URI: mongodbUri });
+      this.mongodbUri = mongodbUri;
+      logger.info('Database connected');
+      
+      this.setupSchemas();
+      logger.info('Database schemas setup complete');
     } catch (error) {
       logger.debug(error);
       if (error instanceof Error) {
@@ -49,9 +49,16 @@ class Database {
       }
       throw error;
     }
+  }
+
+  async disconnect() {
+    await this.mongoose?.disconnect();
+  }
+
+  async setupSchemas() {
     mongoose.model('Settings', new mongoose.Schema({
       name: String,
-      value: String
+      value: {}
     }));
     mongoose.model('Usage', new mongoose.Schema({
       org: String,
@@ -319,7 +326,9 @@ class Database {
       percentTimeSaved: Number,
       reason: String,
       timeUsedFor: String,
-      kudos: Number
+      kudos: Number,
+      status: String,
+      hits: Number
     }, {
       timestamps: true
     }));
@@ -357,10 +366,6 @@ class Database {
     });
 
     mongoose.model('Counter', CounterSchema);
-  }
-
-  async disconnect() {
-    await this.mongoose?.disconnect();
   }
 
 }

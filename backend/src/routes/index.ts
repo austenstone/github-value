@@ -6,7 +6,7 @@ import setupController from '../controllers/setup.controller.js';
 import SeatsController from '../controllers/seats.controller.js';
 import metricsController from '../controllers/metrics.controller.js';
 import teamsController from '../controllers/teams.controller.js';
-import targetValuesController from '../controllers/target-values.controller.js';
+import targetValuesController from '../controllers/target.controller.js';
 import adoptionController from '../controllers/adoption.controller.js';
 
 const router = Router();

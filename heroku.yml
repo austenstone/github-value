@@ -8,6 +8,5 @@ build:
   config:
     DOCKER_BUILDKIT: 1
     NODE_ENV: production
-    MYSQL_DATABASE: value
 run:
   web: npm run start

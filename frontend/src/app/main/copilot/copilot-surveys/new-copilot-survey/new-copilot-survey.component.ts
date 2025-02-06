@@ -69,6 +69,7 @@ export class NewCopilotSurveyComponent implements OnInit {
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
       this.params = params;
+      this.surveyForm.get('userId')?.setValue(params['author']);
     });
 
     // Subscribe to the installationsService to get the latest organization

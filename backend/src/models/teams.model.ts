@@ -1,5 +1,5 @@
 import { components } from "@octokit/openapi-types";
-import { SeatType } from "./copilot.seats.model.js";
+import { SeatType } from "./seats.model.js";
 import mongoose from "mongoose";
 
 export type TeamType = Omit<components["schemas"]["team"], 'parent'> & {

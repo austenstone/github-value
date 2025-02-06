@@ -17,7 +17,7 @@ class WebhookService {
     this.options = options;
   }
 
-  public async connect(options?: WebhookServiceOptions) {
+  public async connect(options?: Partial<WebhookServiceOptions>) {
     if (options) {
       this.options = {
         ...this.options,

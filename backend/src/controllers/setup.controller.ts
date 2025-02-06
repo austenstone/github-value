@@ -1,10 +1,12 @@
 import { Request, Response } from 'express';
 import app from '../index.js';
 import StatusService from '../services/status.service.js';
+import logger from '../services/logger.js';
 
 class SetupController {
   async registrationComplete(req: Request, res: Response) {
     try {
+      logger.info(`GitHub registrationComplete`, req.query);
       const { code } = req.query;
       const { html_url } = await app.github.createAppFromManifest(code as string);
       res.redirect(`${html_url}/installations/new`);
@@ -15,6 +17,7 @@ class SetupController {
 
   async installComplete(req: Request, res: Response) {
     try {
+      logger.info(`GitHub installComplete`, req.query);
       const installationUrl = await app.github.app?.getInstallationUrl();
       if (!installationUrl) throw new Error('No installation URL found');
       res.redirect(installationUrl);
@@ -34,6 +37,7 @@ class SetupController {
 
   async addExistingApp(req: Request, res: Response) {
     try {
+      logger.info(`GitHub addExistingApp`, req.body);
       const { appId, privateKey, webhookSecret } = req.body;
 
       if (!appId || !privateKey || !webhookSecret) {
@@ -101,7 +105,7 @@ class SetupController {
 
   async setupDB(req: Request, res: Response) {
     try {
-      await app.database.connect();
+      await app.database.connect(req.body.uri);
       res.json({ message: 'DB setup started' });
     } catch (error) {
       res.status(500).json(error);

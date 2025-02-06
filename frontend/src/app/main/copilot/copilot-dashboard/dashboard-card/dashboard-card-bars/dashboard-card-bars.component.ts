@@ -24,7 +24,7 @@ export interface DashboardCardBarsInput {
     CommonModule,
     MatProgressBarModule,
     MatIconModule,
-    LoadingSpinnerComponent
+    // LoadingSpinnerComponent
   ],
   templateUrl: './dashboard-card-bars.component.html',
   styleUrls: [

@@ -5,6 +5,7 @@
 .sidenav {
   width: auto;
   padding: 0 12px;
+
   &.full-width {
     width: 100vw !important; // full viewport width on mobile
   }
@@ -26,26 +27,31 @@ mat-sidenav {
     justify-content: center;
     align-items: center;
     padding: 0 8px !important;
-    img { // really we want to add 8px of margin to button
+
+    img {
+      // really we want to add 8px of margin to button
       margin-left: 8px;
     }
   }
 }
 
 mat-card-header {
+  padding: 0 0 0 8px;
+
   mat-card-title {
     font-size: 32px;
   }
-  > * {
+
+  >* {
     margin: 0;
   }
-  padding: 0 0 0 8px;
 }
 
 .hide-nav-text {
   span {
     display: none;
   }
+
   .mat-mdc-list-item {
     padding-right: 0 !important;
   }
@@ -68,33 +74,38 @@ mat-divider {
 }
 
 .header {
-    display: flex;
-    box-sizing: border-box;
-    width: 100%;
-    flex-direction: row;
-    align-items: center;
-    white-space: nowrap;
-    height: var(--mat-toolbar-standard-height);
-    .mat-card-avatar {
-      background-size: cover;
-      border-radius: 6px;
-      box-shadow: 0 0 0 1px rgba(31, 35, 40, 0.15);
-      background-color: var(--sys-inverse-on-surface);
-      width: 48px;
-      height: 48px;
-      vertical-align: middle;
-      margin: 0;
-    }
-    h1 {
-      min-width: 200px;
-      .mat-mdc-select {
-        font-size: 32px;
-        line-height: 32px;
-      }
-      padding: 0 16px;
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  flex-direction: row;
+  align-items: center;
+  white-space: nowrap;
+  height: var(--mat-toolbar-standard-height);
+
+  .mat-card-avatar {
+    background-size: cover;
+    border-radius: 6px;
+    box-shadow: 0 0 0 1px rgba(31, 35, 40, 0.15);
+    background-color: var(--sys-inverse-on-surface);
+    width: 48px;
+    height: 48px;
+    vertical-align: middle;
+    margin: 0;
+  }
+
+  h1 {
+    min-width: 200px;
+
+    .mat-mdc-select {
       font-size: 32px;
-      ::ng-deep .mat-mdc-select-arrow-wrapper  {
-        margin-left: 10px !important;
-      }
+      line-height: 32px;
     }
+
+    padding: 0 16px;
+    font-size: 32px;
+
+    ::ng-deep .mat-mdc-select-arrow-wrapper {
+      margin-left: 10px !important;
+    }
+  }
 }

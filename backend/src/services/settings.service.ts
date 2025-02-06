@@ -1,4 +1,6 @@
 import mongoose from 'mongoose';
+import app from '../index.js';
+import logger from './logger.js';
 
 export interface SettingsType {
   baseUrl?: string,
@@ -70,15 +72,40 @@ class SettingsService {
   async updateSetting(name: keyof SettingsType, value: string) {
     try {
       const Setting = mongoose.model('Settings');
-      const setting = await Setting.findOneAndUpdate(
-        { name },
-        { value },
-        { 
-          new: true,
-          upsert: true,
+
+      const existingSetting = await Setting.findOne({ name });
+      const changed = !existingSetting || existingSetting.value !== value;
+      if (changed) {
+        logger.info(`Setting ${name} changed to ${value}`);
+        const setting = await Setting.findOneAndUpdate(
+          { name },
+          { value },
+          {
+            new: true,
+            upsert: true,
+          }
+        );
+
+        switch (setting.name) {
+          case 'metricsCronExpression':
+            app.github.queryService?.updateCronJob(setting.value);
+            break;
+          case 'webhookSecret':
+            app.github.connect({
+              webhooks: {
+                secret: setting.value
+              }
+            });
+            break;
+          case 'webhookProxyUrl':
+            app.github.smee.connect({
+              url: setting.value
+            });
+            break;
         }
-      );
-      return setting.value;
+        return true;
+      }
+      return false;
     } catch (error) {
       console.error('Failed to update setting:', error);
       throw error;
@@ -87,8 +114,8 @@ class SettingsService {
 
   async updateSettings(obj: { [key: string]: string }) {
     await Promise.all(
-      Object.entries(obj).map(([name, value]) => 
-      this.updateSetting(name as keyof SettingsType, value)
+      Object.entries(obj).map(([name, value]) =>
+        this.updateSetting(name as keyof SettingsType, value)
       )
     );
   }

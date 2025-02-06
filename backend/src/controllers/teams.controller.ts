@@ -1,32 +1,15 @@
 import { Request, Response } from 'express';
-import mongoose from 'mongoose';
-
-// const TeamMember = mongoose.model('TeamMember');
+import teamsService from '../services/teams.service.js';
 
 class TeamsController {
   async getAllTeams(req: Request, res: Response): Promise<void> {
-    const Team = mongoose.model('Team');
-    const Member = mongoose.model('Member');
     try {
-      const query = req.query.org ? { org: req.query.org as string } : {};
-      const teams = await Team.find(query)
-        .populate({
-          path: 'members',
-          select: 'login avatar_url',
-          model: Member
-        })
-        .populate({
-          path: 'children',
-          select: 'name org slug description html_url',
-          populate: {
-            path: 'members',
-            select: 'login avatar_url',
-            model: Member
-          }
-        })
-        .sort({ name: 'asc', 'members.login': 'asc' })
-        .exec();
-
+      const { org } = req.query;
+      if (org && typeof org !== 'string') {
+        res.status(400).json({ message: 'Invalid org parameter' });
+        return;
+      }
+      const teams = teamsService.getTeams(org);
       res.json(teams);
     } catch (error) {
       res.status(500).json(error);
@@ -34,18 +17,13 @@ class TeamsController {
   }
 
   async getAllMembers(req: Request, res: Response): Promise<void> {
-    const Member = mongoose.model('Member');
     try {
-      const members = await Member.find()
-        .select('login org name url avatar_url')
-        .populate({
-          path: 'seat',
-          select: '-_id -__v',
-          options: { lean: true }
-        })
-        .sort({ login: 'asc' })
-        .exec();
-
+      const { org } = req.query;
+      if (org && typeof org !== 'string') {
+        res.status(400).json({ message: 'Invalid org parameter' });
+        return;
+      }
+      const members = await teamsService.getAllMembers(org);
       res.json(members);
     } catch (error) {
       res.status(500).json(error);
@@ -53,13 +31,9 @@ class TeamsController {
   }
 
   async getMemberByLogin(req: Request, res: Response): Promise<void> {
-    const Member = mongoose.model('Member');
     try {
       const { login } = req.params;
-      const member = await Member.findOne({ login })
-        .select('login name url avatar_url')
-        .exec();
-
+      const member = teamsService.getMemberByLogin(login);
       if (member) {
         res.json(member);
       } else {

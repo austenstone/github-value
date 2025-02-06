@@ -53,17 +53,24 @@
       </button>
       }
       <div class="header">
-        <div *ngIf="installationsService.currentInstallation.asObservable() | async as installation" class="mat-card-avatar" mat-card-avatar style="background-size: cover;"
+        <div *ngIf="installationsService.currentInstallation.asObservable() | async as installation"
+          class="mat-card-avatar" mat-card-avatar style="background-size: cover;"
           [style.background-image]="'url(' + installation?.account?.avatar_url + ')'">
         </div>
-        <h1>
-          <mat-select [ngModel]="(installationsService.currentInstallation.asObservable() | async)?.id || 1" (ngModelChange)="installationsService.setInstallation($event)">
-            <mat-option [value]="1">Enterprise</mat-option>
-            @for (installation of installationsService.getInstallations() | async; track installation.id) {
-            <mat-option [value]="installation.id">{{ installation.account?.login }}</mat-option>
-            }
-          </mat-select>
-        </h1>
+        <ng-container *ngIf="installationsService.getInstallations() | async as installations">
+          <h1>
+            <mat-select *ngIf="installations.length > 1; else singleInstall" [ngModel]="(installationsService.currentInstallation.asObservable() | async)?.id || 1"
+              (ngModelChange)="installationsService.setInstallation($event)">
+              <mat-option [value]="1">Enterprise</mat-option>
+              @for (installation of installationsService.getInstallations() | async; track installation.id) {
+              <mat-option [value]="installation.id">{{ installation.account?.login }}</mat-option>
+              }
+            </mat-select>
+            <ng-template #singleInstall>
+              <span>{{ installations[0]?.account?.login }}</span>
+            </ng-template>
+          </h1>
+        </ng-container>
       </div>
       <span class="spacer"></span>
     </mat-toolbar>
