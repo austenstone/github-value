@@ -6,7 +6,7 @@ class SettingsController {
     try {
       const settings = await app.settingsService.getAllSettings();
       if (!settings) {
-        return res.status(404).json({ error: 'Settings not found' });
+        res.status(404).json({ error: 'Settings not found' });
       }
       res.json(settings);
     } catch (error) {
