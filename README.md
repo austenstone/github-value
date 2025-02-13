@@ -18,7 +18,7 @@ github-value will take you through setup the first time you run it. You can manu
 
 <details>
   <summary>Docker Compose</summary>
-
+sfdsdfsadf
   Install [docker compose](https://docs.docker.com/compose/install/) and run one command.
 
   ```bash
