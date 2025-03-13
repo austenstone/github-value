@@ -7,14 +7,14 @@ import { TimeSavedChartComponent } from './time-saved-chart/time-saved-chart.com
 import { CopilotMetrics } from '../../../services/api/metrics.service.interfaces';
 import { MetricsService } from '../../../services/api/metrics.service';
 import { FormControl } from '@angular/forms';
-import { Subscription, takeUntil } from 'rxjs';
+import { combineLatest, startWith, Subscription, takeUntil } from 'rxjs';
 import { CopilotSurveyService, Survey } from '../../../services/api/copilot-survey.service';
 import * as Highcharts from 'highcharts';
 import HC_exporting from 'highcharts/modules/exporting';
 HC_exporting(Highcharts);
 import HC_full_screen from 'highcharts/modules/full-screen';
 import { InstallationsService } from '../../../services/api/installations.service';
-import { Targets, TargetsService } from '../../../services/api/targets.service';
+import { TargetsGridType, TargetsService } from '../../../services/api/targets.service';
 HC_full_screen(Highcharts);
 
 @Component({
@@ -35,7 +35,7 @@ HC_full_screen(Highcharts);
 export class CopilotValueComponent implements OnInit {
   activityData?: ActivityResponse;
   metricsData?: CopilotMetrics[];
-  targetsData?: Targets;
+  targetsData?: TargetsGridType;
   surveysData?: Survey[];
   daysInactive = new FormControl(30);
   adoptionFidelity = new FormControl<'day' | 'hour'>('day');

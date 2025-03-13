@@ -4,7 +4,7 @@ import { MaterialModule } from '../../../material.module';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { HighchartsChartModule } from 'highcharts-angular';
-import { SharedModule } from '../../../shared/shared.module';
+import { SharedModule } from '../shared/shared.module';
 import * as Highcharts from 'highcharts';
 import { CopilotSurveyService } from '../../../services/api/copilot-survey.service';
 import { AdoptionService } from '../../../services/api/adoption.service';
@@ -243,7 +243,7 @@ export class ValueModelingComponent implements OnInit, AfterViewInit {
         this.originalAsOfDate = new Date(this.gridObject.current.asOfDate);
       }
 
-    }, 500);
+    }, 3000);
 
     this.installationsService.currentInstallation.pipe(
       takeUntil(this._destroy$.asObservable())
@@ -507,13 +507,16 @@ export class ValueModelingComponent implements OnInit, AfterViewInit {
 
   async queryCurrentAndMaxValues(): Promise<void> {
 
-    const now = new Date();
+    const now = this.originalAsOfDate || new Date();
     const utcNow = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0);
     const xDaysAgoUTC = new Date(utcNow - this.clickCounter * 24 * 60 * 60 * 1000);
     const xPlus1DaysAgoUTC = new Date(utcNow - (this.clickCounter + .9) * 24 * 60 * 60 * 1000);
     const xPlus7DaysAgoUTC = new Date(utcNow - (this.clickCounter + 6) * 24 * 60 * 60 * 1000);
     const xPlus30DaysAgoUTC = new Date(utcNow - (this.clickCounter + 30) * 24 * 60 * 60 * 1000);
     console.log('xDaysAgo:', xDaysAgoUTC);
+    console.log('xPlus1DaysAgoUTC:', xPlus1DaysAgoUTC);
+    console.log('xPlus7DaysAgoUTC:', xPlus7DaysAgoUTC);
+    console.log('xPlus30DaysAgoUTC:', xPlus30DaysAgoUTC);
 
     let dayAtaTimeMetricsCounter = 0;
     let weekAtaTimeMetricsCounter = 0;
@@ -581,12 +584,12 @@ export class ValueModelingComponent implements OnInit, AfterViewInit {
         console.log('Adoption records:', dayAtaTimeAdoptionsCounter);
         // Process adoptions
         for (const adoption of dayAtaTimeAdoptions) {
-          //console.log('Adoption data:', adoption.date, adoption.totalActive);
-          if (adoption.totalActive > Number(gridObject.current.adoptedDevs || 0) && (gridObject.current.asOfDate != (new Date(adoption.date.$date)).getTime())) {
+          //console.log('Adoption data:', adoption.date, adoption.totalSeats, adoption.totalActive)
             gridObject.current.seats = adoption.totalSeats;
+            //console.log('>>>>seats:', adoption.totalSeats);
             gridObject.current.adoptedDevs = adoption.totalActive;
             gridObject.current.asOfDate = new Date(adoption.date.toString()).getTime();
-          }
+          
         }
       }),
       tap(({ dayAtaTimeMetrics }) => {

@@ -4,7 +4,7 @@ import { HighchartsChartModule } from 'highcharts-angular';
 import { ActivityResponse } from '../../../../services/api/seat.service';
 import { CopilotMetrics } from '../../../../services/api/metrics.service.interfaces';
 import { HighchartsService } from '../../../../services/highcharts.service';
-import { Targets } from '../../../../services/api/targets.service';
+import { TargetsGridType } from '../../../../services/api/targets.service';
 
 @Component({
   selector: 'app-daily-activity-chart',
@@ -19,7 +19,7 @@ export class DailyActivityChartComponent implements OnInit, OnChanges {
   Highcharts: typeof Highcharts = Highcharts;
   updateFlag = false;
   @Input() activity?: ActivityResponse;
-  @Input() targets?: Targets;
+  @Input() targets?: TargetsGridType;
   @Input() metrics?: CopilotMetrics[];
   @Input() chartOptions?: Highcharts.Options;
   @Output() chartInstanceChange = new EventEmitter<Highcharts.Chart>();
@@ -32,10 +32,10 @@ export class DailyActivityChartComponent implements OnInit, OnChanges {
 
           // Mapping from series name to target values
           const targetMapping: Record<string, number> = {
-            'IDE Suggestions': this.targets?.user.dailySuggestions.target || 0,
-            'IDE Accepts': this.targets?.user.dailyAcceptances.target || 0,
-            'IDE Chats': this.targets?.user.dailyChatTurns.target || 0,
-            '.COM Chats': this.targets?.user.dailyDotComChats.target || 0
+            'IDE Suggestions': this.targets?.target.dailySuggestions || 0,
+            'IDE Accepts': this.targets?.target.dailyAcceptances || 0,
+            'IDE Chats': this.targets?.target.dailyChatTurns || 0,
+            '.COM Chats': this.targets?.target.dailyDotComChats || 0
           };
 
           let newTarget = 1000;
