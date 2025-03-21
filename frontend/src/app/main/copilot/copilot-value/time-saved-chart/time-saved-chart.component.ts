@@ -4,7 +4,7 @@ import { HighchartsChartModule } from 'highcharts-angular';
 import { Survey } from '../../../../services/api/copilot-survey.service';
 import { HighchartsService } from '../../../../services/highcharts.service';
 import { ActivityResponse } from '../../../../services/api/seat.service';
-import { Targets } from '../../../../services/api/targets.service';
+import { TargetsGridType } from '../../../../services/api/targets.service';
 
 @Component({
   selector: 'app-time-saved-chart',
@@ -17,7 +17,7 @@ import { Targets } from '../../../../services/api/targets.service';
 })
 export class TimeSavedChartComponent implements OnInit, OnChanges {
   @Input() surveys?: Survey[];
-  @Input() targets?: Targets;
+  @Input() targets?: TargetsGridType;
   @Input() activity?: ActivityResponse;
   @Input() chartOptions?: Highcharts.Options;
   @Output() chartInstanceChange = new EventEmitter<Highcharts.Chart>();

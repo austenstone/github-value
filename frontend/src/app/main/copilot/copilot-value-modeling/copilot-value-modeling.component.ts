@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
 import { Subject, takeUntil } from 'rxjs';
 import { InstallationsService } from '../../../services/api/installations.service';
-import { Target, Targets, TargetsService } from '../../../services/api/targets.service';
+import { Target, Targets, TargetsService } from '../../../services/api/targets.service-pending';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogActions, MatDialogContent, MatDialogRef, MatDialogTitle } from '@angular/material/dialog';

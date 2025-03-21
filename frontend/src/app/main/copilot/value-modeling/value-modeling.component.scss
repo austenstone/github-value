@@ -1,0 +1,145 @@
+.page-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 500;
+  }
+
+  .button-group {
+    display: flex;
+    gap: 16px;
+  }
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-bottom: 24px;
+
+  mat-card {
+    height: 300px;
+
+    .chart-container {
+      height: 250px;
+    }
+  }
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 200px repeat(3, 1fr);
+  gap: 16px;
+  align-items: center;
+
+  .grid-header {
+    font-weight: 500;
+    padding: 8px;
+    text-align: center;
+  }
+
+  .metrics-label {
+    font-weight: 500;
+  }
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  .usage-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+}
+
+.metrics-table {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+
+  mat-card {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+
+      th, td {
+        padding: 8px;
+        text-align: right; /* Right justify all content */
+        width: 25%; /* Ensure consistent column widths */
+      }
+
+      th {
+        font-weight: 500;
+      }
+
+      td {
+        mat-form-field {
+          width: 100%;
+        }
+      }
+    }
+  }
+}
+
+.example-right-align {
+  text-align: right;
+}
+
+.invalid {
+  border-color: red;
+}
+
+mat-form-field[disabled] {
+  .mat-form-field-wrapper {
+    background-color: #f5f5f5;
+    box-shadow: none;
+  }
+
+  .mat-input-element {
+    color: #9e9e9e;
+  }
+}
+
+.nav-arrow {
+  font-size: 24px;  // Adjust this value to make arrows bigger/smaller
+  font-weight: bold;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics-grid {
+    grid-template-columns: 1fr;
+    
+    .grid-header {
+      display: none;
+    }
+
+    .usage-inputs {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .metrics-table {
+    grid-template-columns: 1fr;
+  }
+}
