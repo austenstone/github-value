@@ -1,6 +1,5 @@
 import { CronJob, CronJobParams, CronTime } from 'cron';
 import logger from './logger.js';
-import { insertUsage } from '../models/usage.model.js';
 import SeatService, { SeatEntry } from './seats.service.js';
 import { App, Octokit } from 'octokit';
 import { MetricDailyResponseType } from '../models/metrics.model.js';
@@ -98,10 +97,6 @@ class QueryService {
       }
 
       const queries = [
-        this.queryCopilotUsageMetrics(octokit, org).then(result => {
-          this.status.usage = true;
-          return result;
-        }),
         this.queryCopilotUsageMetricsNew(octokit, org).then(result => {
           this.status.metrics = true;
           return result;
@@ -112,11 +107,10 @@ class QueryService {
         }),
       ];
 
-      const [usageMetrics, usageMetricsNew, copilotSeatAssignments] = await Promise.all(queries);
+      const [usageMetricsNew, copilotSeatAssignments] = await Promise.all(queries);
       this.status.dbInitialized = true;
 
       return {
-        usageMetrics,
         usageMetricsNew,
         copilotSeatAssignments,
         teamsAndMembers
@@ -139,19 +133,6 @@ class QueryService {
       logger.info(`${org} metrics updated`);
     } catch (error) {
       logger.error(org, `Error updating ${org} metrics`, error);
-    }
-  }
-
-  public async queryCopilotUsageMetrics(octokit: Octokit, org: string) {
-    try {
-      const rsp = await octokit.rest.copilot.usageMetricsForOrg({
-        org
-      });
-
-      insertUsage(org, rsp.data);
-      logger.info(`${org} usage metrics updated`);
-    } catch (error) {
-      logger.error(`Error updating ${org} usage metrics`, error);
     }
   }
 

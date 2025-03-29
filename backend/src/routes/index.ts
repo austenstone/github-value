@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
 import surveyController from '../controllers/survey.controller.js';
-import usageController from '../controllers/usage.controller.js';
 import settingsController from '../controllers/settings.controller.js';
 import setupController from '../controllers/setup.controller.js';
 import SeatsController from '../controllers/seats.controller.js';
@@ -21,8 +20,6 @@ router.get('/survey/:id', surveyController.getSurveyById);
 router.put('/survey/:id', surveyController.updateSurvey); // put github survey logic here
 router.delete('/survey/:id', surveyController.deleteSurvey);
 router.post('/survey/:id/github', surveyController.updateSurveyGitHub);
-
-router.get('/usage', usageController.getUsage);
 
 router.get('/metrics', metricsController.getMetrics);
 router.get('/metrics/totals', metricsController.getMetricsTotals);
