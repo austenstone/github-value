@@ -2,6 +2,7 @@ import bunyan from 'bunyan';
 import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { Request, Response, NextFunction } from 'express';
 import path, { dirname } from 'path';
+import process from 'node:process';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -15,6 +16,9 @@ if (!existsSync(logsDir)) {
 const packageJsonPath = path.resolve(__dirname, '../../package.json');
 const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
 export const appName = packageJson.name || 'GitHub Value';
+
+const period = process.env.LOG_ROTATION_PERIOD || '1d';
+const count = parseInt(process.env.LOG_ROTATION_COUNT ?? '14');
 
 const logger = bunyan.createLogger({
   name: appName,
@@ -42,14 +46,16 @@ const logger = bunyan.createLogger({
     },
     {
       path: `${logsDir}/error.json`,
-      period: '1d',
-      count: 14,
+      type: 'rotating-file',
+      period: period,
+      count: count,
       level: 'error'
     },
     {
       path: `${logsDir}/debug.json`,
-      period: '1d',
-      count: 14,
+      type: 'rotating-file',
+      period: period,
+      count: count,
       level: 'debug'
     }
   ]
