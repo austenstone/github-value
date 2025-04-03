@@ -5,6 +5,8 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import path from 'path';
 import * as http from 'http';
+import session from 'express-session';
+import passport from 'passport';
 import Database from './database.js';
 import logger, { expressLoggerMiddleware } from './services/logger.js';
 import GitHub from './github.js';
@@ -12,6 +14,7 @@ import SettingsService from './services/settings.service.js';
 import apiRoutes from "./routes/index.js"
 import WebhookService from './services/smee.js';
 import TargetValuesService from './services/target.service.js';
+import authService from './services/auth/auth.service.js';
 
 class App {
   e: Express;
@@ -90,7 +93,6 @@ class App {
         } catch (error) {
           logger.warn('GitHub App failed to connect', (error as any)?.message || error);
         }
-
       }
 
       return this.e;
@@ -118,12 +120,28 @@ class App {
       bodyParser.json()(req, res, next);
     }, bodyParser.urlencoded({ extended: true }));
 
+    this.e.use(session({
+      secret: process.env.SESSION_SECRET || 'github-value-secret',
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000
+      }
+    }));
+
+    this.e.use(passport.initialize());
+    this.e.use(passport.session());
+    
+    this.setupAuthentication();
+
     this.e.use(expressLoggerMiddleware);
     this.e.use(rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 1000, // max 100 requests per windowMs
       skip: (req) => req.path === '/api/github/webhooks'
     }));
+    
     this.e.use('/api', apiRoutes);
 
     const __dirname = path.resolve();
@@ -133,6 +151,20 @@ class App {
 
     this.eListener = this.e.listen(this.port, '0.0.0.0');
     logger.info(`eListener on port ${this.port} (http://localhost:${this.port})`);
+  }
+
+  private setupAuthentication() {
+    const clientID = process.env.GITHUB_OAUTH_CLIENT_ID || '';
+    const clientSecret = process.env.GITHUB_OAUTH_CLIENT_SECRET || '';
+    const callbackURL = `${this.baseUrl}/api/auth/github/callback`;
+
+    if (!clientID || !clientSecret) {
+      logger.warn('GitHub OAuth credentials not provided. Authentication disabled.');
+      return;
+    }
+
+    authService.initialize(clientID, clientSecret, callbackURL);
+    logger.info('GitHub OAuth authentication initialized');
   }
 
   private initializeSettings() {

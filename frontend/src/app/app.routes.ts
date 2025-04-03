@@ -15,8 +15,11 @@ import { CopilotSeatComponent } from './main/copilot/copilot-seats/copilot-seat/
 import { DatabaseComponent } from './database/database.component';
 import { ErrorComponent } from './error/error.component';
 import { CopilotValueModelingComponent } from './main/copilot/copilot-value-modeling/copilot-value-modeling.component';
+import { LoginComponent } from './login/login.component';
+import { AuthGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
+  { path: 'login', component: LoginComponent },
   { path: 'setup', component: InstallComponent },
   { path: 'setup/loading', component: DbLoadingComponent },
   { path: 'setup/db', component: DatabaseComponent },
@@ -24,8 +27,8 @@ export const routes: Routes = [
   {
     path: '',
     component: MainComponent,
-    canActivate: [SetupStatusGuard],
-    canActivateChild: [SetupStatusGuard],
+    canActivate: [SetupStatusGuard, AuthGuard],
+    canActivateChild: [SetupStatusGuard, AuthGuard],
     children: [
       { path: 'copilot', component: CopilotDashboardComponent, title: 'Dashboard' },
       { path: 'copilot/value', component: CopilotValueComponent, title: 'Value' },

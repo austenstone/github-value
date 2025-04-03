@@ -18,6 +18,9 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { InstallationsService } from '../services/api/installations.service';
+import { AuthService } from '../services/auth.service';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-main',
@@ -35,7 +38,9 @@ import { InstallationsService } from '../services/api/installations.service';
     MatCardModule,
     MatFormFieldModule,
     MatSelectModule,
-    MatInputModule
+    MatInputModule,
+    MatMenuModule,
+    MatTooltipModule
   ]
 })
 export class MainComponent {
@@ -59,6 +64,7 @@ export class MainComponent {
     private confettiService: ConfettiService,
     public setupService: SetupService,
     public installationsService: InstallationsService,
+    public authService: AuthService
   ) {
     this.hideNavText = localStorage.getItem('hideNavText') === 'true';
     this.route.queryParams.subscribe(params => {
@@ -89,5 +95,11 @@ export class MainComponent {
     if (installation) {
       this.installationsService.setInstallation(installation);
     }
+  }
+
+  logout(): void {
+    this.authService.logout().subscribe(() => {
+      this.router.navigate(['/login']);
+    });
   }
 }

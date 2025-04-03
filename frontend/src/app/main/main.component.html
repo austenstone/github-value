@@ -73,6 +73,36 @@
         </ng-container>
       </div>
       <span class="spacer"></span>
+      
+      <!-- User profile and authentication -->
+      <ng-container *ngIf="authService.authStatus$ | async as authStatus">
+        <div *ngIf="authStatus.isAuthenticated" class="user-profile">
+          <!-- Theme toggle button -->
+          <button mat-icon-button [matTooltip]="(themeService.isDarkTheme() | async) ? 'Switch to light theme' : 'Switch to dark theme'"
+            (click)="themeService.toggleTheme()">
+            <mat-icon>{{ (themeService.isDarkTheme() | async) ? 'light_mode' : 'dark_mode' }}</mat-icon>
+          </button>
+
+          <!-- User avatar and menu -->
+          <button mat-icon-button [matMenuTriggerFor]="userMenu" class="user-avatar"
+            [style.background-image]="'url(' + (authStatus.user?.photos?.[0]?.value || '') + ')'"
+            [matTooltip]="authStatus.user?.displayName || authStatus.user?.username || 'User'">
+          </button>
+          <mat-menu #userMenu="matMenu">
+            <div class="user-menu-header">
+              <div class="user-info">
+                <h3>{{ authStatus.user?.displayName || authStatus.user?.username }}</h3>
+                <p>{{ authStatus.user?.emails?.[0]?.value }}</p>
+              </div>
+            </div>
+            <mat-divider></mat-divider>
+            <button mat-menu-item (click)="logout()">
+              <mat-icon>logout</mat-icon>
+              <span>Log out</span>
+            </button>
+          </mat-menu>
+        </div>
+      </ng-container>
     </mat-toolbar>
     <div class="sidenav-content">
       <router-outlet />
