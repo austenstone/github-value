@@ -60,28 +60,6 @@ class Database {
       name: String,
       value: {}
     }));
-    mongoose.model('Usage', new mongoose.Schema({
-      org: String,
-      team: String,
-      day: Date,
-      total_suggestions_count: Number,
-      total_acceptances_count: Number,
-      total_lines_suggested: Number,
-      total_lines_accepted: Number,
-      total_active_users: Number,
-      total_chat_acceptances: Number,
-      total_chat_turns: Number,
-      total_active_chat_users: Number,
-      breakdown: [{
-        language: String,
-        editor: String,
-        suggestions_count: Number,
-        acceptances_count: Number,
-        lines_suggested: Number,
-        lines_accepted: Number,
-        active_users: Number
-      }]
-    }));
 
     // Language Schema 📝
     const LanguageSchema = new mongoose.Schema({
