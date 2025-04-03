@@ -16,6 +16,9 @@ const packageJsonPath = path.resolve(__dirname, '../../package.json');
 const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
 export const appName = packageJson.name || 'GitHub Value';
 
+const period = process.env.LOG_ROTATION_PERIOD || '1d';
+const count = process.env.LOG_ROTATION_COUNT ? parseInt(process.env.LOG_ROTATION_COUNT) : 14;
+
 const logger = bunyan.createLogger({
   name: appName,
   level: 'debug',
@@ -42,14 +45,16 @@ const logger = bunyan.createLogger({
     },
     {
       path: `${logsDir}/error.json`,
-      period: '1d',
-      count: 14,
+      type: 'rotating-file',
+      period,
+      count,
       level: 'error'
     },
     {
       path: `${logsDir}/debug.json`,
-      period: '1d',
-      count: 14,
+      type: 'rotating-file',
+      period,
+      count,
       level: 'debug'
     }
   ]
