@@ -1,32 +1,27 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { InstallationStatus } from '../services/api/setup.service';
-import { Router } from '@angular/router';
-import { finalize, Subscription, takeWhile, timer } from 'rxjs';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { InstallationsService } from '../services/api/installations.service';
+import { Router } from '@angular/router';
+import { InstallationsService, SystemStatus } from '../services/api/installations.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-db-loading',
   standalone: true,
   imports: [
-    MatProgressBarModule
+    MatProgressBarModule,
   ],
   template: `
     <div class="loading-container">
-      <h2>Database Initialization</h2>
+      <h2>Loading Data</h2>
       <mat-progress-bar mode="determinate" [value]="statusProgress"></mat-progress-bar>
-      <p class="status-text">{{statusText}}</p>
+      <div class="status-text">{{statusText}}</div>
       <div class="status-details">
         <p [class.completed]="dbStatus.teamsAndMembers">
           <span class="label">Teams & Members</span>
           <span class="status">{{dbStatus.teamsAndMembers ? '✅' : '⏳'}}</span>
         </p>
-        <p [class.completed]="dbStatus.copilotSeats">
-          <span class="label">Copilot Seats</span>
-          <span class="status">{{dbStatus.copilotSeats ? '✅' : '⏳'}}</span>
-        </p>
         <p [class.completed]="dbStatus.usage">
-          <span class="label">Copilot Usage DB</span>
+          <span class="label">Usage</span>
           <span class="status">{{dbStatus.usage ? '✅' : '⏳'}}</span>
         </p>
         <p [class.completed]="dbStatus.metrics">
@@ -68,70 +63,75 @@ import { InstallationsService } from '../services/api/installations.service';
         display: grid;
         grid-template-columns: 1fr auto;
         gap: 1rem;
-        align-items: center;
         margin: 0.5rem 0;
+        opacity: 0.7;
+        font-size: 0.9rem;
+
+        &.completed {
+          opacity: 1;
+        }
       }
-      
+
       .label {
         text-align: right;
       }
-      
-      .status {
-        width: 24px;
-        text-align: left;
-      }
-    }
-
-    .completed {
-      color: #4CAF50;
     }
   `]
 })
 export class DbLoadingComponent implements OnInit, OnDestroy {
   private statusSubscription?: Subscription;
-  statusText = 'Please wait while we set up your database...';
   statusProgress = 0;
-  dbStatus: InstallationStatus = {
+  statusText = 'Initializing...';
+  dbStatus = {
     usage: false,
     metrics: false,
     copilotSeats: false,
-    teamsAndMembers: false,
-    installation: undefined
+    teamsAndMembers: false
   };
 
   constructor(
-    private installationsService: InstallationsService,
-    private router: Router
-  ) { }
+    private router: Router,
+    private installationsService: InstallationsService
+  ) {}
 
-  ngOnInit(): void {
-    this.statusSubscription = timer(0, 5000).pipe(
-      takeWhile(() => Object.values(this.dbStatus).every(value => value)),
-      finalize(() => this.router.navigate(['/']))
-    ).subscribe(() => {
-      this.installationsService.refreshStatus().subscribe((response) => {
-        if (!response.isSetup) {
+  ngOnInit() {
+    this.pollStatus();
+  }
+
+  ngOnDestroy() {
+    if (this.statusSubscription) {
+      this.statusSubscription.unsubscribe();
+    }
+  }
+
+  private pollStatus() {
+    const interval = setInterval(() => {
+      this.statusSubscription = this.installationsService.refreshStatus().subscribe((status: SystemStatus) => {
+        if (!status.componentDetails['database']?.currentStatus || status.componentDetails['database'].currentStatus === 'error') {
+          clearInterval(interval);
           this.statusSubscription?.unsubscribe();
           this.router.navigate(['/setup/db']);
           return;
         }
 
-        this.dbStatus = response.installations.reduce((acc, intallation) => {
-          acc.usage = acc.usage || intallation.usage;
-          acc.metrics = acc.metrics || intallation.metrics;
-          acc.copilotSeats = acc.copilotSeats || intallation.copilotSeats;
-          acc.teamsAndMembers = acc.teamsAndMembers || intallation.teamsAndMembers;
-          return acc;
-        }, {
-          usage: false,
-          metrics: false,
-          copilotSeats: false,
-          teamsAndMembers: false
-        })
+        // Check initialization components
+        this.dbStatus = {
+          usage: status.componentDetails['usage']?.currentStatus === 'running',
+          metrics: status.componentDetails['metrics']?.currentStatus === 'running',
+          copilotSeats: status.componentDetails['seats']?.currentStatus === 'running',
+          teamsAndMembers: status.componentDetails['teams']?.currentStatus === 'running'
+        };
 
         this.updateProgress();
+
+        // If everything is initialized, navigate to home
+        if (Object.values(this.dbStatus).every(value => value)) {
+          clearInterval(interval);
+          this.statusSubscription?.unsubscribe();
+          this.router.navigate(['/']);
+        }
       });
-    });
+    }, 2000);
   }
 
   private updateProgress(): void {
@@ -140,17 +140,10 @@ export class DbLoadingComponent implements OnInit, OnDestroy {
     this.updateStatusText(completedSteps);
   }
 
-  private updateStatusText(completedSteps: number): void {
-    if (completedSteps === 0) {
-      this.statusText = 'Starting database initialization...';
-    } else if (completedSteps === 4) {
-      this.statusText = 'Database initialized successfully! Redirecting...';
-    } else {
-      this.statusText = `Initialized ${completedSteps} of 4 tables...`;
-    }
-  }
-
-  ngOnDestroy(): void {
-    this.statusSubscription?.unsubscribe()
+  private updateStatusText(completed: number): void {
+    const remaining = 4 - completed;
+    this.statusText = remaining === 0 ? 
+      'Data loading complete!' : 
+      `Loading data... ${completed}/4 complete`;
   }
 }

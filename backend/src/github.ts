@@ -8,6 +8,7 @@ import { Express } from 'express';
 import { Endpoints } from '@octokit/types';
 import { setupWebhookListeners } from "./controllers/webhook.controller.js";
 import app from "./index.js";
+import statusManager from "./services/status.manager.js";
 
 interface SetupStatusDbsInitialized {
   usage?: boolean;
@@ -46,7 +47,6 @@ class GitHub {
     installation: Endpoints["GET /app/installations"]["response"]["data"][0],
     octokit: Octokit
   }[];
-  status = 'starting';
   cronExpression = '0 0 * * * *';
 
   constructor(
@@ -60,82 +60,98 @@ class GitHub {
   }
 
   connect = async (input?: GitHubInput) => {
+    statusManager.updateStatus('github', 'starting', 'Connecting to GitHub App');
+    
     if (input) this.setInput(input);
-    if (!this.input.appId) throw new Error('GITHUB_APP_ID is required');
-    if (!this.input.privateKey) throw new Error('GITHUB_APP_PRIVATE_KEY is required');
-
-    this.app = new App({
-      appId: this.input.appId,
-      privateKey: this.input.privateKey,
-      ...this.input.webhooks?.secret ? { webhooks: { secret: this.input.webhooks.secret } } : {},
-      oauth: {
-        clientId: null,
-        clientSecret: null
-      } as {
-        clientId: never;
-        clientSecret: never;
-      }
-    });
-
-    await updateDotenv({ GITHUB_APP_ID: this.input.appId })
-    await updateDotenv({ GITHUB_APP_PRIVATE_KEY: String(this.input.privateKey) })
-    if (this.input.webhooks?.secret) await updateDotenv({ GITHUB_WEBHOOK_SECRET: this.input.webhooks.secret })
+    if (!this.input.appId) {
+      statusManager.updateStatus('github', 'error', 'GitHub App ID is missing');
+      throw new Error('GITHUB_APP_ID is required');
+    }
+    if (!this.input.privateKey) {
+      statusManager.updateStatus('github', 'error', 'GitHub App private key is missing');
+      throw new Error('GITHUB_APP_PRIVATE_KEY is required');
+    }
 
     try {
-      await this.webhookService.connect();
-    } catch (error) {
-      logger.error('Failed to connect to webhook Smee', error);
-    }
-
-    // if (this.webhookService.url) {
-    //   try {
-    //     await this.app.octokit.request('PATCH /app/hook/config', {
-    //       url: this.webhookService.url,
-    //       secret: this.input.webhooks?.secret
-    //     });
-    //     logger.info('Webhook config updated for app', this.webhookService.url, this.input.webhooks?.secret?.replace(/\S/, '*'));
-    //   } catch (error) {
-    //     logger.warn('Failed to update webhook config for app', error);
-    //   }
-    //   app.settingsService.updateSetting('webhookProxyUrl', this.webhookService.url, false);
-    // }
-
-    try {
-      if (!this.app) throw new Error('GitHub App is not initialized')
-      if (!this.expressApp) throw new Error('Express app is not initialized')
-      const webhookMiddlewareIndex = this.expressApp._router.stack.findIndex((layer: {
-        name: string;
-      }) => layer.name === 'bound middleware');
-      if (webhookMiddlewareIndex > -1) {
-        this.expressApp._router.stack.splice(webhookMiddlewareIndex, 1);
+      this.app = new App({
+        appId: this.input.appId,
+        privateKey: this.input.privateKey,
+        ...this.input.webhooks?.secret ? { webhooks: { secret: this.input.webhooks.secret } } : {},
+        oauth: {
+          clientId: null,
+          clientSecret: null
+        } as {
+          clientId: never;
+          clientSecret: never;
+        }
+      });
+  
+      await updateDotenv({ GITHUB_APP_ID: this.input.appId })
+      await updateDotenv({ GITHUB_APP_PRIVATE_KEY: String(this.input.privateKey) })
+      if (this.input.webhooks?.secret) await updateDotenv({ GITHUB_WEBHOOK_SECRET: this.input.webhooks.secret })
+  
+      try {
+        await this.webhookService.connect();
+        statusManager.updateStatus('webhooks', 'starting', 'Webhook service connecting');
+      } catch (error) {
+        logger.error('Failed to connect to webhook Smee', error);
+        statusManager.updateStatus('webhooks', 'error', 'Failed to connect to webhook service');
       }
-      setupWebhookListeners(this.app);
-      this.webhooks = this.expressApp.use(createNodeMiddleware(this.app));
-    } catch (error) {
-      logger.debug(error);
-      logger.error('Failed to create webhook middleware')
-    }
 
-    if (!this.queryService) {
-      this.queryService = new QueryService(this.app, {
-        cronTime: this.cronExpression
+      try {
+        if (!this.app) throw new Error('GitHub App is not initialized')
+        if (!this.expressApp) throw new Error('Express app is not initialized')
+        const webhookMiddlewareIndex = this.expressApp._router.stack.findIndex((layer: {
+          name: string;
+        }) => layer.name === 'bound middleware');
+        if (webhookMiddlewareIndex > -1) {
+          this.expressApp._router.stack.splice(webhookMiddlewareIndex, 1);
+        }
+        setupWebhookListeners(this.app);
+        this.webhooks = this.expressApp.use(createNodeMiddleware(this.app));
+        statusManager.updateStatus('webhooks', 'running', 'GitHub webhook middleware configured');
+      } catch (error) {
+        logger.debug(error);
+        logger.error('Failed to create webhook middleware');
+        statusManager.updateStatus('webhooks', 'error', 'Failed to create webhook middleware');
+      }
+  
+      if (!this.queryService) {
+        this.queryService = new QueryService(this.app, {
+          cronTime: this.cronExpression
+        });
+        await this.queryService.start();
+        logger.info(`CRON task ${this.cronExpression} started`);
+        statusManager.updateStatus('tasks', 'running', `Scheduled tasks started with cron: ${this.cronExpression}`);
+      }
+      
+      for await (const { octokit, installation } of this.app.eachInstallation.iterator()) {
+        if (!installation.account?.login) continue;
+        this.installations.push({
+          installation,
+          octokit
+        });
+      }
+      
+      statusManager.updateStatus('github', 'running', 'GitHub App connected successfully', {
+        appId: this.input.appId,
+        installations: this.installations.length
       });
-      await this.queryService.start();
-      logger.info(`CRON task ${this.cronExpression} started`);
+      
+      return this.app;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      statusManager.updateStatus('github', 'error', `GitHub connection failed: ${errorMessage}`);
+      throw error;
     }
-    for await (const { octokit, installation } of this.app.eachInstallation.iterator()) {
-      if (!installation.account?.login) return;
-      this.installations.push({
-        installation,
-        octokit
-      });
-    }
-    return this.app;
   }
 
   disconnect = () => {
+    statusManager.updateStatus('github', 'stopping', 'Disconnecting GitHub services');
     this.queryService?.delete();
+    statusManager.updateStatus('tasks', 'stopped', 'Scheduled tasks stopped');
     this.installations = [];
+    statusManager.updateStatus('github', 'stopped', 'GitHub services disconnected');
   }
 
   getAppManifest() {
@@ -150,39 +166,61 @@ class GitHub {
   };
 
   async createAppFromManifest(code: string) {
-    const {
-      data: {
-        id,
-        pem,
-        webhook_secret,
-        html_url
+    statusManager.updateStatus('github', 'starting', 'Creating GitHub App from manifest');
+    
+    try {
+      const {
+        data: {
+          id,
+          pem,
+          webhook_secret,
+          html_url
+        }
+      } = await new Octokit().rest.apps.createFromManifest({ code });
+  
+      if (!id || !pem) {
+        statusManager.updateStatus('github', 'error', 'Failed to create app from manifest: missing ID or private key');
+        throw new Error('Failed to create app from manifest');
       }
-    } = await new Octokit().rest.apps.createFromManifest({ code });
-
-    if (!id || !pem) throw new Error('Failed to create app from manifest');
-
-    this.input.appId = id.toString();
-    this.input.privateKey = pem;
-
-    if (webhook_secret) {
-      this.input.webhooks = {
-        secret: webhook_secret
+  
+      this.input.appId = id.toString();
+      this.input.privateKey = pem;
+  
+      if (webhook_secret) {
+        this.input.webhooks = {
+          secret: webhook_secret
+        }
+        await updateDotenv({
+          GITHUB_WEBHOOK_SECRET: webhook_secret,
+        });
+        app.settingsService.updateSetting('webhookSecret', webhook_secret, false);
+        statusManager.updateStatus('webhooks', 'running', 'Webhook secret configured');
       }
+      
       await updateDotenv({
-        GITHUB_WEBHOOK_SECRET: webhook_secret,
+        GITHUB_APP_ID: id.toString(),
+        GITHUB_APP_PRIVATE_KEY: pem
       });
-      app.settingsService.updateSetting('webhookSecret', webhook_secret, false);
+  
+      statusManager.updateStatus('github', 'running', 'GitHub App created from manifest successfully', {
+        appId: id.toString(),
+        appUrl: html_url
+      });
+      
+      return { id, pem, webhook_secret, html_url };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      statusManager.updateStatus('github', 'error', `Failed to create app from manifest: ${errorMessage}`);
+      throw error;
     }
-    await updateDotenv({
-      GITHUB_APP_ID: id.toString(),
-      GITHUB_APP_PRIVATE_KEY: pem
-    });
-
-    return { id, pem, webhook_secret, html_url };
   }
 
   async getInstallation(id: string | number) {
-    if (!this.app) throw new Error('App is not initialized');
+    if (!this.app) {
+      statusManager.updateStatus('github', 'error', 'App is not initialized');
+      throw new Error('App is not initialized');
+    }
+    
     return new Promise<{
       installation: Endpoints["GET /app/installations"]["response"]["data"][0],
       octokit: Octokit
@@ -194,7 +232,10 @@ class GitHub {
         ) {
           resolve({ installation, octokit });
         }
-      }).finally(() => reject('Installation not found'));
+      }).finally(() => {
+        statusManager.updateStatus('github', 'warning', `Installation not found: ${id}`);
+        reject('Installation not found');
+      });
     });
   }
 

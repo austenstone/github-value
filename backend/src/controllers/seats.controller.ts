@@ -42,6 +42,20 @@ class SeatsController {
       res.status(500).json(error);
     }
   }
+
+  async deleteSeats(req: Request, res: Response): Promise<void> {
+    const org = req.query.org?.toString();
+    if (!org) {
+      res.status(400).json({ error: 'org query parameter is required' });
+      return;
+    }
+    try {
+      const result = await SeatsService.deleteSeats(org);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).json(error);
+    }
+  }
 }
 
 export default new SeatsController();

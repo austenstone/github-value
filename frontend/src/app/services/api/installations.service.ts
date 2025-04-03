@@ -1,33 +1,47 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, of, Subject, tap } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, of, tap } from 'rxjs';
 import { serverUrl } from '../server.service';
 import { Endpoints } from '@octokit/types';
 import { HttpClient } from '@angular/common/http';
 
-export interface InstallationStatus {
-  installation?: Endpoints["GET /app/installations"]["response"]["data"][number],
-  usage: boolean;
-  metrics: boolean;
-  copilotSeats: boolean;
-  teamsAndMembers: boolean;
-}
-export interface statusResponse {
-  isSetup: boolean;
-  dbConnected: boolean;
-  installations: InstallationStatus[],
+export interface SystemStatus {
+  status: Record<string, 'starting' | 'running' | 'error' | 'warning' | 'stopping' | 'stopped'>;
+  componentDetails: Record<string, {
+    currentStatus: 'starting' | 'running' | 'error' | 'warning' | 'stopping' | 'stopped';
+    lastUpdated: string;
+    history: {
+      timestamp: string;
+      status: 'starting' | 'running' | 'error' | 'warning' | 'stopping' | 'stopped';
+      message?: string;
+    }[];
+    message?: string;
+  }>;
+  isReady: boolean;
+  uptime: number;
+  startTime: string;
+  seatsHistory?: {
+    oldestCreatedAt: string;
+    daysSinceOldestCreatedAt?: number;
+  };
+  installations?: {
+    installation: Endpoints["GET /app/installations"]["response"]["data"][0];
+    repos: any[];
+  }[];
+  surveyCount: number;
 }
 
 export type Installations = Endpoints["GET /app/installations"]["response"]["data"]
 export type Installation = Installations[number]
+
 @Injectable({
   providedIn: 'root'
 })
 export class InstallationsService implements OnDestroy {
-  private apiUrl = `${serverUrl}/api/setup`;
-  status?: statusResponse;
-  installations = new BehaviorSubject<Installations>([]);
-  currentInstallation = new BehaviorSubject<Installation | undefined>(undefined);
-  currentInstallationId = localStorage.getItem('installation') ? parseInt(localStorage.getItem('installation')!) : 0;
+  private apiUrl = `${serverUrl}/api/status`;
+  private status?: SystemStatus;
+  private installations = new BehaviorSubject<Installations>([]);
+  public currentInstallation = new BehaviorSubject<Installation | undefined>(undefined);
+  private currentInstallationId = localStorage.getItem('installation') ? parseInt(localStorage.getItem('installation')!) : 0;
   private readonly _destroy$ = new Subject<void>();
   readonly destroy$ = this._destroy$.asObservable();
 
@@ -51,11 +65,11 @@ export class InstallationsService implements OnDestroy {
   }
 
   refreshStatus() {
-    return this.http.get<statusResponse>(`${this.apiUrl}/status`).pipe(
+    return this.http.get<SystemStatus>(`${this.apiUrl}`).pipe(
       tap((status) => {
         this.status = status;
         if (status.installations) {
-          this.installations.next(status.installations.map(i => i.installation!));
+          this.installations.next(status.installations.map(i => i.installation));
           if (this.installations.value.length === 1) {
             this.setInstallation(this.installations.value[0].id);
           } else {
@@ -70,14 +84,13 @@ export class InstallationsService implements OnDestroy {
     return this.installations.asObservable();
   }
 
+  getCurrentInstallation() {
+    return this.currentInstallation.asObservable();
+  }
+
   setInstallation(id: number) {
     this.currentInstallationId = id;
     this.currentInstallation.next(this.installations.value.find(i => i.id === id));
     localStorage.setItem('installation', id.toString());
   }
-
-  getStatus2() {
-    return this.http.get<any>(`${serverUrl}/api/status`);
-  }
-  
 }

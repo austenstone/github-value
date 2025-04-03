@@ -8,6 +8,8 @@ import metricsController from '../controllers/metrics.controller.js';
 import teamsController from '../controllers/teams.controller.js';
 import targetValuesController from '../controllers/target.controller.js';
 import adoptionController from '../controllers/adoption.controller.js';
+import statusController from '../controllers/status.controller.js';
+import statusManager from 'services/status.manager.js';
 
 const router = Router();
 
@@ -31,6 +33,7 @@ router.get('/seats', SeatsController.getAllSeats);
 router.get('/seats/activity', adoptionController.getAdoptions);
 router.get('/seats/activity/totals', adoptionController.getAdoptionTotals);
 router.get('/seats/:id', SeatsController.getSeat);
+router.delete('/seats', SeatsController.deleteSeats);
 
 router.get('/teams', teamsController.getAllTeams);
 router.get('/members', teamsController.getAllMembers);
@@ -49,8 +52,11 @@ router.get('/setup/manifest', setupController.getManifest);
 router.post('/setup/existing-app', setupController.addExistingApp);
 router.post('/setup/db', setupController.setupDB);
 router.get('/setup/status', setupController.setupStatus);
+router.post('/setup/install/complete', setupController.installComplete);
 
-router.get('/status', setupController.getStatus);
+router.get('/status', statusManager.getAllComponentStatuses);
+router.get('/status/components/:component/history', statusController.getComponentHistory);
+router.post('/status/health-check', statusManager.runHealthChecks);
 
 router.get('/targets', targetValuesController.getTargetValues);
 router.post('/targets', targetValuesController.updateTargetValues);

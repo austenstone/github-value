@@ -13,6 +13,7 @@ import SettingsService from './services/settings.service.js';
 import apiRoutes from "./routes/index.js"
 import WebhookService from './services/smee.js';
 import TargetValuesService from './services/target.service.js';
+import statusManager from './services/status.manager.js';
 
 class App {
   e: Express;
@@ -29,9 +30,14 @@ class App {
     this.baseUrl = process.env.BASE_URL || 'http://localhost:' + port;
     this.e = express();
     logger.info(`Starting application on port ${this.port}`);
-    // if (!process.env.MONGODB_URI) {
-    //   throw new Error('MONGODB_URI must be set');
-    // }
+    
+    // Initialize status manager for all components
+    statusManager.updateStatus('database', 'starting', 'Database initializing');
+    statusManager.updateStatus('github', 'starting', 'GitHub initializing');
+    statusManager.updateStatus('settings', 'starting', 'Settings initializing');
+    statusManager.updateStatus('targets', 'stopped', 'Targets not initialized yet');
+    statusManager.updateStatus('webhooks', 'stopped', 'Webhooks not started yet');
+    
     this.database = new Database();
     const webhookService = new WebhookService({
       url: process.env.WEBHOOK_PROXY_URL,
@@ -62,6 +68,7 @@ class App {
       percentTimeSaved: '20',
       percentCoding: '20'
     })
+    
   }
 
   public async start() {
@@ -74,24 +81,61 @@ class App {
 
       if (process.env.MONGODB_URI) {
         logger.info('Database connecting...');
-        await this.database.connect(process.env.MONGODB_URI);
-        logger.info('Database connected');
+        statusManager.updateStatus('database', 'starting', 'Connecting to MongoDB', { uri: process.env.MONGODB_URI });
+        
+        try {
+          await this.database.connect(process.env.MONGODB_URI);
+          logger.info('Database connected');
+          statusManager.updateStatus('database', 'running', 'Database connected successfully');
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          statusManager.updateStatus('database', 'error', `Database connection failed: ${errorMessage}`);
+          logger.error(`Database connection error: ${errorMessage}`);
+        }
 
         logger.info('Initializing settings...');
-        await this.initializeSettings();
-        logger.info('Settings initialized');
+        statusManager.updateStatus('settings', 'starting', 'Loading application settings');
+        
+        try {
+          await this.initializeSettings();
+          logger.info('Settings initialized');
+          statusManager.updateStatus('settings', 'running', 'Settings initialized successfully');
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          statusManager.updateStatus('settings', 'error', `Settings initialization failed: ${errorMessage}`);
+          logger.error(`Settings initialization error: ${errorMessage}`);
+        }
   
         logger.info('GitHub App starting...');
+        statusManager.updateStatus('github', 'starting', 'Connecting to GitHub API');
+        
         try {
           await this.github.connect();
           logger.info('GitHub App connected');
+          statusManager.updateStatus('github', 'running', 'GitHub API connected successfully', {
+            appId: this.github.input.appId,
+            installations: this.github.installations.length
+          });
+          
           logger.info('Targets initializing...');
-          await TargetValuesService.initialize();
-          logger.info('Targets initialized');
+          statusManager.updateStatus('targets', 'starting', 'Initializing target values');
+          
+          try {
+            await TargetValuesService.initialize();
+            logger.info('Targets initialized');
+            statusManager.updateStatus('targets', 'running', 'Target values initialized successfully');
+          } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            statusManager.updateStatus('targets', 'error', `Target values initialization failed: ${errorMessage}`);
+            logger.error(`Target values initialization error: ${errorMessage}`);
+          }
         } catch (error) {
-          logger.warn('GitHub App failed to connect', (error as any)?.message || error);
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          statusManager.updateStatus('github', 'error', `GitHub connection failed: ${errorMessage}`);
+          logger.warn('GitHub App failed to connect', errorMessage);
         }
-
+      } else {
+        statusManager.updateStatus('database', 'stopped', 'No MongoDB URI provided');
       }
 
       return this.e;
@@ -105,9 +149,16 @@ class App {
   }
 
   public async stop() {
-    await new Promise(resolve => this.eListener?.close(resolve));
+    statusManager.updateStatus('database', 'stopping', 'Disconnecting from database');
     await this.database.disconnect();
+    statusManager.updateStatus('database', 'stopped', 'Database disconnected');
+    
+    statusManager.updateStatus('github', 'stopping', 'Disconnecting GitHub services');
     await this.github.disconnect();
+    statusManager.updateStatus('github', 'stopped', 'GitHub disconnected');
+    
+    await new Promise(resolve => this.eListener?.close(resolve));
+    statusManager.updateStatus('webhooks', 'stopped', 'Webhooks stopped');
   }
 
   private setupExpress() {
@@ -136,7 +187,7 @@ class App {
     logger.info(`eListener on port ${this.port}`);
   }
 
-  private initializeSettings() {
+  private async initializeSettings() {
     return this.settingsService.initialize()
       .then(async (settings) => {
         if (settings.webhookSecret) {

@@ -1,6 +1,14 @@
+import mongoose from 'mongoose';
+
+const counterSchema = new mongoose.Schema({
+  _id: { type: String, required: true },
+  seq: { type: Number, default: 0 }
+});
+
 type CounterType = {
-  _id: string; // Ensure _id is of type string
+  _id: string;
   seq: number;
 }
 
-export default CounterType;
+export { CounterType };
+export default counterSchema;

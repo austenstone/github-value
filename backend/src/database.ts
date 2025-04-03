@@ -1,381 +1,90 @@
-import updateDotenv from 'update-dotenv';
-import logger from './services/logger.js';
-import mongoose, { Schema } from 'mongoose';
-import util from 'util';
+import mongoose from "mongoose";
+import teamSchema, { memberSchema, teamMemberSchema } from "./models/teams.model.js";
+import seatsSchema from "./models/seats.model.js";
+import metricsSchema from "./models/metrics.model.js";
+import usageSchema from "./models/usage.model.js";
+import surveySchema from "./models/survey.model.js";
+import targetSchema from "./models/target.model.js";
+import settingsSchema from "./models/settings.model.js";
+import adoptionSchema from "./models/adoption.model.js";
+import activityTotalsSchema from "./models/activity-totals.model.js";
+import counterSchema from "./models/counter.model.js";
+import statusManager from "./services/status.manager.js";
+import logger from "./services/logger.js";
 
 class Database {
-  mongoose: mongoose.Mongoose | null = null;
-  mongodbUri?: string;
+  constructor() {
+    statusManager.registerComponent('database', 'starting', 'Database initializing');
 
-  constructor() { }
-
-  async connect(mongodbUri: string) {
-    logger.info('Connecting to the database', mongodbUri);
-    try {
-      this.mongoose = await mongoose.connect(mongodbUri, {
-        socketTimeoutMS: 360000,
-        connectTimeoutMS: 360000,
-        serverSelectionTimeoutMS: 60000,
-        retryWrites: true,
-        readPreference: 'primaryPreferred',
-        retryReads: true,
-        w: 'majority',
-        maxPoolSize: 10,        // Limit maximum connections
-        minPoolSize: 5,         // Keep minimum connections ready
-        maxIdleTimeMS: 30000,   // Close idle connections after 30 seconds
-        heartbeatFrequencyMS: 10000,  // Check connection status every 10 seconds
-        bufferCommands: true,   // Queue operations when connection is lost
-        monitorCommands: true // Add connection pool monitoring
-      });
-      mongoose.set('debug', (collectionName: string, methodName: string, ...methodArgs: unknown[]) => {
-        const msgMapper = (m: unknown) => {
-          return util.inspect(m, false, 10, true)
-            .replace(/\n/g, '').replace(/\s{2,}/g, ' ');
-        };
-        // logger.debug(`\x1B[0;36mMongoose:\x1B[0m: ${collectionName}.${methodName}` + `(${methodArgs.map(msgMapper).join(', ')})`);
-        logger.debug(`[Mongoose] ${collectionName}.${methodName}(${methodArgs.map(msgMapper).join(', ')})`);
-      });
-      
-      if (mongodbUri) await updateDotenv({ MONGODB_URI: mongodbUri });
-      this.mongodbUri = mongodbUri;
-      logger.info('Database connected');
-      
-      this.setupSchemas();
-      logger.info('Database schemas setup complete');
-    } catch (error) {
-      logger.debug(error);
-      if (error instanceof Error) {
-        logger.error(`Database connection error: ${error.message}`);
+    statusManager.on('healthcheck:database', async (callback) => {
+      if (mongoose.connection.readyState === 1) {
+        callback('running', 'Connected to MongoDB');
+      } else if (mongoose.connection.readyState === 2) {
+        callback('warning', 'MongoDB connection in progress');
+      } else if (mongoose.connection.readyState === 0) {
+        callback('error', 'Disconnected from MongoDB');
+      } else {
+        callback('error', `MongoDB connection in unknown state: ${mongoose.connection.readyState}`);
       }
+    });
+  }
+
+  async connect(uri: string) {
+    try {
+      statusManager.updateStatus('database', 'starting', 'Connecting to MongoDB');
+      
+      await mongoose.connect(uri);
+      
+      mongoose.model("Team", teamSchema);
+      mongoose.model("Member", memberSchema);
+      mongoose.model("TeamMember", teamMemberSchema);
+      mongoose.model("Seats", seatsSchema);
+      mongoose.model("Metrics", metricsSchema);
+      mongoose.model("Usage", usageSchema);
+      mongoose.model("Survey", surveySchema);
+      mongoose.model("Targets", targetSchema); // Changed from Target to Targets to match error message
+      mongoose.model("Settings", settingsSchema);
+      mongoose.model("Adoption", adoptionSchema);
+      mongoose.model("ActivityTotals", activityTotalsSchema);
+      mongoose.model("Counter", counterSchema);
+      
+      mongoose.connection.on('error', (err) => {
+        logger.error('MongoDB connection error', err);
+        statusManager.updateStatus('database', 'error', `MongoDB connection error: ${err.message}`);
+      });
+      
+      mongoose.connection.on('disconnected', () => {
+        logger.warn('MongoDB disconnected');
+        statusManager.updateStatus('database', 'error', 'MongoDB disconnected');
+      });
+      
+      mongoose.connection.on('reconnected', () => {
+        logger.info('MongoDB reconnected');
+        statusManager.updateStatus('database', 'running', 'MongoDB reconnected');
+      });
+      
+      statusManager.updateStatus('database', 'running', 'Connected to MongoDB successfully');
+      return mongoose.connection;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown connection error';
+      statusManager.updateStatus('database', 'error', `Failed to connect to MongoDB: ${errorMessage}`);
       throw error;
     }
   }
 
   async disconnect() {
-    await this.mongoose?.disconnect();
+    try {
+      statusManager.updateStatus('database', 'stopping', 'Disconnecting from MongoDB');
+      await mongoose.disconnect();
+      statusManager.updateStatus('database', 'stopped', 'Disconnected from MongoDB');
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown disconnection error';
+      statusManager.updateStatus('database', 'error', `Error disconnecting from MongoDB: ${errorMessage}`);
+      throw error;
+    }
   }
-
-  async setupSchemas() {
-    mongoose.model('Settings', new mongoose.Schema({
-      name: String,
-      value: {}
-    }));
-    mongoose.model('Usage', new mongoose.Schema({
-      org: String,
-      team: String,
-      day: Date,
-      total_suggestions_count: Number,
-      total_acceptances_count: Number,
-      total_lines_suggested: Number,
-      total_lines_accepted: Number,
-      total_active_users: Number,
-      total_chat_acceptances: Number,
-      total_chat_turns: Number,
-      total_active_chat_users: Number,
-      breakdown: [{
-        language: String,
-        editor: String,
-        suggestions_count: Number,
-        acceptances_count: Number,
-        lines_suggested: Number,
-        lines_accepted: Number,
-        active_users: Number
-      }]
-    }));
-
-    // Language Schema 📝
-    const LanguageSchema = new mongoose.Schema({
-      name: String,
-      total_engaged_users: Number,
-      total_code_acceptances: Number,
-      total_code_suggestions: Number,
-      total_code_lines_accepted: Number,
-      total_code_lines_suggested: Number
-    });
-
-    // Model Schema 🤖
-    const ModelSchema = new mongoose.Schema({
-      name: String,
-      is_custom_model: Boolean,
-      total_engaged_users: Number,
-      total_code_acceptances: Number,
-      total_code_suggestions: Number,
-      total_code_lines_accepted: Number,
-      total_code_lines_suggested: Number,
-      languages: [LanguageSchema],
-      total_chats: Number,
-      total_chat_copy_events: Number,
-      total_chat_insertion_events: Number,
-      total_pr_summaries_created: Number
-    });
-
-    // Editor Schema 🖥️
-    const EditorSchema = new mongoose.Schema({
-      name: String,
-      total_engaged_users: Number,
-      total_code_acceptances: Number,
-      total_code_suggestions: Number,
-      total_code_lines_accepted: Number,
-      total_code_lines_suggested: Number,
-      models: [ModelSchema],
-      total_chats: Number,
-      total_chat_copy_events: Number,
-      total_chat_insertion_events: Number
-    });
-
-    // Repository Schema 📚
-    const RepositorySchema = new mongoose.Schema({
-      name: String,
-      total_engaged_users: Number,
-      total_pr_summaries_created: Number,
-      models: [ModelSchema]
-    });
-
-    mongoose.model('Metrics', new mongoose.Schema({
-      org: String,
-      team: String,
-      date: Date,
-      total_active_users: Number,
-      total_engaged_users: Number,
-
-      copilot_ide_code_completions: {
-        total_engaged_users: Number,
-        total_code_acceptances: Number,
-        total_code_suggestions: Number,
-        total_code_lines_accepted: Number,
-        total_code_lines_suggested: Number,
-        editors: [EditorSchema]
-      },
-      copilot_ide_chat: {
-        total_engaged_users: Number,
-        total_chats: Number,
-        total_chat_copy_events: Number,
-        total_chat_insertion_events: Number,
-        editors: [EditorSchema]
-      },
-      copilot_dotcom_chat: {
-        total_engaged_users: Number,
-        total_chats: Number,
-        models: [ModelSchema]
-      },
-      copilot_dotcom_pull_requests: {
-        total_engaged_users: Number,
-        total_pr_summaries_created: Number,
-        repositories: [RepositorySchema]
-      }
-    }));
-
-    const teamSchema = new Schema({
-      org: { type: String, required: true },
-      team: String,
-      githubId: { type: Number, required: true, unique: true }, // renamed from id
-      node_id: String,
-      name: String,
-      slug: String,
-      description: String,
-      privacy: String,
-      notification_setting: String,
-      permission: String,
-      url: String,
-      html_url: String,
-      members_url: String,
-      repositories_url: String,
-      parent: { type: Schema.Types.ObjectId, ref: 'Team' }
-    }, {
-      timestamps: true
-    });
-
-    const memberSchema = new Schema({
-      org: { type: String, required: true },
-      login: { type: String, required: true },
-      id: { type: Number, required: true },
-      node_id: String,
-      avatar_url: String,
-      gravatar_id: String,
-      url: String,
-      html_url: String,
-      followers_url: String,
-      following_url: String,
-      gists_url: String,
-      starred_url: String,
-      subscriptions_url: String,
-      organizations_url: String,
-      repos_url: String,
-      events_url: String,
-      received_events_url: String,
-      type: String,
-      site_admin: Boolean,
-      name: String,
-      email: String,
-      starred_at: String,
-      user_view_type: String,
-      seat: {
-        type: Schema.Types.ObjectId,
-        ref: 'Seats'
-      }
-    }, {
-      timestamps: true,
-    });
-    memberSchema.index({ org: 1, login: 1, id: 1 }, { unique: true });
-    memberSchema.index({ seat: 1 });
-    memberSchema.index({ updatedAt: -1 });
-    memberSchema.virtual('seats', {
-      ref: 'Seats',
-      localField: '_id',
-      foreignField: 'assignee'
-    });
-
-    const teamMemberSchema = new Schema({
-      team: { type: Schema.Types.ObjectId, ref: 'Team', required: true },
-      member: { type: Schema.Types.ObjectId, ref: 'Member', required: true }
-    }, {
-      timestamps: false
-    });
-    teamMemberSchema.index({ team: 1, member: 1 }, { unique: true });
-
-    mongoose.model('Team', teamSchema);
-    mongoose.model('Member', memberSchema);
-    mongoose.model('TeamMember', teamMemberSchema);
-
-    const seatsSchema = new mongoose.Schema({
-      org: String,
-      team: String,
-      created_at: Date,
-      updated_at: Date,
-      pending_cancellation_date: Date,
-      last_activity_at: Date,
-      last_activity_editor: String,
-      plan_type: String,
-      assignee: {
-        type: Schema.Types.ObjectId,
-        ref: 'Member'
-      },
-      queryAt: Date,
-      assignee_id: Number,
-      assignee_login: String,
-    }, {
-      timestamps: true
-    });
-
-    seatsSchema.index({ org: 1, queryAt: 1, last_activity_at: -1 });
-    seatsSchema.index({ org: 1, team: 1, queryAt: 1, assignee_id: 1 }, { unique: true });
-    mongoose.model('Seats', seatsSchema);
-
-    const adoptionSchema = new Schema({
-      enterprise: String,
-      org: String,
-      team: String,
-      date: {
-        type: Date,
-        required: true
-      },
-      totalSeats: Number,
-      totalActive: Number,
-      totalInactive: Number,
-      seats: [{
-        login: String,
-        last_activity_at: Date,
-        last_activity_editor: String,
-        _assignee: {
-          required: true,
-          type: Schema.Types.ObjectId,
-          ref: 'Member'
-        },
-        _seat: {
-          required: true,
-          type: Schema.Types.ObjectId,
-          ref: 'Seats'
-        }
-      }]
-    }, {
-      timestamps: true
-    });
-
-    // Create indexes
-    adoptionSchema.index({ enterprise: 1, org: 1, team: 1, date: 1 }, { unique: true });
-
-    mongoose.model('Adoption', adoptionSchema);
-
-    const activityTotalsSchema = new mongoose.Schema({
-      org: String,
-      assignee: {
-        type: Schema.Types.ObjectId,
-        ref: 'Member'
-      },
-      assignee_id: Number,
-      assignee_login: String,
-      date: Date,
-      total_active_time_ms: Number,
-      last_activity_at: Date,
-      last_activity_editor: String
-    }, {
-      timestamps: true
-    });
-
-    activityTotalsSchema.index({ org: 1, date: 1, assignee: 1 }, { unique: true });
-    activityTotalsSchema.index({ date: 1 }); // For date range queries
-
-    mongoose.model('ActivityTotals', activityTotalsSchema);
-
-    mongoose.model('Survey', new mongoose.Schema({
-      id: Number,
-      userId: String,
-      org: String,
-      repo: String,
-      prNumber: String,
-      usedCopilot: Boolean,
-      percentTimeSaved: Number,
-      reason: String,
-      timeUsedFor: String,
-      kudos: Number,
-      status: String,
-      hits: Number
-    }, {
-      timestamps: true
-    }));
-
-    const TargetSchema = new mongoose.Schema({
-      current: Number,
-      target: Number,
-      max: Number
-    });
-    
-    const TargetsSchema = new mongoose.Schema({
-      org: {
-        seats: TargetSchema,
-        adoptedDevs: TargetSchema,
-        monthlyDevsReportingTimeSavings: TargetSchema,
-        percentOfSeatsReportingTimeSavings: TargetSchema,
-        percentOfSeatsAdopted: TargetSchema,
-        percentOfMaxAdopted: TargetSchema
-      },
-      user: {
-        dailySuggestions: TargetSchema,
-        dailyAcceptances: TargetSchema,
-        dailyChatTurns: TargetSchema,
-        dailyDotComChats: TargetSchema,
-        weeklyPRSummaries: TargetSchema,
-        weeklyTimeSavedHrs: TargetSchema
-      },
-      impact: {
-        monthlyTimeSavingsHrs: TargetSchema,
-        annualTimeSavingsAsDollars: TargetSchema,
-        productivityOrThroughputBoostPercent: TargetSchema
-      }
-    }, {
-      timestamps: true
-    });
-    
-    mongoose.model('Targets', TargetsSchema);
-
-    const CounterSchema = new mongoose.Schema({
-      _id: { type: String, required: true },
-      seq: { type: Number, default: 0 }
-    });
-
-    mongoose.model('Counter', CounterSchema);
-  }
-
 }
 
-export default Database;
+export {
+  Database as default
+};

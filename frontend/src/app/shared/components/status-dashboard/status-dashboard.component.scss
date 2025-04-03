@@ -1,0 +1,250 @@
+.status-dashboard {
+  margin: 16px;
+}
+
+.status-card {
+  margin-bottom: 16px;
+}
+
+mat-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.status-badge {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 16px;
+  margin-left: 12px;
+  
+  &.ready {
+    background-color: #4caf50;
+    color: white;
+  }
+  
+  &.not-ready {
+    background-color: #f44336;
+    color: white;
+  }
+}
+
+.loading-container, .error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+}
+
+.error-container {
+  color: #f44336;
+  
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+  }
+}
+
+.status-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.status-info {
+  display: flex;
+  gap: 24px;
+  padding: 16px;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+  
+  .label {
+    font-weight: 500;
+    margin-right: 8px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+  
+  .value {
+    font-weight: 400;
+  }
+}
+
+.component-statuses, .installations, .data-stats {
+  h3 {
+    margin-top: 0;
+    margin-bottom: 16px;
+    font-size: 18px;
+    color: rgba(0, 0, 0, 0.87);
+  }
+}
+
+.component-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.component-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+  
+  .component-icon {
+    margin-right: 16px;
+    
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+      
+      &.green {
+        color: #4caf50;
+      }
+      
+      &.blue {
+        color: #2196f3;
+      }
+      
+      &.orange {
+        color: #ff9800;
+      }
+      
+      &.red {
+        color: #f44336;
+      }
+      
+      &.gray {
+        color: #9e9e9e;
+      }
+    }
+  }
+  
+  .component-details {
+    .component-name {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .component-status {
+      font-size: 12px;
+      
+      &.running {
+        color: #4caf50;
+      }
+      
+      &.starting {
+        color: #2196f3;
+      }
+      
+      &.warning {
+        color: #ff9800;
+      }
+      
+      &.error {
+        color: #f44336;
+      }
+      
+      &.stopped {
+        color: #9e9e9e;
+      }
+    }
+  }
+}
+
+.installation-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.installation-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+  width: calc(50% - 8px);
+  
+  .installation-icon {
+    margin-right: 16px;
+    
+    img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
+  }
+  
+  .installation-details {
+    .installation-name {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .installation-repos {
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.6);
+    }
+  }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.stat-item {
+  padding: 16px;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+  
+  .stat-label {
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+  
+  .stat-value {
+    font-size: 24px;
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  
+  .stat-desc {
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+}
+
+.refreshing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background-color: rgba(0, 0, 0, 0.02);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  
+  span {
+    margin-left: 8px;
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.6);
+  }
+}

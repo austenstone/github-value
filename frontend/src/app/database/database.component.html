@@ -1,46 +1,41 @@
 <div class="stepper-container">
   <mat-stepper linear #stepper>
-    <mat-step label="Database" state="database" [completed]="status?.dbConnected">
-      <div *ngIf="status" class="stepper-content">
-        <p>Enter your database credentials</p>
-        <form [formGroup]="dbFormGroup" (ngSubmit)="dbConnect()" class="database-form">
-          <ng-template matStepLabel>Database</ng-template>
-          <mat-form-field>
-            <mat-label>Connection String URI</mat-label>
-            <input matInput formControlName="uri"
-              placeholder="mongodb://myDatabaseUser:P%40ssw0rd@cluster0.example.mongodb.net/?retryWrites=true&w=majority">
-          </mat-form-field>
-          <div>
-          </div>
-          <div>
-            <button mat-button matStepperNext>
-              Connect
-              <mat-icon matIconSuffix *ngIf="isDbConnecting">
-                <mat-spinner class="mat-spinner-color" diameter="18"></mat-spinner>
-              </mat-icon>
-            </button>
-          </div>
-        </form>
-      </div>
-    </mat-step>
-    <mat-step label="GitHub App" state="github" [completed]="status?.isSetup">
-      <div class="stepper-content">
-        <app-install (finishedChange)="checkStatus()"></app-install>
-      </div>
-    </mat-step>
-    <mat-step label="Done" state="rocket_launch">
-      <p>All Setup!</p>
+    <mat-step label="Database" state="database" [completed]="status?.isReady">
+      <ng-template matStepperIcon="database">
+        <mat-icon>database</mat-icon>
+      </ng-template>
+      <form [formGroup]="dbFormGroup">
+        <ng-template matStepLabel>Connect Database</ng-template>
+        <mat-form-field>
+          <mat-label>MongoDB URI</mat-label>
+          <input matInput placeholder="mongodb://localhost:27017/copilot" formControlName="uri" required>
+        </mat-form-field>
+        <div>
+          <button mat-button matStepperNext (click)="dbConnect()" [disabled]="dbFormGroup.invalid || isDbConnecting">
+            <mat-icon>navigate_next</mat-icon>
+            Next
+          </button>
+          @if (isDbConnecting) {
+          <mat-progress-spinner mode="indeterminate" diameter="20"></mat-progress-spinner>
+          }
+        </div>
+      </form>
     </mat-step>
 
-    <!-- Icon overrides. -->
-    <ng-template matStepperIcon="database">
-      <mat-icon>table</mat-icon>
-    </ng-template>
-    <ng-template matStepperIcon="github">
-      <mat-icon class="material-icons" svgIcon="github"></mat-icon>
-    </ng-template>
-    <ng-template matStepperIcon="rocket_launch">
-      <mat-icon>rocket_launch</mat-icon>
-    </ng-template>
+    <mat-step label="GitHub App" state="github" [completed]="status?.installations?.length">
+      <ng-template matStepperIcon="github">
+        <mat-icon>settings_applications</mat-icon>
+      </ng-template>
+      <ng-template matStepLabel>GitHub App</ng-template>
+      <app-install></app-install>
+    </mat-step>
+
+    <mat-step label="Complete" state="done">
+      <ng-template matStepperIcon="done">
+        <mat-icon>done</mat-icon>
+      </ng-template>
+      <ng-template matStepLabel>Complete</ng-template>
+      <p>You have completed all the setup steps!</p>
+    </mat-step>
   </mat-stepper>
 </div>

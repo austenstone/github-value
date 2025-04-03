@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subscription, interval, of } from 'rxjs';
-import { catchError, map, shareReplay, switchMap, tap } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
+import { catchError, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { serverUrl } from '../server.service';
 
 // Types for system status
 export type ComponentStatus = 'starting' | 'running' | 'error' | 'warning' | 'stopping' | 'stopped';
@@ -32,7 +32,7 @@ export interface SystemStatus {
   providedIn: 'root'
 })
 export class StatusService {
-  private apiUrl = `${environment.apiUrl}/status`;
+  private apiUrl = `${serverUrl}/status`;
   private refreshInterval = 30000; // Default refresh interval in milliseconds
   private refreshTimer: Subscription | null = null;
   private statusSubject = new BehaviorSubject<SystemStatus | null>(null);
@@ -81,14 +81,6 @@ export class StatusService {
         return of(null);
       })
     );
-  }
-
-  /**
-   * Get the current system status
-   * @returns Observable of SystemStatus
-   */
-  getStatus(): Observable<SystemStatus | null> {
-    return this.fetchStatus();
   }
 
   /**
@@ -150,13 +142,5 @@ export class StatusService {
       default:
         return 'help';
     }
-  }
-
-  /**
-   * Run health checks for all components
-   * @returns Observable of health check results
-   */
-  runHealthChecks(): Observable<any> {
-    return this.triggerHealthCheck();
   }
 }

@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import adoptionService, { AdoptionType } from './adoption.service.js';
 import app from '../index.js';
 import { SettingsType } from './settings.service.js';
+import metricsService from './metrics.service.js';
+import { MetricDailyResponseType } from 'models/metrics.model.js';
 
 interface Target {
   current: number;
@@ -54,11 +56,10 @@ class TargetValuesService {
     }
   }
 
-  calculateTargets(settings: SettingsType, adoptions: AdoptionType[]): Targets {
+  calculateTargets(settings: SettingsType, adoptions: AdoptionType[], metrics: MetricDailyResponseType[]): Targets {
     const topAdoptions = adoptions
       .sort((a, b) => b.totalActive - a.totalActive)
       .slice(0, 10);
-
     const averages = topAdoptions.reduce((acc, curr) => {
       return {
         totalSeats: acc.totalSeats + curr.totalSeats,
@@ -72,7 +73,7 @@ class TargetValuesService {
 
     return {
       org: {
-        seats: { current: avgTotalSeats, target: avgTotalSeats, max: avgTotalSeats },
+        seats: { current: avgTotalSeats, target: avgTotalSeats, max: Number(settings.developerCount) },
         adoptedDevs: { current: avgTotalActive, target: avgTotalActive, max: avgTotalSeats },
         monthlyDevsReportingTimeSavings: { current: 0, target: 0, max: avgTotalSeats },
         percentOfSeatsReportingTimeSavings: { current: 0, target: 0, max: 100 },
@@ -103,14 +104,23 @@ class TargetValuesService {
     try {
       const Targets = mongoose.model('Targets');
       const existingTargets = await Targets.findOne();
+      const isCorrectFormat = existingTargets.org || existingTargets.user;
 
-      if (!existingTargets) {
+      if (!isCorrectFormat) {
+        await Targets.deleteMany({});
+      }
+
+      if (!existingTargets || !existingTargets.org) {
         const settings = await app.settingsService.getAllSettings();
         const adoptions = await adoptionService.getAllAdoptions2({
           filter: { enterprise: 'enterprise' },
           projection: {}
         });
-        const initialData = this.calculateTargets(settings, adoptions);
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - 30);
+        const metrics = await metricsService.getMetrics({});
+        const initialData = this.calculateTargets(settings, adoptions, metrics);
         await Targets.create(initialData);
       }
     } catch (error) {

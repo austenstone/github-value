@@ -15,6 +15,7 @@ import { CopilotSeatComponent } from './main/copilot/copilot-seats/copilot-seat/
 import { DatabaseComponent } from './database/database.component';
 import { ErrorComponent } from './error/error.component';
 import { CopilotValueModelingComponent } from './main/copilot/copilot-value-modeling/copilot-value-modeling.component';
+import { StatusDashboardComponent } from './shared/components/status-dashboard/status-dashboard.component';
 
 export const routes: Routes = [
   { path: 'setup', component: InstallComponent },
@@ -41,5 +42,6 @@ export const routes: Routes = [
       { path: '', redirectTo: 'copilot', pathMatch: 'full' }
     ]
   },
+  { path: 'status', component: StatusDashboardComponent, title: 'System Status' },
   { path: '**', redirectTo: '' }
 ];

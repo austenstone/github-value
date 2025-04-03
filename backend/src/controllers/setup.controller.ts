@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import app from '../index.js';
 import StatusService from '../services/status.service.js';
 import logger from '../services/logger.js';
+import statusManager from 'services/status.manager.js';
 
 class SetupController {
   async registrationComplete(req: Request, res: Response) {
@@ -83,8 +84,7 @@ class SetupController {
 
   async getStatus(req: Request, res: Response) {
     try {
-      const statusService = new StatusService();
-      const status = await statusService.getStatus();
+      const status = await statusManager.getStatus();
       return res.json(status);
     } catch (error) {
       res.status(500).json(error);

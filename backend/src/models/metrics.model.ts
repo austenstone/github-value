@@ -1,3 +1,6 @@
+import mongoose from 'mongoose';
+import { EditorSchema, ModelSchema, RepositorySchema } from './schemas/metrics-schemas.js';
+
 type MetricDailyResponseType = {
   date: string;
   total_active_users: number;
@@ -142,7 +145,39 @@ type MetricIdeChatModelStatsType = {
   editor_id: number;
 }
 
-export {
-  MetricDailyType,
-  MetricDailyResponseType
-};
+const metricsSchema = new mongoose.Schema({
+  org: String,
+  team: String,
+  date: Date,
+  total_active_users: Number,
+  total_engaged_users: Number,
+
+  copilot_ide_code_completions: {
+    total_engaged_users: Number,
+    total_code_acceptances: Number,
+    total_code_suggestions: Number,
+    total_code_lines_accepted: Number,
+    total_code_lines_suggested: Number,
+    editors: [EditorSchema]
+  },
+  copilot_ide_chat: {
+    total_engaged_users: Number,
+    total_chats: Number,
+    total_chat_copy_events: Number,
+    total_chat_insertion_events: Number,
+    editors: [EditorSchema]
+  },
+  copilot_dotcom_chat: {
+    total_engaged_users: Number,
+    total_chats: Number,
+    models: [ModelSchema]
+  },
+  copilot_dotcom_pull_requests: {
+    total_engaged_users: Number,
+    total_pr_summaries_created: Number,
+    repositories: [RepositorySchema]
+  }
+});
+
+export { MetricDailyType, MetricDailyResponseType };
+export default metricsSchema;

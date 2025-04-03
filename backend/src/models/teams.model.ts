@@ -1,6 +1,76 @@
+import mongoose, { Schema } from 'mongoose';
 import { components } from "@octokit/openapi-types";
 import { SeatType } from "./seats.model.js";
-import mongoose from "mongoose";
+
+const teamSchema = new Schema({
+  org: { type: String, required: true },
+  team: String,
+  githubId: { type: Number, required: true, unique: true },
+  node_id: String,
+  name: String,
+  slug: String,
+  description: String,
+  privacy: String,
+  notification_setting: String,
+  permission: String,
+  url: String,
+  html_url: String,
+  members_url: String,
+  repositories_url: String,
+  parent: { type: Schema.Types.ObjectId, ref: 'Team' }
+}, {
+  timestamps: true
+});
+
+const memberSchema = new Schema({
+  org: { type: String, required: true },
+  login: { type: String, required: true },
+  id: { type: Number, required: true },
+  node_id: String,
+  avatar_url: String,
+  gravatar_id: String,
+  url: String,
+  html_url: String,
+  followers_url: String,
+  following_url: String,
+  gists_url: String,
+  starred_url: String,
+  subscriptions_url: String,
+  organizations_url: String,
+  repos_url: String,
+  events_url: String,
+  received_events_url: String,
+  type: String,
+  site_admin: Boolean,
+  name: String,
+  email: String,
+  starred_at: String,
+  user_view_type: String,
+  seat: {
+    type: Schema.Types.ObjectId,
+    ref: 'Seats'
+  }
+}, {
+  timestamps: true,
+});
+
+memberSchema.index({ org: 1, login: 1, id: 1 }, { unique: true });
+memberSchema.index({ seat: 1 });
+memberSchema.index({ updatedAt: -1 });
+memberSchema.virtual('seats', {
+  ref: 'Seats',
+  localField: '_id',
+  foreignField: 'assignee'
+});
+
+const teamMemberSchema = new Schema({
+  team: { type: Schema.Types.ObjectId, ref: 'Team', required: true },
+  member: { type: Schema.Types.ObjectId, ref: 'Member', required: true }
+}, {
+  timestamps: false
+});
+
+teamMemberSchema.index({ team: 1, member: 1 }, { unique: true });
 
 export type TeamType = Omit<components["schemas"]["team"], 'parent'> & {
   _id?: mongoose.Types.ObjectId;
@@ -12,7 +82,7 @@ export type TeamType = Omit<components["schemas"]["team"], 'parent'> & {
   parent?: TeamType | null;
 };
 
-type MemberType = {
+export type MemberType = {
   org: string;
   login: string;
   id: number;
@@ -41,7 +111,7 @@ type MemberType = {
   activity?: SeatType[];
 };
 
-type MemberActivityType = {
+export type MemberActivityType = {
   org: string;
   login: string;
   id: number;
@@ -70,13 +140,9 @@ type MemberActivityType = {
   activity: SeatType[];
 };
 
-type TeamMemberAssociationType = {
+export type TeamMemberAssociationType = {
   TeamId: number;
   MemberId: number;
 };
 
-export {
-  MemberType,
-  TeamMemberAssociationType,
-  MemberActivityType
-};
+export { teamSchema as default, memberSchema, teamMemberSchema };

@@ -1,0 +1,106 @@
+<div class="status-dashboard">
+  <mat-card class="status-overview-card">
+    <mat-card-header>
+      <mat-card-title>System Status</mat-card-title>
+      <div class="header-actions">
+        <button mat-icon-button color="primary" (click)="refreshStatus()" matTooltip="Refresh Status">
+          <mat-icon>refresh</mat-icon>
+        </button>
+        <button mat-icon-button color="primary" (click)="runHealthCheck()" matTooltip="Run Health Check">
+          <mat-icon>health_and_safety</mat-icon>
+        </button>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      <div *ngIf="loading" class="loading-indicator">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        <p>Loading system status...</p>
+      </div>
+
+      <ng-container *ngIf="(systemStatus$ | async) as status">
+        <div class="system-health-overview">
+          <div class="health-gauge" [class.success]="getSystemHealthPercentage(status) > 80"
+                                   [class.warning]="getSystemHealthPercentage(status) > 40 && getSystemHealthPercentage(status) <= 80"
+                                   [class.error]="getSystemHealthPercentage(status) <= 40">
+            <div class="health-gauge-inner">
+              <span class="health-percentage">{{ getSystemHealthPercentage(status) }}%</span>
+              <span class="health-label">Overall Health</span>
+            </div>
+          </div>
+
+          <div class="system-info">
+            <div class="info-row">
+              <span class="info-label">Status:</span>
+              <span class="info-value" [class]="status.isReady ? 'status-success' : 'status-warning'">
+                {{ status.isReady ? 'Ready' : 'Not Ready' }}
+              </span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Uptime:</span>
+              <span class="info-value">{{ formatUptime(status.uptime) }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Started:</span>
+              <span class="info-value">{{ formatDate(status.startTime) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="component-status-list">
+          <h3>Component Status</h3>
+
+          <div *ngFor="let component of objectKeys(status.status)" class="component-status-item">
+            <div class="component-header">
+              <div class="component-name-status">
+                <mat-icon [class]="getStatusClass(status.status[component])">{{ getStatusIcon(status.status[component]) }}</mat-icon>
+                <span class="component-name">{{ component }}</span>
+              </div>
+              
+              <div class="component-badge" [class]="getStatusClass(status.status[component])">
+                {{ status.status[component] }}
+              </div>
+            </div>
+
+            <div *ngIf="status.componentDetails[component]?.message" class="component-message">
+              {{ status.componentDetails[component].message }}
+            </div>
+
+            <mat-expansion-panel *ngIf="status.componentDetails[component]?.history?.length" class="history-panel">
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  History
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              
+              <div class="history-timeline">
+                <div *ngFor="let entry of status.componentDetails[component].history.slice().reverse()" class="history-entry">
+                  <div class="history-entry-icon">
+                    <mat-icon [class]="getStatusClass(entry.status)">{{ getStatusIcon(entry.status) }}</mat-icon>
+                  </div>
+                  <div class="history-entry-content">
+                    <div class="history-entry-header">
+                      <span class="history-entry-status" [class]="getStatusClass(entry.status)">{{ entry.status }}</span>
+                      <span class="history-entry-time">{{ formatDate(entry.timestamp) }}</span>
+                    </div>
+                    <div *ngIf="entry.message" class="history-entry-message">
+                      {{ entry.message }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </mat-expansion-panel>
+          </div>
+        </div>
+      </ng-container>
+
+      <div *ngIf="!(systemStatus$ | async) && !loading" class="error-state">
+        <mat-icon color="warn">error</mat-icon>
+        <p>Unable to load system status information.</p>
+        <button mat-raised-button color="primary" (click)="refreshStatus()">Retry</button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

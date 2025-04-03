@@ -1,0 +1,111 @@
+<div class="status-dashboard">
+  <mat-card class="status-card">
+    <mat-card-header>
+      <mat-card-title>
+        System Status
+        <span *ngIf="!loading && !error && status?.systemStatus?.isReady" 
+              class="status-badge ready">System Ready</span>
+        <span *ngIf="!loading && !error && !status?.systemStatus?.isReady" 
+              class="status-badge not-ready">System Not Ready</span>
+      </mat-card-title>
+      <div class="header-actions">
+        <button mat-icon-button color="primary" 
+                (click)="refreshStatus()" 
+                [disabled]="refreshing"
+                matTooltip="Refresh status">
+          <mat-icon>refresh</mat-icon>
+        </button>
+        <button mat-icon-button color="accent" 
+                (click)="runHealthChecks()" 
+                [disabled]="refreshing"
+                matTooltip="Run health checks">
+          <mat-icon>health_and_safety</mat-icon>
+        </button>
+      </div>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div *ngIf="loading" class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Loading status information...</p>
+      </div>
+      
+      <div *ngIf="error" class="error-container">
+        <mat-icon color="warn">error</mat-icon>
+        <p>{{ error }}</p>
+        <button mat-button color="primary" (click)="refreshStatus()">Try Again</button>
+      </div>
+      
+      <div *ngIf="!loading && !error" class="status-content">
+        <div class="status-info">
+          <div class="uptime-info">
+            <span class="label">Uptime:</span>
+            <span class="value">{{ formatUptime(status?.systemStatus?.uptime) }}</span>
+          </div>
+          <div class="started-info">
+            <span class="label">Started:</span>
+            <span class="value">{{ status?.systemStatus?.startTime | date:'medium' }}</span>
+          </div>
+        </div>
+        
+        <div class="component-statuses">
+          <h3>Component Status</h3>
+          
+          <div *ngIf="status?.systemStatus?.components" class="component-grid">
+            <div *ngFor="let component of objectKeys(status.systemStatus.components)" 
+                 class="component-item">
+              <div class="component-icon" [style.color]="getStatusColor(status.systemStatus.components[component])">
+                <mat-icon>{{ getStatusIcon(status.systemStatus.components[component]) }}</mat-icon>
+              </div>
+              <div class="component-details">
+                <div class="component-name">{{ component | titlecase }}</div>
+                <div class="component-status" [class]="status.systemStatus.components[component]">
+                  {{ status.systemStatus.components[component] | titlecase }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div *ngIf="status?.installations?.length" class="installations">
+          <h3>GitHub App Installations ({{ status.installations.length }})</h3>
+          <div class="installation-list">
+            <div *ngFor="let install of status.installations" class="installation-item">
+              <div class="installation-icon">
+                <img [src]="install.installation.account.avatar_url" 
+                     [alt]="install.installation.account.login">
+              </div>
+              <div class="installation-details">
+                <div class="installation-name">{{ install.installation.account.login }}</div>
+                <div class="installation-repos">{{ install.repos.length }} repositories</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div *ngIf="status?.seatsHistory" class="data-stats">
+          <h3>Data Statistics</h3>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-label">Oldest Data Point</div>
+              <div class="stat-value">{{ status.seatsHistory.oldestCreatedAt | date:'mediumDate' }}</div>
+              <div class="stat-desc" *ngIf="status.seatsHistory.daysSinceOldestCreatedAt">
+                {{ status.seatsHistory.daysSinceOldestCreatedAt }} days of data
+              </div>
+            </div>
+            
+            <div class="stat-item">
+              <div class="stat-label">Survey Responses</div>
+              <div class="stat-value">{{ status.surveyCount }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-card-content>
+    
+    <mat-card-footer *ngIf="refreshing" class="refreshing">
+      <mat-progress-spinner mode="indeterminate" diameter="20"></mat-progress-spinner>
+      <span>Refreshing...</span>
+    </mat-card-footer>
+  </mat-card>
+</div>

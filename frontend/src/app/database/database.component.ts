@@ -11,7 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { finalize, takeWhile, timer } from 'rxjs';
-import { InstallationsService, statusResponse } from '../services/api/installations.service';
+import { InstallationsService, SystemStatus } from '../services/api/installations.service';
 import { SetupService } from '../services/api/setup.service';
 
 @Component({
@@ -36,12 +36,12 @@ import { SetupService } from '../services/api/setup.service';
     },
   ],
   templateUrl: './database.component.html',
-  styleUrl: './database.component.scss',
+  styleUrls: ['./database.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DatabaseComponent implements AfterViewInit {
   @ViewChild('stepper') private stepper!: MatStepper;
-  status?: statusResponse;
+  status?: SystemStatus;
   isDbConnecting = false;
   dbFormGroup = new FormGroup({
     uri: new FormControl('', Validators.required)
@@ -57,12 +57,10 @@ export class DatabaseComponent implements AfterViewInit {
   ngAfterViewInit() {
     timer(0, 1000).pipe(
       takeWhile(() => {
-        return !this.status || !this.status.isSetup;
+        return !this.status || !this.status.installations?.length;
       }),
       finalize(async () => {
-        await this.router.navigate(['/copilot'], {
-          // queryParams: { celebrate: true }
-        })
+        await this.router.navigate(['/copilot'])
       })
     ).subscribe(() => this.checkStatus());
   }
@@ -82,21 +80,20 @@ export class DatabaseComponent implements AfterViewInit {
   checkStatus() {
     this.installationService.refreshStatus().subscribe(status => {
       this.status = status;
-      if (this.status.dbConnected && this.stepper.selectedIndex === 0) {
+      if (this.status.isReady && this.stepper.selectedIndex === 0) {
         const step = this.stepper.steps.get(0);
         if (step) step.completed = true;
         this.stepper.next();
       }
-      if (this.status.isSetup && this.stepper.selectedIndex === 1) {
+      if (this.status.installations?.length && this.stepper.selectedIndex === 1) {
         const step = this.stepper.steps.get(1);
         if (step) step.completed = true;
         this.stepper.next();
       }
-      if (this.status.isSetup && this.stepper.selectedIndex === 2) {
+      if (this.status.installations?.length && this.stepper.selectedIndex === 2) {
         const step = this.stepper.steps.get(2);
         if (step) step.interacted = true;
       }
     })
   }
-
 }
