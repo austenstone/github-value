@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import { MemberActivityType, MemberType } from 'models/teams.model.js';
 import fs from 'fs';
 import adoptionService from './adoption.service.js';
+import logger from './logger.js';
 
 type _Seat = NonNullable<Endpoints["GET /orgs/{org}/copilot/billing/seats"]["response"]["data"]["seats"]>[0];
 export interface SeatEntry extends _Seat {
@@ -48,7 +49,7 @@ class SeatsService {
   async getAssignee(id: number) {
     const Seats = mongoose.model('Seats');
     const Member = mongoose.model('Member');
-    const member = await Member.findOne({id}).sort({org: -1}); //this temporarily resolves a bug where one org fails but the other one succeeds
+    const member = await Member.findOne({ id }).sort({ org: -1 }); //this temporarily resolves a bug where one org fails but the other one succeeds
 
     if (!member) {
       throw `Member with id ${id} not found`
@@ -90,6 +91,40 @@ class SeatsService {
     const Seats = mongoose.model('Seats');
     const ActivityTotals = mongoose.model('ActivityTotals');
 
+    // fill the data to 10,000 entries for testing
+    // data = new Array(10000).fill(0).map((entry, index) => {
+    //   const seat = data[index % data.length];
+    //   return {
+    //     ...seat,
+    //     plan_type: seat.plan_type || 'unknown',
+    //     assignee: {
+    //       ...seat.assignee,
+    //       id: seat.assignee.id + index,
+    //       login: seat.assignee.login ||
+    //         `test-login-${index}`,
+    //       node_id: seat.assignee.node_id || `test-node-id-${index}`,
+    //       avatar_url: seat.assignee.avatar_url ||
+    //         `https://avatars.githubusercontent.com/u/${index}?v=4`,
+    //       gravatar_id: seat.assignee.gravatar_id || `test-gravatar-id-${index}`,
+    //       url: seat.assignee.url || `https://api.github.com/users/test-login-${index}`,
+    //       html_url: seat.assignee.html_url || ``,
+    //       followers_url: seat.assignee.followers_url || `https://api.github.com/users/test-login-${index}/followers`,
+    //       following_url: seat.assignee.following_url || `https://api.github.com/users/test-login-${index}/following{/other_user}`,
+    //       gists_url: seat.assignee.gists_url || `https://api.github.com/users/test-login-${index}/gists{/gist_id}`,
+    //       starred_url: seat.assignee.starred_url || `https://api.github.com/users/test-login-${index}/starred{/owner}{/repo}`,
+    //       subscriptions_url: seat.assignee.subscriptions_url || `https://api.github.com/users/test-login-${index}/subscriptions`,
+    //       organizations_url: seat.assignee.organizations_url || `https://api.github.com/users/test-login-${index}/orgs`,
+    //       repos_url: seat.assignee.repos_url || `https://api.github.com/users/test-login-${index}/repos`,
+    //       events_url: seat.assignee.events_url || `https://api.github.com/users/test-login-${index}/events{/privacy}`,
+    //       received_events_url: seat.assignee.received_events_url || `https://api.github.com/users/test-login-${index}/received_events`,
+    //       type: seat.assignee.type || `User`,
+    //       site_admin: seat.assignee.site_admin || false
+    //     }
+    //   }
+    // });
+
+    logger.info(`Inserting ${data.length} seat assignments for ${org}`);
+
     const memberUpdates = data.map(seat => ({
       updateOne: {
         filter: { org, id: seat.assignee.id },
@@ -120,6 +155,8 @@ class SeatsService {
         upsert: true,
       }
     }));
+
+    logger.debug(`Writing ${memberUpdates.length} members`);
     await Members.bulkWrite(memberUpdates);
 
     const updatedMembers = await Members.find({
@@ -136,9 +173,21 @@ class SeatsService {
       assignee_login: seat.assignee.login,
       assignee: updatedMembers.find(m => m.id === seat.assignee.id)?._id
     }));
-    const seatResults = await Seats.insertMany(seatsData);
+    logger.debug(`Writing ${seatsData.length} seats`);
 
-    // Add member seat updates
+    const seatInsertOperations = seatsData.map(seat => ({
+      insertOne: {
+        document: seat
+      }
+    }));
+    const bulkWriteResult = await Seats.bulkWrite(seatInsertOperations, { ordered: false });
+    logger.debug(`Inserted ${bulkWriteResult.insertedCount} seats`);
+    const seatResults = await Seats.find({
+      queryAt,
+      org,
+      assignee_id: { $in: data.map(seat => seat.assignee.id) }
+    }).sort({ createdAt: -1 }).limit(seatsData.length);
+
     const memberSeatUpdates = seatResults.map(seat => ({
       updateOne: {
         filter: { org, id: seat.assignee_id },
@@ -147,6 +196,7 @@ class SeatsService {
         }
       }
     }));
+    logger.debug(`Writing ${memberSeatUpdates.length} member seat updates`);
     await Members.bulkWrite(memberSeatUpdates);
 
     const adoptionData = {
@@ -163,7 +213,7 @@ class SeatsService {
         _seat: seat._id,
       }))
     }
-
+    logger.debug(`Writing ${adoptionData.seats.length} adoption data`);
     await adoptionService.createAdoption(adoptionData);
 
     const today = new Date(queryAt);
@@ -221,6 +271,7 @@ class SeatsService {
     })).filter(update => update !== null);
 
     if (activityUpdates.length > 0) {
+      logger.debug(`Writing ${activityUpdates.length} activity updates`);
       await ActivityTotals.bulkWrite(activityUpdates);
     }
 

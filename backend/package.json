@@ -1,8 +1,8 @@
 {
   "name": "github-value-backend",
   "version": "1.0.0",
-  "description": "Demonstrate the value of GitHub",
   "type": "module",
+  "description": "Demonstrate the value of GitHub",
   "main": "src/index.ts",
   "scripts": {
     "start": "node --enable-source-maps dist/index.js | bunyan -o short -l info",
@@ -15,6 +15,7 @@
     "dotenv": "cp -n .env.example .env || true"
   },
   "dependencies": {
+    "@octokit/core": "^6.1.4",
     "bunyan": "^1.8.15",
     "cors": "^2.8.5",
     "cron": "^3.2.1",
@@ -33,6 +34,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.16.0",
+    "@octokit/types": "^13.8.0",
     "@types/bunyan": "^1.8.11",
     "@types/cors": "^2.8.17",
     "@types/eventsource": "^1.1.15",

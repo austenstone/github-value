@@ -7,6 +7,7 @@ import { Endpoints } from '@octokit/types';
 
 export const setupWebhookListeners = (github: App) => {
   github.webhooks.onAny(async ({ id, name, payload }) => {
+    app.github.webhookPingReceived = true;
     logger.debug(`GitHub Webhook event`, { id, name, payload });
     logger.info(`GitHub Webhook event`, { id, name });
   });

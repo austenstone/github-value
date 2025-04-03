@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "ES6",
+    "target": "ES2022",
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "rootDir": "./src",
@@ -12,7 +12,9 @@
     "forceConsistentCasingInFileNames": true,
     "sourceMap": true,
     "inlineSources": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": false,
+    "noEmit": false
   },
   "include": [
     "src/**/*.ts"

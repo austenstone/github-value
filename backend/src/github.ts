@@ -39,6 +39,7 @@ class GitHub {
   app?: App;
   queryService?: QueryService;
   webhooks?: Express;
+  webhookPingReceived = false;
   input: GitHubInput;
   expressApp: Express;
   installations = [] as {
@@ -119,6 +120,7 @@ class GitHub {
       this.queryService = new QueryService(this.app, {
         cronTime: this.cronExpression
       });
+      await this.queryService.start();
       logger.info(`CRON task ${this.cronExpression} started`);
     }
     for await (const { octokit, installation } of this.app.eachInstallation.iterator()) {

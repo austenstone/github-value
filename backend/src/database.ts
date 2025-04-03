@@ -13,9 +13,9 @@ class Database {
     logger.info('Connecting to the database', mongodbUri);
     try {
       this.mongoose = await mongoose.connect(mongodbUri, {
-        socketTimeoutMS: 90000,
-        connectTimeoutMS: 60000,
-        serverSelectionTimeoutMS: 30000,
+        socketTimeoutMS: 360000,
+        connectTimeoutMS: 360000,
+        serverSelectionTimeoutMS: 60000,
         retryWrites: true,
         readPreference: 'primaryPreferred',
         retryReads: true,
@@ -59,28 +59,6 @@ class Database {
     mongoose.model('Settings', new mongoose.Schema({
       name: String,
       value: {}
-    }));
-    mongoose.model('Usage', new mongoose.Schema({
-      org: String,
-      team: String,
-      day: Date,
-      total_suggestions_count: Number,
-      total_acceptances_count: Number,
-      total_lines_suggested: Number,
-      total_lines_accepted: Number,
-      total_active_users: Number,
-      total_chat_acceptances: Number,
-      total_chat_turns: Number,
-      total_active_chat_users: Number,
-      breakdown: [{
-        language: String,
-        editor: String,
-        suggestions_count: Number,
-        acceptances_count: Number,
-        lines_suggested: Number,
-        lines_accepted: Number,
-        active_users: Number
-      }]
     }));
 
     // Language Schema 📝
@@ -218,6 +196,7 @@ class Database {
     });
     memberSchema.index({ org: 1, login: 1, id: 1 }, { unique: true });
     memberSchema.index({ seat: 1 });
+    memberSchema.index({ updatedAt: -1 });
     memberSchema.virtual('seats', {
       ref: 'Seats',
       localField: '_id',

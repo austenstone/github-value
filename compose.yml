@@ -10,8 +10,6 @@ services:
       NODE_ENV: production
       NODE_OPTIONS: --enable-source-maps
       MONGODB_URI: mongodb://root:octocat@mongo:27017
-    # env_file:
-    #   - backend/.env
     depends_on:
       mongo:
         condition: service_healthy
