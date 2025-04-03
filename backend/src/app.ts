@@ -3,8 +3,7 @@ import express, { Express } from 'express';
 import rateLimit from 'express-rate-limit';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import path, { dirname } from 'path';
-import { fileURLToPath } from 'url';
+import path from 'path';
 import * as http from 'http';
 import Database from './database.js';
 import logger, { expressLoggerMiddleware } from './services/logger.js';
@@ -133,7 +132,7 @@ class App {
     this.e.get('*', (_, res) => res.sendFile(path.join(frontendPath, 'index.html')));
 
     this.eListener = this.e.listen(this.port, '0.0.0.0');
-    logger.info(`eListener on port ${this.port}`);
+    logger.info(`eListener on port ${this.port} (http://localhost:${this.port})`);
   }
 
   private initializeSettings() {

@@ -413,6 +413,80 @@ export class HighchartsService {
     };
   }
 
+  getLanguageTrendsChart(metrics: CopilotMetrics[]): Highcharts.Options {
+    const dailyData: Record<string, Record<string, { accepted: number, suggested: number }>> = {};
+    const languageTotals: Record<string, number> = {};
+
+    for (const entry of metrics) {
+      const dateStr = new Date(entry.date).toISOString().split('T')[0];
+
+      if (!entry.copilot_ide_code_completions?.editors) continue;
+
+      for (const editor of entry.copilot_ide_code_completions.editors) {
+        for (const model of editor.models || []) {
+          for (const lang of model.languages || []) {
+            if (!dailyData[dateStr]) dailyData[dateStr] = {};
+            if (!dailyData[dateStr][lang.name]) {
+              dailyData[dateStr][lang.name] = { accepted: 0, suggested: 0 };
+            }
+
+            dailyData[dateStr][lang.name].accepted += lang.total_code_lines_accepted || 0;
+            dailyData[dateStr][lang.name].suggested += lang.total_code_lines_suggested || 0;
+
+            languageTotals[lang.name] = (languageTotals[lang.name] || 0) + lang.total_code_lines_suggested;
+          }
+        }
+      }
+    }
+
+    const topLanguages = Object.entries(languageTotals)
+      .filter(([lang]) => lang.toLowerCase() !== 'unknown') // exclude "unknown"
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([lang]) => lang);
+
+    const series: Highcharts.SeriesSplineOptions[] = topLanguages.map((lang: string) => ({
+      name: lang,
+      type: 'spline',
+      color: this.getLanguageColor(lang),
+      data: Object.entries(dailyData).map(([date, langs]) => {
+        const accepted = langs[lang]?.accepted || 0;
+        const suggested = langs[lang]?.suggested || 0;
+        const percent = suggested > 0 ? (accepted / suggested) * 100 : null;
+
+        return {
+          x: new Date(date).getTime(),
+          y: percent,
+          custom: { accepted, suggested }
+        };
+      }).filter(p => p.y !== null)
+    }));
+
+    return {
+      chart: { type: 'spline' },
+      xAxis: { type: 'datetime' },
+      yAxis: {
+        min: 0,
+        max: 100,
+        title: { text: 'Acceptance Rate (%)' }
+      },
+      tooltip: {
+        formatter: function (this: Highcharts.TooltipFormatterContextObject & {
+          point: Highcharts.Point & { custom?: { accepted: number, suggested: number } }
+        }) {
+          return `
+            <b>${this.series.name}</b><br/>
+            ${Highcharts.dateFormat('%b %e', this.x as number)}<br/>
+            Accepted: ${this.point.custom?.accepted}<br/>
+            Suggested: ${this.point.custom?.suggested}<br/>
+            Acceptance: ${(this.y ?? 0).toFixed(1)}%
+          `;
+        }
+      },
+      series
+    };
+  }
+
   transformCopilotMetricsToBars(data: CopilotMetrics, totalSeats: number): DashboardCardBarsInput[] {
     return [
       { name: 'IDE Code Completion', icon: 'code', value: data.copilot_ide_code_completions?.total_engaged_users || 0, maxValue: totalSeats },
