@@ -46,6 +46,16 @@
           </ng-container>
         </mat-card-content>
       </mat-card>
+      <mat-card appearance="outlined" id="line-chart" style="grid-column: span 2;">
+        <mat-card-header>
+           <mat-card-title>Language Acceptance Trends</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <ng-container *ngIf="metrics?.length; else loading">
+            <app-dashboard-card-line-chart [data]="metrics"></app-dashboard-card-line-chart>
+          </ng-container>
+        </mat-card-content>
+      </mat-card> 
     </div>
 </div>
 <ng-template #loading>
