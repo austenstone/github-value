@@ -31,7 +31,6 @@
       </a>
       <a mat-list-item routerLink="/copilot/surveys">
         <mat-icon matListItemIcon>merge</mat-icon>
-        <!-- <mat-icon matListItemIcon>feedback</mat-icon> -->
         <span>Developer Estimates</span>
       </a>
       <a mat-list-item routerLink="/copilot/value-modeling">
@@ -67,7 +66,7 @@
               }
             </mat-select>
             <ng-template #singleInstall>
-              <span>{{ installations[0]?.account?.login }}</span>
+              <span>{{ installations[0].account?.login }}</span>
             </ng-template>
           </h1>
         </ng-container>
