@@ -3,27 +3,18 @@ import mongoose from "mongoose";
 import logger from "./logger.js";
 
 class TeamsService {
-  async updateTeams(org: string, teams: Endpoints["GET /orgs/{org}/teams"]["response"]["data"]) {
-    const Team = mongoose.model('Team');
+  async updateTeams(
+    org: string,
+    teams: Endpoints["GET /orgs/{org}/teams"]["response"]["data"]
+  ) {
+    const Team = mongoose.model("Team");
 
     for (const team of teams) {
       await Team.findOneAndUpdate(
         { githubId: team.id }, // search criteria
         {
           org,
-          team: team.slug,
-          githubId: team.id,
-          node_id: team.node_id,
-          name: team.name,
-          slug: team.slug,
-          description: team.description,
-          privacy: team.privacy || 'unknown',
-          notification_setting: team.notification_setting || 'unknown',
-          permission: team.permission,
-          url: team.url,
-          html_url: team.html_url,
-          members_url: team.members_url,
-          repositories_url: team.repositories_url
+          ...team,
         },
         { upsert: true, new: true } // create if doesn't exist, return updated doc
       );
@@ -46,37 +37,40 @@ class TeamsService {
       { githubId: -1 },
       {
         org,
-        name: 'No Team',
-        slug: 'no-team',
-        description: 'No team assigned',
-        node_id: '',
-        permission: '',
-        url: '',
-        html_url: '',
-        members_url: '',
-        repositories_url: '',
-        githubId: -1
+        name: "No Team",
+        slug: "no-team",
+        description: "No team assigned",
+        node_id: "",
+        permission: "",
+        url: "",
+        html_url: "",
+        members_url: "",
+        repositories_url: "",
+        githubId: -1,
       },
       { upsert: true, new: true }
     );
   }
 
-  async updateMembers(org: string, members: Endpoints["GET /orgs/{org}/teams/{team_slug}/members"]["response"]["data"]) {
-    const Members = mongoose.model('Member');
+  async updateMembers(
+    org: string,
+    members: Endpoints["GET /orgs/{org}/teams/{team_slug}/members"]["response"]["data"]
+  ) {
+    const Members = mongoose.model("Member");
     const bulkOps = members.map((member) => ({
       updateOne: {
         filter: { org, id: member.id },
         update: { $set: member },
-        upsert: true
-      }
+        upsert: true,
+      },
     }));
     await Members.bulkWrite(bulkOps, { ordered: false });
   }
 
   async addMemberToTeam(teamId: number, memberId: number) {
-    const Team = mongoose.model('Team');
-    const Member = mongoose.model('Member');
-    const TeamMember = mongoose.model('TeamMember');
+    const Team = mongoose.model("Team");
+    const Member = mongoose.model("Member");
+    const TeamMember = mongoose.model("TeamMember");
 
     // Find Team and Member documents to get their MongoDB _ids
     const team = await Team.findOne({ githubId: teamId });
@@ -96,8 +90,11 @@ class TeamsService {
   }
 
   async deleteMemberFromTeam(teamId: number, memberId: number) {
-    const TeamMember = mongoose.model('TeamMember');
-    const deleted = await TeamMember.deleteOne({ team: teamId, member: memberId });
+    const TeamMember = mongoose.model("TeamMember");
+    const deleted = await TeamMember.deleteOne({
+      team: teamId,
+      member: memberId,
+    });
     if (deleted.deletedCount === 0) {
       throw new Error(`Member ${memberId} is not part of team ${teamId}`);
     }
@@ -105,8 +102,8 @@ class TeamsService {
   }
 
   async deleteMember(memberId: number) {
-    const Member = mongoose.model('Member');
-    const TeamMember = mongoose.model('TeamMember');
+    const Member = mongoose.model("Member");
+    const TeamMember = mongoose.model("TeamMember");
 
     await TeamMember.deleteMany({ member: memberId });
     const deleted = await Member.deleteOne({ id: memberId });
@@ -117,8 +114,8 @@ class TeamsService {
   }
 
   async deleteTeam(teamId: number) {
-    const Team = mongoose.model('Team');
-    const TeamMember = mongoose.model('TeamMember');
+    const Team = mongoose.model("Team");
+    const TeamMember = mongoose.model("TeamMember");
 
     await TeamMember.deleteMany({ team: teamId });
     const deleted = await Team.deleteOne({ githubId: teamId });
@@ -129,59 +126,59 @@ class TeamsService {
   }
 
   async getLastUpdatedAt(org?: string): Promise<Date> {
-    const Team = mongoose.model('Member');
+    const Team = mongoose.model("Member");
     const team = await Team.findOne(org ? { org } : {}).sort({ updatedAt: -1 });
     return team?.updatedAt || new Date(0);
   }
 
   async getMemberByLogin(login: string) {
-    const Member = mongoose.model('Member');
+    const Member = mongoose.model("Member");
     return await Member.findOne({ login })
-      .select('login name url avatar_url')
+      .select("login name url avatar_url")
       .exec();
   }
 
   async getAllMembers(org?: string) {
-    const Member = mongoose.model('Member');
+    const Member = mongoose.model("Member");
     try {
       return await Member.find({
-        ...org ? { org } : {}
+        ...(org ? { org } : {}),
       })
-        .select('login org name url avatar_url')
+        .select("login org name url avatar_url")
         .populate({
-          path: 'seat',
-          select: '-_id -__v',
-          options: { lean: true }
+          path: "seat",
+          select: "-_id -__v",
+          options: { lean: true },
         })
-        .sort({ login: 'asc' })
+        .sort({ login: "asc" })
         .exec();
     } catch (error) {
-      logger.error('Failed to get all members:', error);
+      logger.error("Failed to get all members:", error);
       throw error;
     }
   }
 
   async getTeams(org?: string) {
-    const Team = mongoose.model('Team');
-    const Member = mongoose.model('Member');
+    const Team = mongoose.model("Team");
+    const Member = mongoose.model("Member");
     return await Team.find({
-      ...org ? { org } : {}
+      ...(org ? { org } : {}),
     })
       .populate({
-        path: 'members',
-        select: 'login avatar_url',
-        model: Member
+        path: "members",
+        select: "login avatar_url",
+        model: Member,
       })
       .populate({
-        path: 'children',
-        select: 'name org slug description html_url',
+        path: "children",
+        select: "name org slug description html_url",
         populate: {
-          path: 'members',
-          select: 'login avatar_url',
-          model: Member
-        }
+          path: "members",
+          select: "login avatar_url",
+          model: Member,
+        },
       })
-      .sort({ name: 'asc', 'members.login': 'asc' })
+      .sort({ name: "asc", "members.login": "asc" })
       .exec();
   }
 }
