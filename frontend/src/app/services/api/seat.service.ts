@@ -32,6 +32,24 @@ export interface ActivityResponse2 {
   updatedAt: Date;
 };
 export type ActivityResponse = Record<string, ActivityResponseData>;
+
+
+
+export interface ActivityTotals {
+  total_time: number;
+  last_activity_at: string | null;
+  last_activity_editor: string | null;
+  assignee_id: number;
+  avatar_url: string;
+  name: string | null;
+  url: string;
+  html_url: string;
+  team: string | null;
+  org: string;
+  type: string;
+  login: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -77,7 +95,7 @@ export class SeatService {
     until?: string;
   }) {
     if (!queryParams?.org) delete queryParams?.org;
-    return this.http.get<Record<string, number>>(`${this.apiUrl}/activity/totals`, {
+    return this.http.get<ActivityTotals[]>(`${this.apiUrl}/activity/totals`, {
       params: queryParams
     });
   }

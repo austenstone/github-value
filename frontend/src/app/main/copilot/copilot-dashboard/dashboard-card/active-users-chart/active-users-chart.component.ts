@@ -15,7 +15,11 @@ import { Router } from '@angular/router';
   </highcharts-chart>`
 })
 export class ActiveUsersChartComponent implements OnChanges {
-  @Input() data?: Record<string, number>;
+  @Input() data?: {
+    login: string,
+    total_time: number,
+    avatar_url: string,
+  }[];
   @Input() chartOptions?: Highcharts.Options;
   Highcharts: typeof Highcharts = Highcharts;
   updateFlag = false;
@@ -32,16 +36,20 @@ export class ActiveUsersChartComponent implements OnChanges {
     series: [{
       name: 'Activity',
       type: 'bar',
-      data: this.data ? Object.values(this.data) : [],
+      data: [], // Will be updated in ngOnChanges
       colorByPoint: true,
       borderWidth: 0,
+      // Use point.options to access custom properties
+      keys: ['y', 'login', 'avatar_url']
     }],
     tooltip: {
       pointFormat: '<span style="padding:0">{point.y: .1f} hours</span>',
       headerFormat: '',
       formatter: function () {
         const hours = (this.y || 0); // Convert ms to hours
-        return `<span style="padding:0">@${this.key}</span><br>
+        // Access login from the keys mapping
+        const login = (this.point as any).login || this.key;
+        return `<span style="padding:0">@${login}</span><br>
         <span style="padding:0">${hours.toFixed(1)} hours</span>`;
       },
       outside: true,
@@ -52,8 +60,10 @@ export class ActiveUsersChartComponent implements OnChanges {
         dataLabels: [{
           enabled: true,
           formatter: function () {
+            // Access avatar_url from the keys mapping
+            const avatar_url = (this.point as any).avatar_url || `https://github.com/${this.key}.png`;
             return `<div style="width: 20px; height: 20px; overflow: hidden; border-radius: 50%; margin-right: -25px">
-            <img src="https://github.com/${this.key}.png" style="width: 30px; margin-left: -5px; margin-top: -2px"> 
+            <img src="${avatar_url}" style="width: 30px; margin-left: -5px; margin-top: -2px"> 
           </div>`
           },
           useHTML: true,
@@ -65,7 +75,7 @@ export class ActiveUsersChartComponent implements OnChanges {
         point: {
           events: {
             click: (event) => {
-              this.router.navigate(['/copilot/seats', event.point.name]);
+              this.router.navigate(['/copilot/seats', (event.point as any).login || event.point.name]);
             }
           }
         }
@@ -78,9 +88,16 @@ export class ActiveUsersChartComponent implements OnChanges {
   ) { }
 
   ngOnChanges() {
+    console.log('ngOnChanges', this.data);
     this._chartOptions = Object.assign({}, this.chartOptions, this._chartOptions);
     if (this._chartOptions?.series && this.data) {
-      (this._chartOptions?.series as Highcharts.SeriesBarOptions[])[0].data = Object.values(this.data);
+      // Create an array with [total_time, login, avatar_url] for each point
+      const seriesData = this.data.map(user => [
+        user.total_time,
+        user.login,
+        user.avatar_url
+      ]);
+      (this._chartOptions?.series as Highcharts.SeriesBarOptions[])[0].data = seriesData;
       this.updateFlag = true;
     }
   }
