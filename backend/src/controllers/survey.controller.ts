@@ -10,16 +10,7 @@ class SurveyController {
     let survey: SurveyType;
     try {
       const _survey = await surveyService.updateSurvey({
-        id: req.body.id,
-        userId: req.body.userId,
-        org: req.body.org,
-        repo: req.body.repo,
-        prNumber: req.body.prNumber,
-        usedCopilot: req.body.usedCopilot,
-        percentTimeSaved: req.body.percentTimeSaved,
-        reason: req.body.reason,
-        timeUsedFor: req.body.timeUsedFor,
-        kudos: req.body.kudos,
+        ...req.body,
         hits: 0,
         status: 'completed'
       });
@@ -135,6 +126,7 @@ class SurveyController {
       const updated = await Survey.findOneAndUpdate({
         id: { $eq: Number(id) }
       }, {
+        // we don't want to update all fields... just the ones passed in the body.
         ...req.body,
         hits: 0,
         status: 'completed'

@@ -18,7 +18,6 @@ router.get('/', (req: Request, res: Response) => {
   res.send('Hello github-value!');
 });
 
-// Survey routes
 router.get('/survey', surveyController.getAllSurveys);
 router.post('/survey', surveyController.createSurvey);
 router.get('/survey/:id', surveyController.getSurveyById);
@@ -26,29 +25,24 @@ router.put('/survey/:id', surveyController.updateSurvey); // put github survey l
 router.delete('/survey/:id', surveyController.deleteSurvey);
 router.post('/survey/:id/github', surveyController.updateSurveyGitHub);
 
-// Metrics routes
 router.get('/metrics', metricsController.getMetrics);
 router.get('/metrics/totals', metricsController.getMetricsTotals);
 
-// Seats routes
 router.get('/seats', SeatsController.getAllSeats);
 router.get('/seats/activity', adoptionController.getAdoptions);
 router.get('/seats/activity/totals', adoptionController.getAdoptionTotals);
 router.get('/seats/:id', SeatsController.getSeat);
 
-// Teams routes
 router.get('/teams', teamsController.getAllTeams);
 router.get('/members', teamsController.getAllMembers);
 router.get('/members/:login', teamsController.getMemberByLogin);
 
-// Settings routes - Fix for updated Express typings
 router.get('/settings', settingsController.getAllSettings);
 router.post('/settings', settingsController.createSettings);
 router.put('/settings', settingsController.updateSettings);
 router.get('/settings/:name', settingsController.getSettingsByName);
 router.delete('/settings/:name', settingsController.deleteSettings);
 
-// Setup routes
 router.get('/setup/registration/complete', setupController.registrationComplete);
 router.get('/setup/install/complete', setupController.installComplete);
 router.get('/setup/install', setupController.getInstall);
@@ -59,7 +53,6 @@ router.get('/setup/status', setupController.setupStatus);
 
 router.get('/status', setupController.getStatus);
 
-// Target routes
 router.get('/targets', targetValuesController.getTargetValues);
 router.post('/targets', targetValuesController.updateTargetValues);
 
