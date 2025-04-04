@@ -110,7 +110,10 @@ class GitHub {
         this.expressApp._router.stack.splice(webhookMiddlewareIndex, 1);
       }
       setupWebhookListeners(this.app);
-      this.webhooks = this.expressApp.use(createNodeMiddleware(this.app));
+      
+      this.expressApp.use(createNodeMiddleware(this.app));
+      
+      this.webhooks = this.expressApp;
     } catch (error) {
       logger.debug(error);
       logger.error('Failed to create webhook middleware')
