@@ -4,10 +4,7 @@ import { serverUrl } from '../server.service';
 import { Endpoints } from "@octokit/types";
 import { map } from 'rxjs';
 
-type _Seat = NonNullable<Endpoints["GET /orgs/{org}/copilot/billing/seats"]["response"]["data"]["seats"]>[0];
-export interface Seat extends _Seat {
-  plan_type: string;
-}
+export type Seat = NonNullable<Endpoints["GET /orgs/{org}/copilot/billing/seats"]["response"]["data"]["seats"]>[0];
 export interface AllSeats {
   avatar_url: string,
   login: string,
