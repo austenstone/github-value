@@ -135,16 +135,7 @@ class SurveyController {
       const updated = await Survey.findOneAndUpdate({
         id: { $eq: Number(id) }
       }, {
-        id: Number(req.body.id),
-        userId: String(req.body.userId),
-        org: String(req.body.org),
-        repo: String(req.body.repo),
-        prNumber: Number(req.body.prNumber),
-        usedCopilot: Boolean(req.body.usedCopilot),
-        percentTimeSaved: Number(req.body.percentTimeSaved),
-        reason: String(req.body.reason),
-        timeUsedFor: String(req.body.timeUsedFor),
-        kudos: String(req.body.kudos),
+        ...req.body,
         hits: 0,
         status: 'completed'
       });
