@@ -12,7 +12,8 @@
     "members": "read",
     "metadata": "read",
     "organization_copilot_seat_management": "read",
-    "pull_requests": "write"
+    "pull_requests": "read",
+    "issues": "write"
   },
   "default_events": [
     "pull_request",

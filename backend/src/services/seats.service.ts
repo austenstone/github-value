@@ -441,9 +441,11 @@ class SeatsService {
     org?: string;
     since?: string;
     until?: string;
+    limit?: number;
   }) {
     const ActivityTotals = mongoose.model('ActivityTotals');
     const { org, since, until } = params;
+    const limit = typeof params.limit === 'string' ? parseInt(params.limit) : (params.limit || 100);
 
     const match: mongoose.FilterQuery<MemberActivityType> = {};
     if (org) match.org = org;
@@ -462,26 +464,64 @@ class SeatsService {
             date: "$date",
             login: "$assignee_login"
           },
-          daily_time: { $sum: "$total_active_time_ms" }
+          daily_time: { $sum: "$total_active_time_ms" },
+          last_activity_at: { $max: "$last_activity_at" },
+          last_activity_editor: { $last: "$last_activity_editor" },
+          assignee_id: { $first: "$assignee_id" }
+        }
+      },
+      {
+        $lookup: {
+          from: 'members',
+          localField: '_id.login',
+          foreignField: 'login',
+          as: 'memberDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$memberDetails',
+          preserveNullAndEmptyArrays: true
         }
       },
       {
         $group: {
           _id: "$_id.login",
-          total_time: { $sum: "$daily_time" }
+          total_time: { $sum: "$daily_time" },
+          last_activity_at: { $max: "$last_activity_at" },
+          last_activity_editor: { $last: "$last_activity_editor" },
+          assignee_id: { $first: "$assignee_id" },
+          avatar_url: { $first: "$memberDetails.avatar_url" },
+          name: { $first: "$memberDetails.name" },
+          url: { $first: "$memberDetails.url" },
+          html_url: { $first: "$memberDetails.html_url" },
+          team: { $first: "$memberDetails.team" },
+          org: { $first: "$memberDetails.org" },
+          type: { $first: "$memberDetails.type" }
         }
       },
       { $sort: { total_time: -1 } },
+      { $limit: limit },
       {
         $project: {
           _id: 0,
           login: '$_id',
-          total_time: 1
+          total_time: 1,
+          last_activity_at: 1,
+          last_activity_editor: 1,
+          assignee_id: 1,
+          avatar_url: 1,
+          name: 1,
+          url: 1,
+          html_url: 1,
+          team: 1,
+          org: 1,
+          type: 1
         }
       }
     ]);
 
-    return totals.map(t => [t.login, t.total_time]);
+    return totals;
   }
 }
 

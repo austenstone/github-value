@@ -8,7 +8,7 @@ import { Installation, InstallationsService } from '../../../services/api/instal
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { DashboardCardDrilldownBarChartComponent } from '../copilot-dashboard/dashboard-card/dashboard-card-drilldown-bar-chart/dashboard-card-drilldown-bar-chart.component';
 import { ActiveUsersChartComponent } from '../copilot-dashboard/dashboard-card/active-users-chart/active-users-chart.component';
-import { SeatService } from '../../../services/api/seat.service';
+import { ActivityTotals, SeatService } from '../../../services/api/seat.service';
 import { MembersService } from '../../../services/api/members.service';
 import { CommonModule } from '@angular/common';
 import { LoadingSpinnerComponent } from '../../../shared/loading-spinner/loading-spinner.component';
@@ -38,7 +38,7 @@ export class CopilotMetricsComponent implements OnInit {
   metrics?: CopilotMetrics[];
   metricsTotals?: CopilotMetrics;
   installation?: Installation = undefined;
-  activityTotals?: Record<string, number>;
+  activityTotals?: ActivityTotals[];
   totalSeats?: number;
   subscriptions: Subscription[] = [];
   private readonly _destroy$ = new Subject<void>();
@@ -85,14 +85,17 @@ export class CopilotMetricsComponent implements OnInit {
 
     this.reset();
 
+    console.log({
+      since: event.start.toISOString(),
+      until: event.end.toISOString()
+    })
     this.subscriptions.push(
       this.seatService.getActivityTotals({
         org: this.installation?.account?.login,
-        since: startModified.toISOString(),
-        until: endModified.toISOString()
+        since: event.start.toISOString(),
+        until: event.end.toISOString()
       }).subscribe(totals => {
-        Object.keys(totals).forEach((key, index) => index > 10 ? delete totals[key] : null);
-        this.activityTotals = totals;
+        this.activityTotals = totals.length > 10 ? totals.slice(0, 10) : totals;
         this.cdr.detectChanges();
       })
     )
