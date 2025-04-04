@@ -86,7 +86,7 @@ class QueryService {
     logger.info(`Task started for ${org}`);
     try {
       let teamsAndMembers = null;
-      const mostRecentEntry = await teamsService.getLastUpdatedAt();
+      const mostRecentEntry = await teamsService.getLastUpdatedAt(org);
       const msSinceLastUpdate = new Date().getTime() - new Date(mostRecentEntry).getTime();
       const hoursSinceLastUpdate = msSinceLastUpdate / 1000 / 60 / 60;
       logger.info(`Teams & Members updated ${hoursSinceLastUpdate.toFixed(2)} hours ago for ${org}.`);
