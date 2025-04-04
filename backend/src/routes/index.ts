@@ -7,8 +7,12 @@ import metricsController from '../controllers/metrics.controller.js';
 import teamsController from '../controllers/teams.controller.js';
 import targetValuesController from '../controllers/target.controller.js';
 import adoptionController from '../controllers/adoption.controller.js';
+import mongoSanitize from 'express-mongo-sanitize';
 
 const router = Router();
+
+
+router.use(mongoSanitize());
 
 router.get('/', (req: Request, res: Response) => {
   res.send('Hello github-value!');
