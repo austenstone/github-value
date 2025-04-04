@@ -75,6 +75,7 @@ export class SeatService {
     org?: string | undefined;
     since?: string;
     until?: string;
+    limit?: number;
   }) {
     if (!queryParams?.org) delete queryParams?.org;
     return this.http.get<Record<string, number>>(`${this.apiUrl}/activity/totals`, {

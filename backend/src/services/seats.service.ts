@@ -441,9 +441,11 @@ class SeatsService {
     org?: string;
     since?: string;
     until?: string;
+    limit?: number;
   }) {
     const ActivityTotals = mongoose.model('ActivityTotals');
     const { org, since, until } = params;
+    const limit = typeof params.limit === 'string' ? parseInt(params.limit) : (params.limit || 100);
 
     const match: mongoose.FilterQuery<MemberActivityType> = {};
     if (org) match.org = org;
@@ -472,6 +474,7 @@ class SeatsService {
         }
       },
       { $sort: { total_time: -1 } },
+      { $limit: limit },
       {
         $project: {
           _id: 0,

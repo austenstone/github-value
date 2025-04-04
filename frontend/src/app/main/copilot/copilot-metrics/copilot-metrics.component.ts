@@ -88,10 +88,10 @@ export class CopilotMetricsComponent implements OnInit {
     this.subscriptions.push(
       this.seatService.getActivityTotals({
         org: this.installation?.account?.login,
-        since: startModified.toISOString(),
-        until: endModified.toISOString()
+        since: event.start.toISOString(),
+        until: event.end.toISOString(),
+        limit: 10
       }).subscribe(totals => {
-        Object.keys(totals).forEach((key, index) => index > 10 ? delete totals[key] : null);
         this.activityTotals = totals;
         this.cdr.detectChanges();
       })
