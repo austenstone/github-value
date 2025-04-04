@@ -1,6 +1,5 @@
 import { CronJob, CronJobParams, CronTime } from 'cron';
 import logger from './logger.js';
-import { insertUsage } from '../models/usage.model.js';
 import SeatService, { SeatEntry } from './seats.service.js';
 import { App, Octokit } from 'octokit';
 import { MetricDailyResponseType } from '../models/metrics.model.js';
@@ -80,13 +79,14 @@ class QueryService {
     }
 
     await adoptionService.createAdoption(enterpriseAdoptionData);
+    logger.info(`Task finished. Last ran at `, this.cronJob.lastDate());
   }
 
   private async orgTask(octokit: Octokit, queryAt: Date, org: string) {
     logger.info(`Task started for ${org}`);
     try {
       let teamsAndMembers = null;
-      const mostRecentEntry = await teamsService.getLastUpdatedAt();
+      const mostRecentEntry = await teamsService.getLastUpdatedAt(org);
       const msSinceLastUpdate = new Date().getTime() - new Date(mostRecentEntry).getTime();
       const hoursSinceLastUpdate = msSinceLastUpdate / 1000 / 60 / 60;
       logger.info(`Teams & Members updated ${hoursSinceLastUpdate.toFixed(2)} hours ago for ${org}.`);
@@ -98,11 +98,7 @@ class QueryService {
       }
 
       const queries = [
-        this.queryCopilotUsageMetrics(octokit, org).then(result => {
-          this.status.usage = true;
-          return result;
-        }),
-        this.queryCopilotUsageMetricsNew(octokit, org).then(result => {
+        this.queryCopilotMetrics(octokit, org).then(result => {
           this.status.metrics = true;
           return result;
         }),
@@ -112,12 +108,11 @@ class QueryService {
         }),
       ];
 
-      const [usageMetrics, usageMetricsNew, copilotSeatAssignments] = await Promise.all(queries);
+      const [copilotMetrics, copilotSeatAssignments] = await Promise.all(queries);
       this.status.dbInitialized = true;
 
       return {
-        usageMetrics,
-        usageMetricsNew,
+        copilotMetrics,
         copilotSeatAssignments,
         teamsAndMembers
       }
@@ -127,7 +122,7 @@ class QueryService {
     logger.info(`${org} finished task`);
   }
 
-  public async queryCopilotUsageMetricsNew(octokit: Octokit, org: string, team?: string) {
+  public async queryCopilotMetrics(octokit: Octokit, org: string, team?: string) {
     try {
       const metricsArray = await octokit.paginate<MetricDailyResponseType>(
         'GET /orgs/{org}/copilot/metrics',
@@ -139,19 +134,6 @@ class QueryService {
       logger.info(`${org} metrics updated`);
     } catch (error) {
       logger.error(org, `Error updating ${org} metrics`, error);
-    }
-  }
-
-  public async queryCopilotUsageMetrics(octokit: Octokit, org: string) {
-    try {
-      const rsp = await octokit.rest.copilot.usageMetricsForOrg({
-        org
-      });
-
-      insertUsage(org, rsp.data);
-      logger.info(`${org} usage metrics updated`);
-    } catch (error) {
-      logger.error(`Error updating ${org} usage metrics`, error);
     }
   }
 

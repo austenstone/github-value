@@ -2,7 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { serverUrl } from '../server.service';
 import { Endpoints } from '@octokit/types';
-import { BehaviorSubject } from 'rxjs';
 
 export interface InstallationStatus {
   installation?: Endpoints["GET /app/installations"]["response"]["data"][number],
@@ -17,7 +16,6 @@ export interface InstallationStatus {
 })
 export class SetupService {
   private apiUrl = `${serverUrl}/api/setup`;
-  installations = new BehaviorSubject<Endpoints["GET /app/installations"]["response"]["data"]>([]);
 
   constructor(private http: HttpClient) { }
 

@@ -49,7 +49,7 @@ class TargetValuesService {
   async updateTargetValues(data: Targets) {
     try {
       const Targets = mongoose.model('Targets');
-      const targets = await Targets.findOneAndUpdate({}, data, { new: true, upsert: true });
+      const targets = await Targets.findOneAndUpdate({}, { $set: data }, { new: true, upsert: true });
       return targets;
     } catch (error) {
       throw new Error(`Error updating target values: ${error}`);

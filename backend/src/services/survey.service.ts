@@ -16,8 +16,8 @@ class SurveyService {
       throw new Error('Invalid survey data provided');
     }
     const Survey = mongoose.model('Survey');
-    const result = await Survey.updateOne({ id: survey.id }, survey);
-
+    const result = await Survey.updateOne({ id: survey.id }, { $set: survey });
+    
     // Check if the update modified any document.
     if (result.modifiedCount === 0) {
       throw new Error('Survey update failed: no document was modified');

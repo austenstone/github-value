@@ -42,7 +42,7 @@ class SetupController {
       const { appId, privateKey, webhookSecret } = req.body;
 
       if (!appId || !privateKey || !webhookSecret) {
-        return res.status(400).json({ error: 'All fields are required' });
+        res.status(400).json({ error: 'All fields are required' });
       }
       
       await app.github.connect({
@@ -67,25 +67,20 @@ class SetupController {
     }
   }
 
-  async setupStatus(req: Request, res: Response) {
+  async getStatus(req: Request, res: Response) {
     try {
-      const status = {
-        dbConnected: app.database.mongoose?.connection.readyState === 1,
-        isSetup: app.github.app !== undefined,
-        installations: app.github.installations.map(i => ({
-          installation: i.installation,
-        }))
-      };
-      return res.json(status);
+      const status = await statusManager.getStatus();
+      res.json(status);
     } catch (error) {
       res.status(500).json(error);
     }
   }
 
-  async getStatus(req: Request, res: Response) {
+  async getInstallations(req: Request, res: Response) {
     try {
-      const status = await statusManager.getStatus();
-      return res.json(status);
+      res.json({
+        installations: app.github.installations.map(i => i.installation)
+      });
     } catch (error) {
       res.status(500).json(error);
     }

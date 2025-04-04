@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import settingsSchema from './settings.model.js';
-import usageSchema from './usage.model.js';
 import metricsSchema from './metrics.model.js';
 import teamsSchema, { memberSchema, teamMemberSchema } from './teams.model.js';
 import seatsSchema from './seats.model.js';
@@ -12,7 +11,6 @@ import counterSchema from './counter.model.js';
 
 export function setupSchemas() {
   mongoose.model('Settings', settingsSchema);
-  mongoose.model('Usage', usageSchema);
   mongoose.model('Metrics', metricsSchema);
   mongoose.model('Team', teamsSchema);
   mongoose.model('Member', memberSchema);

@@ -10,16 +10,7 @@ class SurveyController {
     let survey: SurveyType;
     try {
       const _survey = await surveyService.updateSurvey({
-        id: req.body.id,
-        userId: req.body.userId,
-        org: req.body.org,
-        repo: req.body.repo,
-        prNumber: req.body.prNumber,
-        usedCopilot: req.body.usedCopilot,
-        percentTimeSaved: req.body.percentTimeSaved,
-        reason: req.body.reason,
-        timeUsedFor: req.body.timeUsedFor,
-        kudos: req.body.kudos,
+        ...req.body,
         hits: 0,
         status: 'completed'
       });
@@ -132,22 +123,16 @@ class SurveyController {
     try {
       const Survey = mongoose.model('Survey');
       const { id } = req.params;
-      const updated = await Survey.findOneAndUpdate({
-        id: { $eq: Number(id) }
-      }, {
-        id: Number(req.body.id),
-        userId: String(req.body.userId),
-        org: String(req.body.org),
-        repo: String(req.body.repo),
-        prNumber: Number(req.body.prNumber),
-        usedCopilot: Boolean(req.body.usedCopilot),
-        percentTimeSaved: Number(req.body.percentTimeSaved),
-        reason: String(req.body.reason),
-        timeUsedFor: String(req.body.timeUsedFor),
-        kudos: String(req.body.kudos),
-        hits: 0,
-        status: 'completed'
-      });
+      const updated = await Survey.findOneAndUpdate(
+        { id: { $eq: Number(id) } },
+        { 
+          $set: {
+            ...req.body,
+            hits: 0,
+            status: 'completed'
+          }
+        }
+      );
       if (updated) {
         res.status(200).json({ _id: id, ...req.body });
       } else {

@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
 import surveyController from '../controllers/survey.controller.js';
-import usageController from '../controllers/usage.controller.js';
 import settingsController from '../controllers/settings.controller.js';
 import setupController from '../controllers/setup.controller.js';
 import SeatsController from '../controllers/seats.controller.js';
@@ -9,12 +8,14 @@ import teamsController from '../controllers/teams.controller.js';
 import targetValuesController from '../controllers/target.controller.js';
 import adoptionController from '../controllers/adoption.controller.js';
 import statusController from '../controllers/status.controller.js';
-import statusManager from 'services/status.manager.js';
+import mongoSanitize from 'express-mongo-sanitize';
 
 const router = Router();
 
+router.use(mongoSanitize());
+
 router.get('/', (req: Request, res: Response) => {
-  res.send('Hello World!');
+  res.send('Hello github-value!');
 });
 
 router.get('/survey', surveyController.getAllSurveys);
@@ -23,8 +24,6 @@ router.get('/survey/:id', surveyController.getSurveyById);
 router.put('/survey/:id', surveyController.updateSurvey); // put github survey logic here
 router.delete('/survey/:id', surveyController.deleteSurvey);
 router.post('/survey/:id/github', surveyController.updateSurveyGitHub);
-
-router.get('/usage', usageController.getUsage);
 
 router.get('/metrics', metricsController.getMetrics);
 router.get('/metrics/totals', metricsController.getMetricsTotals);
@@ -47,16 +46,16 @@ router.delete('/settings/:name', settingsController.deleteSettings);
 
 router.get('/setup/registration/complete', setupController.registrationComplete);
 router.get('/setup/install/complete', setupController.installComplete);
+router.get('/setup/installs', setupController.getInstallations);
 router.get('/setup/install', setupController.getInstall);
 router.get('/setup/manifest', setupController.getManifest);
 router.post('/setup/existing-app', setupController.addExistingApp);
 router.post('/setup/db', setupController.setupDB);
-router.get('/setup/status', setupController.setupStatus);
 router.post('/setup/install/complete', setupController.installComplete);
 
-router.get('/status', statusManager.getAllComponentStatuses);
+router.get('/status', statusController.getSystemStatus);
 router.get('/status/components/:component/history', statusController.getComponentHistory);
-router.post('/status/health-check', statusManager.runHealthChecks);
+router.post('/status/health-check', statusController.runHealthCheck);
 
 router.get('/targets', targetValuesController.getTargetValues);
 router.post('/targets', targetValuesController.updateTargetValues);

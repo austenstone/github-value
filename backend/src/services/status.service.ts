@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { ServerApp } from '../app';
 import statusManager, { ComponentStatus, ComponentType } from './status.manager';
 import logger from './logger';
+import { Endpoints } from "@octokit/types";
 
 export interface StatusType {
   systemStatus: {

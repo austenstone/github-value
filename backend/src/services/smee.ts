@@ -1,6 +1,6 @@
 import logger from "./logger.js";
 import Client from "smee-client";
-import EventSource from "eventsource";
+import { EventSource } from "eventsource";
 
 export interface WebhookServiceOptions {
   url?: string,

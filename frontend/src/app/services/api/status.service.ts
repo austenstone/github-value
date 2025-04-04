@@ -4,7 +4,6 @@ import { BehaviorSubject, Observable, Subscription, interval, of } from 'rxjs';
 import { catchError, shareReplay, switchMap, tap } from 'rxjs/operators';
 import { serverUrl } from '../server.service';
 
-// Types for system status
 export type ComponentStatus = 'starting' | 'running' | 'error' | 'warning' | 'stopping' | 'stopped';
 
 export interface StatusHistoryEntry {

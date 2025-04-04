@@ -115,6 +115,14 @@ class GitHub {
         logger.error('Failed to create webhook middleware');
         statusManager.updateStatus('webhooks', 'error', 'Failed to create webhook middleware');
       }
+      
+      for await (const { octokit, installation } of this.app.eachInstallation.iterator()) {
+        if (!installation.account?.login) continue;
+        this.installations.push({
+          installation,
+          octokit
+        });
+      }
   
       if (!this.queryService) {
         this.queryService = new QueryService(this.app, {
@@ -123,14 +131,6 @@ class GitHub {
         await this.queryService.start();
         logger.info(`CRON task ${this.cronExpression} started`);
         statusManager.updateStatus('tasks', 'running', `Scheduled tasks started with cron: ${this.cronExpression}`);
-      }
-      
-      for await (const { octokit, installation } of this.app.eachInstallation.iterator()) {
-        if (!installation.account?.login) continue;
-        this.installations.push({
-          installation,
-          octokit
-        });
       }
       
       statusManager.updateStatus('github', 'running', 'GitHub App connected successfully', {

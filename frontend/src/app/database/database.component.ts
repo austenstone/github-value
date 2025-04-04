@@ -11,7 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { finalize, takeWhile, timer } from 'rxjs';
-import { InstallationsService, SystemStatus } from '../services/api/installations.service';
+import { InstallationsService } from '../services/api/installations.service';
 import { SetupService } from '../services/api/setup.service';
 
 @Component({

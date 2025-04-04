@@ -1,8 +1,25 @@
 import { EventEmitter } from 'events';
-import { Router } from 'express';
 import mongoose from 'mongoose';
-import app from '../app.js';
 import logger from './logger.js';
+
+/**
+ * Interface for the main application with GitHub installations
+ */
+interface ServerApp {
+  github?: {
+    installations?: Array<{
+      installation: {
+        repositories_url: string;
+        [key: string]: any;
+      };
+      octokit: {
+        request: (url: string) => Promise<{
+          data: { repositories: unknown[] };
+        }>;
+      };
+    }>;
+  };
+}
 
 /**
  * Status states for components
@@ -59,20 +76,11 @@ class StatusManager extends EventEmitter {
     this.scheduleHealthChecks();
   }
 
-  /**
-   * Initialize with ServerApp instance
-   */
   initialize(app: ServerApp) {
     this.app = app;
     this.registerComponent('status-service', 'running', 'Status monitoring active');
   }
 
-  /**
-   * Register a new component with the status manager
-   * @param componentName Name of the component
-   * @param initialStatus Initial status of the component
-   * @param message Optional message describing the current state
-   */
   registerComponent(
     componentName: string, 
     initialStatus: ComponentStatus = 'starting',
@@ -99,12 +107,6 @@ class StatusManager extends EventEmitter {
     logger.debug(`Registered component ${componentName} with status ${initialStatus}`);
   }
 
-  /**
-   * Update the status of a component
-   * @param componentName Name of the component
-   * @param status New status of the component
-   * @param message Optional message describing the current state
-   */
   updateStatus(
     componentName: string, 
     status: ComponentStatus,
@@ -143,11 +145,6 @@ class StatusManager extends EventEmitter {
     logger.debug(`Updated component ${componentName} status to ${status}${message ? ': ' + message : ''}`);
   }
 
-  /**
-   * Get the status history of a component
-   * @param componentName Name of the component
-   * @returns Array of status history entries or empty array if component not found
-   */
   getStatusHistory(componentName: string): StatusHistoryEntry[] {
     const componentInfo = this.components.get(componentName);
     if (!componentInfo) {
@@ -156,22 +153,13 @@ class StatusManager extends EventEmitter {
     return [...componentInfo.history];
   }
 
-  /**
-   * Get the current status of a component
-   * @param componentName Name of the component
-   * @returns Component status information or null if component not found
-   */
   getComponentStatus(componentName: string): ComponentStatusInfo | null {
     return this.components.get(componentName) || null;
   }
 
-  /**
-   * Get the current status of all components
-   * @returns Object with component names as keys and their statuses
-   */
-  getAllComponentStatuses(): Record<string, ComponentStatus> {
+  public getAllComponentStatuses(): Record<string, ComponentStatus> {
     const statuses: Record<string, ComponentStatus> = {};
-    
+
     this.components.forEach((info, name) => {
       statuses[name] = info.currentStatus;
     });
@@ -179,10 +167,6 @@ class StatusManager extends EventEmitter {
     return statuses;
   }
 
-  /**
-   * Get detailed status for all components
-   * @returns Object with component names as keys and detailed status info
-   */
   getAllComponentDetails(): Record<string, ComponentStatusInfo> {
     const details: Record<string, ComponentStatusInfo> = {};
     
@@ -193,10 +177,6 @@ class StatusManager extends EventEmitter {
     return details;
   }
 
-  /**
-   * Check if all critical components are healthy
-   * @returns true if all critical components have a 'running' status
-   */
   isSystemHealthy(): boolean {
     let isHealthy = true;
     
@@ -209,10 +189,6 @@ class StatusManager extends EventEmitter {
     return isHealthy;
   }
 
-  /**
-   * Check if the system is ready to serve requests
-   * @returns true if the system is ready
-   */
   isSystemReady(): boolean {
     // System is considered ready when all components are running or in warning state
     // (errors mean not ready)
@@ -227,27 +203,14 @@ class StatusManager extends EventEmitter {
     return isReady;
   }
 
-  /**
-   * Get system uptime in seconds
-   * @returns Uptime in seconds
-   */
   getUptime(): number {
     return Math.floor((new Date().getTime() - this.appStartTime.getTime()) / 1000);
   }
 
-  /**
-   * Get system start time
-   * @returns Start time as Date
-   */
   getStartTime(): Date {
     return this.appStartTime;
   }
 
-  /**
-   * Register a health check function for a component
-   * @param componentName Name of the component
-   * @param checkFn Function that returns a promise resolving to status and message
-   */
   monitorComponent(
     componentName: string,
     checkFn: () => Promise<{ status: ComponentStatus; message?: string }>
@@ -256,10 +219,6 @@ class StatusManager extends EventEmitter {
     logger.debug(`Registered health check for component ${componentName}`);
   }
 
-  /**
-   * Run health checks on all registered components
-   * @returns Object with component names as keys and their health check results
-   */
   async runHealthChecks(): Promise<Record<string, { status: ComponentStatus; message?: string }>> {
     const results: Record<string, { status: ComponentStatus; message?: string }> = {};
     
@@ -298,11 +257,6 @@ class StatusManager extends EventEmitter {
     return results;
   }
 
-  /**
-   * Schedule periodic health checks
-   * @param intervalMs Interval between health checks in milliseconds
-   * @returns Timeout ID
-   */
   scheduleHealthChecks(intervalMs: number = 60000): NodeJS.Timeout {
     const interval = setInterval(() => {
       this.runHealthChecks()
@@ -314,9 +268,6 @@ class StatusManager extends EventEmitter {
     return interval;
   }
 
-  /**
-   * Get system status including all components and additional information
-   */
   async getStatus(): Promise<SystemStatus> {
     // Run health checks to ensure statuses are up to date
     await this.runHealthChecks();
@@ -361,57 +312,6 @@ class StatusManager extends EventEmitter {
 
     return status;
   }
-
-  /**
-   * Configure Express routes for status endpoints
-   */
-  configureRoutes(app: ServerApp): Router {
-    const router = Router();
-
-    // Get full system status
-    router.get('/', async (_req, res) => {
-      const status = await this.getStatus();
-      res.json(status);
-    });
-
-    // Get status for a specific component
-    router.get('/:componentName', (req, res) => {
-      const { componentName } = req.params;
-      const status = this.getComponentStatus(componentName);
-      
-      if (status) {
-        res.json(status);
-      } else {
-        res.status(404).json({ error: `Component '${componentName}' not found` });
-      }
-    });
-
-    // Trigger a manual health check
-    router.post('/healthcheck', async (_req, res) => {
-      try {
-        const results = await this.runHealthChecks();
-        res.json(results);
-      } catch (error) {
-        res.status(500).json({ error: String(error) });
-      }
-    });
-
-    // Check if application is ready
-    router.get('/ready', (_req, res) => {
-      const isReady = this.isSystemReady();
-      if (isReady) {
-        res.status(200).json({ status: 'ready' });
-      } else {
-        res.status(503).json({ status: 'not ready' });
-      }
-    });
-
-    app.use('/api/status', router);
-    return router;
-  }
 }
 
-// Create a singleton instance
-const statusManager = new StatusManager();
-
-export default statusManager;
+export default new StatusManager();

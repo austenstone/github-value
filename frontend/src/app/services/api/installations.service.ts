@@ -1,34 +1,8 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, Subject, of, tap } from 'rxjs';
+import { BehaviorSubject, Subject, of, tap } from 'rxjs';
 import { serverUrl } from '../server.service';
 import { Endpoints } from '@octokit/types';
 import { HttpClient } from '@angular/common/http';
-
-export interface SystemStatus {
-  status: Record<string, 'starting' | 'running' | 'error' | 'warning' | 'stopping' | 'stopped'>;
-  componentDetails: Record<string, {
-    currentStatus: 'starting' | 'running' | 'error' | 'warning' | 'stopping' | 'stopped';
-    lastUpdated: string;
-    history: {
-      timestamp: string;
-      status: 'starting' | 'running' | 'error' | 'warning' | 'stopping' | 'stopped';
-      message?: string;
-    }[];
-    message?: string;
-  }>;
-  isReady: boolean;
-  uptime: number;
-  startTime: string;
-  seatsHistory?: {
-    oldestCreatedAt: string;
-    daysSinceOldestCreatedAt?: number;
-  };
-  installations?: {
-    installation: Endpoints["GET /app/installations"]["response"]["data"][0];
-    repos: any[];
-  }[];
-  surveyCount: number;
-}
 
 export type Installations = Endpoints["GET /app/installations"]["response"]["data"]
 export type Installation = Installations[number]
@@ -37,8 +11,6 @@ export type Installation = Installations[number]
   providedIn: 'root'
 })
 export class InstallationsService implements OnDestroy {
-  private apiUrl = `${serverUrl}/api/status`;
-  private status?: SystemStatus;
   private installations = new BehaviorSubject<Installations>([]);
   public currentInstallation = new BehaviorSubject<Installation | undefined>(undefined);
   private currentInstallationId = localStorage.getItem('installation') ? parseInt(localStorage.getItem('installation')!) : 0;
@@ -57,19 +29,18 @@ export class InstallationsService implements OnDestroy {
     this._destroy$.complete();
   }
 
-  getStatus() {
-    if (!this.status) {
+  refresh() {
+    if (!this.installations.value.length) {
       return this.refreshStatus();
     }
-    return of(this.status);
+    return of(this.installations.value);
   }
 
   refreshStatus() {
-    return this.http.get<SystemStatus>(`${this.apiUrl}`).pipe(
-      tap((status) => {
-        this.status = status;
-        if (status.installations) {
-          this.installations.next(status.installations.map(i => i.installation));
+    return this.http.get<any>(`${serverUrl}/api/setup/installations`).pipe(
+      tap((installations) => {
+        if (installations) {
+          this.installations.next(installations);
           if (this.installations.value.length === 1) {
             this.setInstallation(this.installations.value[0].id);
           } else {

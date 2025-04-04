@@ -4,10 +4,7 @@ import { serverUrl } from '../server.service';
 import { Endpoints } from "@octokit/types";
 import { map } from 'rxjs';
 
-type _Seat = NonNullable<Endpoints["GET /orgs/{org}/copilot/billing/seats"]["response"]["data"]["seats"]>[0];
-export interface Seat extends _Seat {
-  plan_type: string;
-}
+export type Seat = NonNullable<Endpoints["GET /orgs/{org}/copilot/billing/seats"]["response"]["data"]["seats"]>[0];
 export interface AllSeats {
   avatar_url: string,
   login: string,
@@ -32,6 +29,22 @@ export interface ActivityResponse2 {
   updatedAt: Date;
 };
 export type ActivityResponse = Record<string, ActivityResponseData>;
+
+export interface ActivityTotals {
+  total_time: number;
+  last_activity_at: string | null;
+  last_activity_editor: string | null;
+  assignee_id: number;
+  avatar_url: string;
+  name: string | null;
+  url: string;
+  html_url: string;
+  team: string | null;
+  org: string;
+  type: string;
+  login: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -75,9 +88,10 @@ export class SeatService {
     org?: string | undefined;
     since?: string;
     until?: string;
+    limit?: number;
   }) {
     if (!queryParams?.org) delete queryParams?.org;
-    return this.http.get<Record<string, number>>(`${this.apiUrl}/activity/totals`, {
+    return this.http.get<ActivityTotals[]>(`${this.apiUrl}/activity/totals`, {
       params: queryParams
     });
   }
