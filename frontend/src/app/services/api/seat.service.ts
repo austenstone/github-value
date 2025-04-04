@@ -33,8 +33,6 @@ export interface ActivityResponse2 {
 };
 export type ActivityResponse = Record<string, ActivityResponseData>;
 
-
-
 export interface ActivityTotals {
   total_time: number;
   last_activity_at: string | null;
