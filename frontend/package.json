@@ -34,9 +34,9 @@
     "rxjs": "~7.8.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^19.2.4",
+    "@angular-devkit/build-angular": "^19.2.6",
     "@angular-eslint/builder": "^19.3.0",
-    "@angular/cli": "^19.2.4",
+    "@angular/cli": "^19.2.6",
     "@angular/compiler-cli": "^19.2.3",
     "@types/canvas-confetti": "^1.9.0",
     "@types/jasmine": "~5.1.7",
