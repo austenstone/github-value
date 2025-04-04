@@ -123,14 +123,16 @@ class SurveyController {
     try {
       const Survey = mongoose.model('Survey');
       const { id } = req.params;
-      const updated = await Survey.findOneAndUpdate({
-        id: { $eq: Number(id) }
-      }, {
-        // we don't want to update all fields... just the ones passed in the body.
-        ...req.body,
-        hits: 0,
-        status: 'completed'
-      });
+      const updated = await Survey.findOneAndUpdate(
+        { id: { $eq: Number(id) } },
+        { 
+          $set: {
+            ...req.body,
+            hits: 0,
+            status: 'completed'
+          }
+        }
+      );
       if (updated) {
         res.status(200).json({ _id: id, ...req.body });
       } else {

@@ -11,7 +11,6 @@ import mongoSanitize from 'express-mongo-sanitize';
 
 const router = Router();
 
-
 router.use(mongoSanitize());
 
 router.get('/', (req: Request, res: Response) => {
