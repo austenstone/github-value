@@ -25,11 +25,11 @@
     "@angular/router": "^19.2.5",
     "@octokit/types": "^13.10.0",
     "canvas-confetti": "^1.9.3",
-    "cronstrue": "^2.57.0",
+    "cronstrue": "^2.58.0",
     "dayjs": "^1.11.13",
-    "highcharts": "^11.4.8",
+    "highcharts": "^12.2.0",
     "highcharts-angular": "^4.0.1",
-    "rxjs": "~7.8.0"
+    "rxjs": "~7.8.2"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^19.2.6",
