@@ -32,8 +32,10 @@ router.get('/seats/activity', adoptionController.getAdoptions);
 router.get('/seats/activity/totals', adoptionController.getAdoptionTotals);
 router.get('/seats/:id', SeatsController.getSeat);
 
+// The order matters - more specific routes first
 router.get('/teams', teamsController.getAllTeams);
 router.get('/members', teamsController.getAllMembers);
+router.get('/members/search', teamsController.searchMembersByLogin); // This needs to be before the dynamic route
 router.get('/members/:login', teamsController.getMemberByLogin);
 
 router.get('/settings', settingsController.getAllSettings);

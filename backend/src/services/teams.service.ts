@@ -181,6 +181,26 @@ class TeamsService {
       .sort({ name: "asc", "members.login": "asc" })
       .exec();
   }
+
+  async searchMembersByLogin(query: string) {
+    try {
+      if (!query) return [];
+      
+      // Using MongoDB's $regex for partial text matching (case-insensitive)
+      const Member = mongoose.model('Member');
+      const members = await Member.find({
+        login: { $regex: query, $options: 'i' }
+      })
+      .select('login id avatar_url name org')
+      .limit(10)
+      .lean();
+      
+      return members;
+    } catch (error) {
+      console.error('Error searching members:', error);
+      throw error;
+    }
+  }
 }
 
 export default new TeamsService();

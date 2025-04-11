@@ -17,9 +17,30 @@
           <label for="usedCopilot" class="label-large">   Who is submitting this estimate?</label>
           <mat-form-field class="example-form-field">
             <mat-label>GitHub Handle</mat-label>
-            <input matInput formControlName="userId" placeholder="Ex. mona">
+            <input
+              type="text"
+              matInput
+              formControlName="userId"
+              placeholder="Ex. mona"
+              [matAutocomplete]="auto"
+              (blur)="onUserIdBlur()">
+            <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayFn" (optionSelected)="onMemberSelected($event)">
+              <ng-container *ngIf="isLoading$ | async as loading">
+                <mat-option *ngIf="loading" class="loading-option">
+                  <mat-spinner diameter="20"></mat-spinner>
+                  Loading...
+                </mat-option>
+              </ng-container>
+              <mat-option *ngFor="let member of filteredMembers$ | async" [value]="member">
+               
+                {{ member.login }}
+              </mat-option>
+            </mat-autocomplete>
             <mat-error *ngIf="surveyForm.get('userId')?.hasError('invalidUserId')">
-              Invalid GitHub Handle
+              This GitHub user was not found
+            </mat-error>
+            <mat-error *ngIf="surveyForm.get('userId')?.hasError('required')">
+              GitHub handle is required
             </mat-error>
           </mat-form-field>
           <mat-form-field class="example-form-field">
