@@ -106,7 +106,7 @@ class TargetValuesService {
   }
 
   calculateTargets(settings: SettingsType, adoptions: AdoptionType[]): Promise<Targets> {
-    return TargetCalculationService.fetchAndCalculateTargets(null, true); //always true for now  to audit calculations
+    return TargetCalculationService.fetchAndCalculateTargets(null, false, false); //always true for enableLogging for now  to audit calculations, always false for includeLogsInResponse.
   }
 
   //create default targets if they don't exist  

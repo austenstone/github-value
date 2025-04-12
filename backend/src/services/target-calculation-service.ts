@@ -63,16 +63,43 @@ export class TargetCalculationService {
   // Flag to enable/disable calculation logging
   debugLogging: boolean = false;
   
+  // Replace individual boolean flags with a Set to track logged calculation names
+  private loggedCalculations: Set<string> = new Set();
+  
   // Tracks calculation readiness
   dataFetched: boolean = false;
   
+  // Collection of logs to return with the response
+  calculationLogs: Array<{
+    name: string;
+    inputs: Record<string, any>;
+    formula: string;
+    result: any;
+  }> = [];
+  
   /**
    * Log calculation details if debug logging is enabled
+   * Each calculation name will only be logged once
    */
   private logCalculation(name: string, inputs: Record<string, any>, formula: string, result: any): void {
-    if (!this.debugLogging) return;
-    
-    console.log(`
+    // Only log if we haven't logged this calculation name before
+    if (!this.loggedCalculations.has(name)) {
+      // Mark this calculation name as logged
+      this.loggedCalculations.add(name);
+      
+      const logEntry = {
+        name,
+        inputs,
+        formula,
+        result
+      };
+      
+      // Store the log entry if debug logging is enabled
+      if (this.debugLogging) {
+        this.calculationLogs.push(logEntry);
+        
+        // Also print to console
+        console.log(`
 ========== CALCULATION: ${name} ==========
 INPUTS:
 ${Object.entries(inputs).map(([key, value]) => `  ${key}: ${JSON.stringify(value)}`).join('\n')}
@@ -84,6 +111,14 @@ RESULT:
   ${JSON.stringify(result)}
 ========================================
 `);
+      }
+    }
+  }
+
+  // Reset the logged calculations set when starting a new calculation run
+  private resetLogging(): void {
+    this.loggedCalculations.clear();
+    this.calculationLogs = [];
   }
 
   /**
@@ -816,14 +851,27 @@ RESULT:
    * One-step method to fetch data and perform all calculations
    * The instance method - used when you already have a service instance
    */
-  async fetchAndCalculateTargets(org: string | null, enableLogging: boolean = false): Promise<Targets> {
+  async fetchAndCalculateTargets(
+    org: string | null, 
+    enableLogging: boolean = false,
+    includeLogsInResponse: boolean = false
+  ): Promise<{ targets: Targets; logs?: Array<any> }> {
     this.debugLogging = enableLogging;
+    this.resetLogging(); // Reset logging state
     console.log(`Calculation logging ${enableLogging ? 'enabled' : 'disabled'}`);
     
-    // Use 'enterprise' as default when org is null or undefined
-   // const orgName = org || 'enterprise';
     await this.fetchCalculationData(org);
-    return this.calculateAllTargets();
+    const targets = this.calculateAllTargets();
+    
+    // Return both targets and logs if requested
+    if (includeLogsInResponse && this.debugLogging) {
+      return { 
+        targets,
+        logs: this.calculationLogs
+      };
+    }
+    
+    return { targets };
   }
 
   /**
@@ -831,17 +879,22 @@ RESULT:
    * Used for convenience when you don't want to create an instance first
    * This is a facade that creates an instance and calls the instance method
    */
-  static async fetchAndCalculateTargets(org: string | null, enableLogging: boolean = false): Promise<Targets> {
+  static async fetchAndCalculateTargets(
+    org: string | null, 
+    enableLogging: boolean = false,
+    includeLogsInResponse: boolean = false
+  ): Promise<{ targets: Targets; logs?: Array<any> }> {
     const service = new TargetCalculationService();
-    return service.fetchAndCalculateTargets(org, enableLogging);
+    return service.fetchAndCalculateTargets(org, enableLogging, includeLogsInResponse);
   }
 }
 
 // Allow isolated testing
 if (import.meta.url.endsWith(process.argv[1])) {
   (async () => {
-    // Example of using the static method
-    const targets = await TargetCalculationService.fetchAndCalculateTargets('test-org', true);
-    console.log('Calculated Targets:', JSON.stringify(targets, null, 2));
+    // Example of using the static method with logs included in response
+    const result = await TargetCalculationService.fetchAndCalculateTargets('test-org', true, true);
+    console.log('Calculated Targets:', JSON.stringify(result.targets, null, 2));
+    console.log(`Returned ${result.logs?.length || 0} calculation logs`);
   })();
 }

@@ -8,7 +8,7 @@
     "start": "node --enable-source-maps dist/index.js | bunyan -o short -l info",
     "test": "vitest",
     "build": "tsc",
-    "dev": "tsx watch src/index.ts | bunyan -o short -l info",
+    "dev": "NODE_OPTIONS='--max-old-space-size=8192' tsx watch src/index.ts | bunyan -o short -l info",
     "lint": "eslint src/**/*.ts",
     "compose:start": "docker-compose -f ../compose.yml up -d",
     "db:start": "docker-compose -f ../compose.yml up -d mongo",

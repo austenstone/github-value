@@ -649,7 +649,7 @@ export class HighchartsService {
 
       if (dateSurveys.length > 0) {
         const avgPercentTimeSaved = dateSurveys.reduce((sum, survey) => sum + survey.percentTimeSaved, 0)
-        acc[dateKey].sum = avgPercentTimeSaved * 0.01 * 0.3 * 40; // TODO pull settings
+        acc[dateKey].sum = avgPercentTimeSaved * 0.01 * 0.3 * 40; // TODO pull settings value, right now fixed at 30% time spent coding
         acc[dateKey].count = dateSurveys.length;
       }
 

@@ -29,14 +29,19 @@ class TargetValuesController {
     try {
       const org = req.query.org || 'enterprise';
       const enableLogging = req.query.enableLogging === 'true';
+      const includeLogsInResponse = req.query.includeLogs === 'true';
       
       // Create an instance of the calculation service
       const calculationService = new TargetCalculationService();
       
-      // Fetch data and calculate targets with optional logging
-      const targets = await calculationService.fetchAndCalculateTargets(org, enableLogging);
+      // Fetch data and calculate targets with optional logging and logs in response
+      const result = await calculationService.fetchAndCalculateTargets(
+        org as string, 
+        enableLogging,
+        includeLogsInResponse
+      );
       
-      return res.status(200).json(targets);
+      return res.status(200).json(result);
     } catch (error) {
       console.error('Error calculating target values:', error);
       return res.status(500).json({ error: 'Failed to calculate target values' });
