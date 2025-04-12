@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import adoptionService, { AdoptionType } from './adoption.service.js';
 import app from '../index.js';
 import { SettingsType } from './settings.service.js';
+import { TargetCalculationService } from './target-calculation-service.js';
 
 interface Target {
   current: number;
@@ -54,7 +55,12 @@ class TargetValuesService {
     }
   }
 
-  calculateTargets(settings: SettingsType, adoptions: AdoptionType[]): Targets {
+  //TODO: remove this method
+  // This method is not used in the current codebase and should be removed
+  // It was originally intended to calculate targets based on settings and adoptions
+  // but is now replaced by the fetchAndCalculateTargets method in TargetCalculationService
+  // and should be removed to avoid confusion.
+  calculateTargets_ori(settings: SettingsType, adoptions: AdoptionType[]): Targets {
     const topAdoptions = adoptions
       .sort((a, b) => b.totalActive - a.totalActive)
       .slice(0, 10);
@@ -99,19 +105,25 @@ class TargetValuesService {
     };
   }
 
-  async initialize() {
+  calculateTargets(settings: SettingsType, adoptions: AdoptionType[]): Promise<Targets> {
+    return TargetCalculationService.fetchAndCalculateTargets(null, true); //always true for now  to audit calculations
+  }
+
+  //create default targets if they don't exist  
+  async initialize() { 
     try {
       const Targets = mongoose.model('Targets');
       const existingTargets = await Targets.findOne();
 
-      if (!existingTargets) {
+      if (!existingTargets || true) {
         const settings = await app.settingsService.getAllSettings();
         const adoptions = await adoptionService.getAllAdoptions2({
           filter: { enterprise: 'enterprise' },
           projection: {}
         });
-        const initialData = this.calculateTargets(settings, adoptions);
+        const initialData = await this.calculateTargets(settings, adoptions);
         await Targets.create(initialData);
+        console.log('Default  targets created successfully.');
       }
     } catch (error) {
       throw new Error(`Error initializing target values: ${error}`);

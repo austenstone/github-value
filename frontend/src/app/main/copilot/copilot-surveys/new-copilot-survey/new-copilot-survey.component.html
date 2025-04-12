@@ -13,7 +13,8 @@
       </a>
     </h5>
       <form [formGroup]="surveyForm" (ngSubmit)="onSubmit()">
-        <div *ngIf="!id" class="conditional-fields">
+        <div *ngIf="!id && !hasQueryParams" class="conditional-fields">
+          <!-- Fields hidden when either an ID is present OR query parameters are provided -->
           <label for="usedCopilot" class="label-large">   Who is submitting this estimate?</label>
           <mat-form-field class="example-form-field">
             <mat-label>GitHub Handle</mat-label>

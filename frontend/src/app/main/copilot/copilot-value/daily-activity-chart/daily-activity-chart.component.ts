@@ -76,6 +76,7 @@ export class DailyActivityChartComponent implements OnInit, OnChanges {
         text: 'Daily Activity Per Avg User'
       },
       min: 0,
+      maxPadding: 1.7,
       plotBands: [{
         from: 500,
         to: 750,

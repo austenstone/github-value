@@ -56,6 +56,8 @@ router.get('/status', setupController.getStatus);
 
 router.get('/targets', targetValuesController.getTargetValues);
 router.post('/targets', targetValuesController.updateTargetValues);
+// Add the new route for target calculation
+router.get('/targets/calculate', targetValuesController.calculateTargetValues);
 
 router.get('*', (req: Request, res: Response) => {
   res.status(404).send('Route not found');

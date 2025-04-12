@@ -90,15 +90,13 @@ export class CopilotSeatComponent implements OnInit {
         ...this.chartOptions,
         ...this._chartOptions
       };
-      this.timeSpent = dayjs.duration({
+      this.timeSpent = " ~ " + Math.floor(dayjs.duration({
         milliseconds: (this.chartOptions.series as Highcharts.SeriesGanttOptions[])?.reduce((total, series) => {
           return total += series.data?.reduce((dataTotal, data) => dataTotal += (data.end || 0) - (data.start || 0), 0) || 0;
         }, 0)
-      }).humanize();
+      }).asHours()).toString() + " hrs"; //.humanize();
       this.updateFlag = true;
       this.cdr.detectChanges();
     });
-
   }
-
 }

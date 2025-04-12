@@ -72,6 +72,7 @@ export class NewCopilotSurveyComponent implements OnInit {
   id: number;
   surveys: Survey[] = [];
   orgFromApp: string = '';
+  hasQueryParams = false;
   
   // Use a subject to trigger searches
   private searchTerms = new Subject<string>();
@@ -137,9 +138,33 @@ export class NewCopilotSurveyComponent implements OnInit {
     // Initial form setup from query params
     this.route.queryParams.subscribe(params => {
       this.params = params;
-      this.surveyForm.get('userId')?.setValue(params['author'] || '');
-      this.surveyForm.get('repo')?.setValue(params['repo'] || '');
-      this.surveyForm.get('prNumber')?.setValue(params['prno'] || '');
+      
+      // Set hasQueryParams BEFORE setting values to avoid form validation errors
+      this.hasQueryParams = !!(params['author'] || params['repo'] || params['prno'] || params['url']);
+      
+      // Pre-fill the form only if params exist
+      if (params['author']) {
+        this.surveyForm.get('userId')?.setValue(params['author']);
+      }
+      
+      if (params['repo']) {
+        this.surveyForm.get('repo')?.setValue(params['repo']);
+      }
+      
+      if (params['prno']) {
+        this.surveyForm.get('prNumber')?.setValue(params['prno']);
+      }
+      
+      // Handle GitHub URL parsing
+      if (params['url'] && params['url'].includes('github.com')) {
+        const { org, repo, prNumber } = this.parseGitHubPRUrl(params['url']);
+        if (!params['repo'] && repo) {
+          this.surveyForm.get('repo')?.setValue(repo);
+        }
+        if (!params['prno'] && prNumber) {
+          this.surveyForm.get('prNumber')?.setValue(prNumber);
+        }
+      }
     });
 
     // Get organization
@@ -157,6 +182,9 @@ export class NewCopilotSurveyComponent implements OnInit {
         this.surveyForm.get('percentTimeSaved')?.setValue(this.defaultPercentTimeSaved);
       }
     });
+
+    const id = this.route.snapshot.paramMap.get('id');
+    this.id = id ? Number(id) : 0; // Correct type conversion
   }
   
   loadHistoricalReasons() {
@@ -195,40 +223,74 @@ export class NewCopilotSurveyComponent implements OnInit {
   }
 
   onSubmit() {
+    if (this.surveyForm.invalid) {
+      // Mark all fields as touched to show validation errors
+      Object.keys(this.surveyForm.controls).forEach(key => {
+        this.surveyForm.get(key)?.markAsTouched();
+      });
+      return;
+    }
+
     // Validate the userId field using the userIdValidator before submission
     const userIdControl = this.surveyForm.get('userId');
-    if (userIdControl && userIdControl.valid) { // Check validity before proceeding
-      // Proceed with form submission only if the control is valid
-      const { org, repo, prNumber } = this.parseGitHubPRUrl(this.params['url']);
-      
-      // Ensure userId is the login string before sending
-      const userIdValue = userIdControl.value;
-      const finalUserId = (typeof userIdValue === 'object' && userIdValue?.login) ? userIdValue.login : userIdValue;
+    if (userIdControl && userIdControl.valid) {
+      try {
+        // Ensure userId is the login string before sending
+        const userIdValue = userIdControl.value;
+        const finalUserId = (typeof userIdValue === 'object' && userIdValue?.login) ? userIdValue.login : userIdValue;
 
-      const survey = {
-        id: this.id,
-        userId: finalUserId, // Use the extracted login string
-        org: org || this.orgFromApp,
-        repo: repo || this.surveyForm.value.repo,
-        prNumber: prNumber || this.surveyForm.value.prNumber,
-        usedCopilot: this.surveyForm.value.usedCopilot,
-        percentTimeSaved: Number(this.surveyForm.value.percentTimeSaved),
-        reason: this.surveyForm.value.reason,
-        timeUsedFor: this.surveyForm.value.timeUsedFor
-      };
-      if (!this.id) {
-        this.copilotSurveyService.createSurvey(survey).subscribe(() => {
-          this.router.navigate(['/copilot/survey']);
-        });
-      } else {
-        this.copilotSurveyService.createSurveyGitHub(survey).subscribe(() => {
-          const redirectUrl = this.params['url'];
-          if (redirectUrl && redirectUrl.startsWith('https://github.com/')) {
-            window.location.href = redirectUrl;
-          } else {
-            console.error('Unauthorized URL:', redirectUrl);
-          }
-        });
+        // Use fallbacks for org and repo
+        const { org, repo, prNumber } = this.parseGitHubPRUrl(this.params['url'] || '');
+        
+        const survey = {
+          id: this.id,
+          userId: finalUserId,
+          org: org || this.orgFromApp || 'default-org', // Add fallback
+          repo: repo || this.surveyForm.value.repo || '',
+          // Fix: Convert null to 0 to match required type
+          prNumber: prNumber || Number(this.surveyForm.value.prNumber) || 0, // Use 0 instead of null
+          usedCopilot: Boolean(this.surveyForm.value.usedCopilot),
+          percentTimeSaved: Number(this.surveyForm.value.percentTimeSaved),
+          reason: this.surveyForm.value.reason || '',
+          timeUsedFor: this.surveyForm.value.timeUsedFor || ''
+        };
+
+        console.log('Submitting survey:', survey);
+
+        if (!this.id) {
+          this.copilotSurveyService.createSurvey(survey).pipe(
+            catchError(error => {
+              console.error('Error creating survey:', error);
+              alert('Failed to submit survey. Please try again.');
+              return of(null);
+            })
+          ).subscribe(result => {
+            if (result) {
+              this.router.navigate(['/copilot/survey']);
+            }
+          });
+        } else {
+          this.copilotSurveyService.createSurveyGitHub(survey).pipe(
+            catchError(error => {
+              console.error('Error creating GitHub survey:', error);
+              alert('Failed to submit survey. Please try again.');
+              return of(null);
+            })
+          ).subscribe(result => {
+            if (result) {
+              const redirectUrl = this.params['url'];
+              if (redirectUrl && redirectUrl.startsWith('https://github.com/')) {
+                window.location.href = redirectUrl;
+              } else {
+                console.error('Unauthorized URL:', redirectUrl);
+                this.router.navigate(['/copilot/survey']);
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error in form submission:', error);
+        alert('An unexpected error occurred. Please try again.');
       }
     } else if (userIdControl) {
       // If control is invalid, trigger validation explicitly to show error
