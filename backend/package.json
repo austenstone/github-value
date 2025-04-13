@@ -5,10 +5,10 @@
   "description": "Demonstrate the value of GitHub",
   "main": "src/index.ts",
   "scripts": {
-    "start": "node --enable-source-maps dist/index.js | bunyan -o short -l info",
+    "start": "NODE_OPTIONS='--max-old-space-size=5120' node --enable-source-maps dist/index.js | bunyan -o short -l info",
     "test": "vitest",
     "build": "tsc",
-    "dev": "NODE_OPTIONS='--max-old-space-size=8192' tsx watch src/index.ts | bunyan -o short -l info",
+    "dev": "NODE_OPTIONS='--max-old-space-size=5120' tsx watch src/index.ts | bunyan -o short -l info",
     "lint": "eslint src/**/*.ts",
     "compose:start": "docker-compose -f ../compose.yml up -d",
     "db:start": "docker-compose -f ../compose.yml up -d mongo",
