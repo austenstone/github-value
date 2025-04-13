@@ -34,7 +34,7 @@ class TeamsController {
     try {
       const { login } = req.params;
       const exact = req.query.exact === 'true';
-      const member = await teamsService.getMemberByLogin(login, exact);
+      const member = await teamsService.getMemberByLogin(login);
       if (member) {
         res.json(member);
       } else {

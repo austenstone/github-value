@@ -41,10 +41,10 @@ class TargetValuesController {
         includeLogsInResponse
       );
       
-      return res.status(200).json(result);
+      res.status(200).json(result);
     } catch (error) {
       console.error('Error calculating target values:', error);
-      return res.status(500).json({ error: 'Failed to calculate target values' });
+      res.status(500).json({ error: 'Failed to calculate target values' });
     }
   }
 }

@@ -20,6 +20,7 @@ export const setupWebhookListeners = (github: App) => {
       }
 
       const survey = await surveyService.createSurvey({
+        id: crypto.randomUUID(), // Or some other unique ID generation
         status: 'pending',
         hits: 0,
         userId: payload.pull_request.user.login,
