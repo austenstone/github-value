@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import app from "../index.js";
 import { Endpoints } from "@octokit/types";
+import { Request } from "express";
 
 export interface StatusType {
   github?: boolean;
@@ -13,6 +14,11 @@ export interface StatusType {
     repos: Endpoints["GET /app/installations"]["response"]["data"];
   }[];
   surveyCount: number;
+  auth?: {
+    user?: string;
+    email?: string;
+    authenticated: boolean;
+  };
 }
 
 class StatusService {
@@ -20,8 +26,20 @@ class StatusService {
     
   }
 
-  async getStatus(): Promise<StatusType> {
+  async getStatus(req?: Request): Promise<StatusType> {
     const status = {} as StatusType;
+
+    // Add authentication information if request is provided
+    if (req) {
+      const user = req.headers['x-auth-request-user'] as string;
+      const email = req.headers['x-auth-request-email'] as string;
+      
+      status.auth = {
+        user,
+        email,
+        authenticated: !!user
+      };
+    }
 
     const Seats = mongoose.model('Seats');
 
