@@ -18,6 +18,7 @@ export interface StatusType {
     user?: string;
     email?: string;
     authenticated: boolean;
+    headers?: string[]; // Add this to store header names
   };
 }
 
@@ -37,7 +38,8 @@ class StatusService {
       status.auth = {
         user,
         email,
-        authenticated: !!user
+        authenticated: !!user,
+        headers: Object.keys(req.headers) // Add all header names as an array
       };
     }
 
