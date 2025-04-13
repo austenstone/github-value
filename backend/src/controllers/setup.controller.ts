@@ -84,7 +84,7 @@ class SetupController {
   async getStatus(req: Request, res: Response) {
     try {
       const statusService = new StatusService();
-      const status = await statusService.getStatus();
+      const status = await statusService.getStatus(req);
       res.json(status);
     } catch (error) {
       res.status(500).json(error);
