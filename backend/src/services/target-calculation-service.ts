@@ -228,11 +228,15 @@ RESULT:
     const totalSeats = topAdoptions.reduce((sum, adoption) => sum + adoption.totalSeats, 0);
     const avgTotalSeats = Math.round(totalSeats / (topAdoptions.length || 1));
     
+    // Convert developerCount to number to ensure the correct type
+    const developerCount = typeof this.settings.developerCount === 'string' 
+      ? parseInt(this.settings.developerCount, 10) 
+      : (this.settings.developerCount || 0);
+    
     const result = {
       current: avgTotalSeats,
       target: avgTotalSeats,
-      max: typeof this.settings.developerCount === 'string' ? Number(this.settings.developerCount) : this.settings.developerCount
-   
+      max: developerCount
     };
     
     this.logCalculation(
@@ -260,11 +264,15 @@ RESULT:
     const totalActive = topAdoptions.reduce((sum, adoption) => sum + adoption.totalActive, 0);
     const avgTotalActive = Math.round(totalActive / (topAdoptions.length || 1));
     
+    // Convert developerCount to number
+    const developerCount = typeof this.settings.developerCount === 'string' 
+      ? parseInt(this.settings.developerCount, 10) 
+      : (this.settings.developerCount || 0);
+    
     const result = {
       current: avgTotalActive,
-      target: avgTotalActive, 
-      // convert developerCount to number if it's a string
-      max: typeof this.settings.developerCount === 'string' ? Number(this.settings.developerCount) : this.settings.developerCount
+      target: avgTotalActive,
+      max: developerCount
     };
     
     this.logCalculation(
@@ -287,10 +295,15 @@ RESULT:
   calculateMonthlyDevsReportingTimeSavings(): Target {
     const distinctUsers = this.getDistinctSurveyUsers(this.surveysMonthly);
     
+    // Convert developerCount to number
+    const developerCount = typeof this.settings.developerCount === 'string' 
+      ? parseInt(this.settings.developerCount, 10) 
+      : (this.settings.developerCount || 0);
+    
     const result = {
       current: distinctUsers.length,
       target: distinctUsers.length * 2, // Target is user-defined
-      max: this.settings.developerCount
+      max: developerCount
     };
     
     this.logCalculation(
@@ -373,11 +386,14 @@ RESULT:
    * Calculate percentage of max possible seats adopted
    */
   calculatePercentOfMaxAdopted(): Target {
-    let maxSeats = this.settings.developerCount;
+    // Convert maxSeats to number to ensure correct type
+    const maxSeats = typeof this.settings.developerCount === 'string' 
+      ? parseInt(this.settings.developerCount, 10) 
+      : (this.settings.developerCount || 0);
+    
     let adoptedDevs = this.calculateAdoptedDevs().current;
     const currentPercentage = this.calculatePercentage(adoptedDevs, maxSeats);
-
-    maxSeats = this.settings.developerCount;
+  
     adoptedDevs = this.calculateAdoptedDevs().target;
     const targetPercentage = this.calculatePercentage(adoptedDevs, maxSeats);
     
@@ -410,7 +426,7 @@ RESULT:
     
     // Extract metrics from the 5 largest values in the array, with fallbacks if there are less.
       
-    const metricsWeekly = this.metricsWeekly.sort((a, b) => b.date - a.date).slice(0, 5);
+    const metricsWeekly = this.metricsWeekly.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
     const metricsAvg = metricsWeekly.reduce((acc, curr) => {
       acc.copilot_ide_code_completions.total_code_suggestions += curr.copilot_ide_code_completions?.total_code_suggestions || 0;
       return acc;
@@ -452,7 +468,7 @@ RESULT:
     const adoptedDevs = this.calculateAdoptedDevs().current;
     
     // Extract metrics from the 5 most recent days in the array
-    const metricsDaily = this.metricsDaily.sort((a, b) => b.date - a.date).slice(0, 5);
+    const metricsDaily = this.metricsDaily.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
     const metricsAvg = metricsDaily.reduce((acc, curr) => {
       acc.copilot_ide_chat.total_chats += curr.copilot_ide_chat?.total_chats || 0;
       acc.total_active_users += curr.total_active_users || 0;
@@ -499,7 +515,7 @@ RESULT:
     const adoptedDevs = this.calculateAdoptedDevs().current;
     
     // Extract metrics from the 5 most recent days in the array
-    const metricsDaily = this.metricsDaily.sort((a, b) => b.date - a.date).slice(0, 5);
+    const metricsDaily = this.metricsDaily.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
     
     // We don't have acceptance data yet, but when we do, we can follow this pattern
     // Placeholder formula: roughly 70% of suggestions get accepted
@@ -593,7 +609,7 @@ RESULT:
     const adoptedDevs = this.calculateAdoptedDevs().current;
     
     // Extract metrics from the last 5 metrics points in the array (up to a week)
-    const metricsWeekly = this.metricsWeekly.sort((a, b) => b.date - a.date).slice(0, 5);
+    const metricsWeekly = this.metricsWeekly.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
     const metricsAvg = metricsWeekly.reduce((acc, curr) => {
       acc.copilot_dotcom_pull_requests.total_pr_summaries_created += 
         curr.copilot_dotcom_pull_requests?.total_pr_summaries_created || 0;
@@ -649,22 +665,27 @@ RESULT:
     // Group surveys by user to get average time saved per user
     const userTimeSavings = distinctUsers.map(userId => {
       const userSurveys = this.surveysWeekly.filter(survey => survey.userId === userId);
-      const totalPercent = userSurveys.reduce((sum, survey) => sum + (survey.percentTimeSaved || 0), 0);
+      const totalPercent = userSurveys.reduce((sum, survey) => {
+        const percentTimeSaved = typeof survey.percentTimeSaved === 'number' ? survey.percentTimeSaved : 0;
+        return sum + percentTimeSaved;
+      }, 0);
       return totalPercent / userSurveys.length; // Average percent time saved per user
     });
     
     // Average across all users
     const avgPercentTimeSaved = userTimeSavings.reduce((sum, percent) => sum + percent, 0) / userTimeSavings.length;
     
+    // Convert settings values to numbers
+    const hoursPerYear = typeof this.settings.hoursPerYear === 'number' ? this.settings.hoursPerYear : 2000;
+    const percentCoding = typeof this.settings.percentCoding === 'number' ? this.settings.percentCoding : 50;
+    
     // Calculate weekly hours saved based on settings and average percent
-    const hoursPerYear = this.settings.hoursPerYear || 2000;
-    const percentCoding = this.settings.percentCoding || 50;
     const weeklyHours = hoursPerYear / 50; // Assuming 50 working weeks
     const weeklyDevHours = weeklyHours * (percentCoding / 100);
     const avgWeeklyTimeSaved = weeklyDevHours * (avgPercentTimeSaved / 100);
     
     // Calculate max based on settings
-    const maxPercentTimeSaved = this.settings.percentTimeSaved || 20;
+    const maxPercentTimeSaved = typeof this.settings.percentTimeSaved === 'number' ? this.settings.percentTimeSaved : 20;
     const maxWeeklyTimeSaved = weeklyDevHours * (maxPercentTimeSaved / 100);
     
     const result = {
@@ -727,10 +748,13 @@ RESULT:
   calculateAnnualTimeSavingsAsDollars(): Target {
     const adoptedDevs = this.calculateAdoptedDevs().current;
     const weeklyTimeSavedHrs = this.calculateWeeklyTimeSavedHrs().current;
-    const weeksInYear = this.settings.weeksInYear || 50;
-    const hourlyRate = this.settings.devCostPerYear 
-      ? (this.settings.devCostPerYear / (this.settings.hoursPerYear || 2000))
-      : 50; // Default hourly rate if missing
+    
+    // Ensure all values are properly typed as numbers
+    const hoursPerYear = typeof this.settings.hoursPerYear === 'number' ? this.settings.hoursPerYear : 2000;
+    const weeksInYear = Math.round(hoursPerYear / 40) || 50; // Calculate weeks and ensure it's a number
+    
+    const devCostPerYear = typeof this.settings.devCostPerYear === 'number' ? this.settings.devCostPerYear : 0;
+    const hourlyRate = devCostPerYear > 0 ? (devCostPerYear / hoursPerYear) : 50;
     
     const annualSavings = weeklyTimeSavedHrs * weeksInYear * hourlyRate * adoptedDevs;
     
@@ -760,13 +784,17 @@ RESULT:
    * Calculate productivity or throughput boost percentage
    */
   calculateProductivityOrThroughputBoostPercent(): Target {
-      const adoptedDevs = this.calculateAdoptedDevs().current;
-      const weeklyTimeSavedHrs = this.calculateWeeklyTimeSavedHrs().current;
-      const monthlyTimeSavings = adoptedDevs * weeklyTimeSavedHrs * 4; // Assuming 4 weeks per month
-      
-      const hoursPerWeek = this.settings.hoursPerYear / 50 || 40; // Default to 40 if undefined
-      const productivityBoost = ((hoursPerWeek) + weeklyTimeSavedHrs) / (hoursPerWeek);
-
+    const adoptedDevs = this.calculateAdoptedDevs().current;
+    const weeklyTimeSavedHrs = this.calculateWeeklyTimeSavedHrs().current;
+    const monthlyTimeSavings = adoptedDevs * weeklyTimeSavedHrs * 4; // Assuming 4 weeks per month
+    
+    // Convert hours per year to number
+    const hoursPerYear = typeof this.settings.hoursPerYear === 'number' ? this.settings.hoursPerYear : 2000;
+    const hoursPerWeek = hoursPerYear / 50 || 40; // Default to 40 if undefined
+    
+    // Calculate productivity boost factor (not percentage)
+    const productivityBoost = (hoursPerWeek + weeklyTimeSavedHrs) / hoursPerWeek;
+  
     const result = {
       current: productivityBoost,
       target: 10, // Target is user-defined
@@ -776,11 +804,11 @@ RESULT:
     this.logCalculation(
       'PRODUCTIVITY OR THROUGHPUT BOOST PERCENT',
       {
-            adoptedDevsCount: adoptedDevs,                  
-            weeklyTimeSavedHrs: weeklyTimeSavedHrs,
-            monthlyTimeSavings: monthlyTimeSavings,
-            hoursPerWeek: hoursPerWeek,
-            productivityBoost: productivityBoost
+        adoptedDevsCount: adoptedDevs,                  
+        weeklyTimeSavedHrs: weeklyTimeSavedHrs,
+        monthlyTimeSavings: monthlyTimeSavings,
+        hoursPerWeek: hoursPerWeek,
+        productivityBoost: productivityBoost
       },
       'Calculate (hoursPerWeek + weeklyTimeSavedHrs) / hoursPerWeek, set current = productivityBoost, max = 25',
       result
