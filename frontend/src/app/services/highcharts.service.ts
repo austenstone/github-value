@@ -582,18 +582,21 @@ export class HighchartsService {
     };
 
     Object.entries(activity).forEach(([date, dateData]) => {
+      // Skip if totalActive is undefined or 0
+      if (!dateData.totalActive) return;
+      
       const currentMetrics = metrics.find(m => m.date.startsWith(date.slice(0, 10)));
       if (currentMetrics?.copilot_ide_code_completions) {
         (dailyActiveIdeCompletionsSeries.data).push({
           x: new Date(date).getTime(),
-          y: (currentMetrics.copilot_ide_code_completions.total_code_suggestions / (dateData.totalActive || 1)),
+          y: (currentMetrics.copilot_ide_code_completions.total_code_suggestions / dateData.totalActive),
           raw: date
         });
 
         if (dailyActiveIdeAcceptsSeries && dailyActiveIdeAcceptsSeries.data) {
           dailyActiveIdeAcceptsSeries.data.push({
             x: new Date(date).getTime(),
-            y: (currentMetrics.copilot_ide_code_completions.total_code_acceptances / (dateData.totalActive || 1)),
+            y: (currentMetrics.copilot_ide_code_completions.total_code_acceptances / dateData.totalActive),
             raw: date
           });
         }
@@ -601,21 +604,21 @@ export class HighchartsService {
       if (currentMetrics?.copilot_ide_chat) {
         (dailyActiveIdeChatSeries.data).push({
           x: new Date(date).getTime(),
-          y: (currentMetrics.copilot_ide_chat.total_chats / dateData.totalActive || 1),
+          y: (currentMetrics.copilot_ide_chat.total_chats / dateData.totalActive),
           raw: date
         });
       }
       if (currentMetrics?.copilot_dotcom_chat) {
         (dailyActiveDotcomChatSeries.data).push({
           x: new Date(date).getTime(),
-          y: (currentMetrics.copilot_dotcom_chat.total_chats / dateData.totalActive || 1),
+          y: (currentMetrics.copilot_dotcom_chat.total_chats / dateData.totalActive),
           raw: date
         });
       }
       if (currentMetrics?.copilot_dotcom_pull_requests) {
         (dailyActiveDotcomPrSeries.data).push({
           x: new Date(date).getTime(),
-          y: (currentMetrics.copilot_dotcom_pull_requests.total_pr_summaries_created / dateData.totalActive || 1),
+          y: (currentMetrics.copilot_dotcom_pull_requests.total_pr_summaries_created / dateData.totalActive),
           raw: date
         });
       }
