@@ -35,6 +35,7 @@ interface Targets {
     annualTimeSavingsAsDollars: Target;
     productivityOrThroughputBoostPercent: Target;
   };
+  [key: string]: any; // Add this index signature
 }
 
 // More specific typed interfaces for metrics data

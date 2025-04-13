@@ -105,7 +105,7 @@ class TargetValuesService {
     };
   }
 
-  calculateTargets(settings: SettingsType, adoptions: AdoptionType[]): Promise<Targets> {
+  calculateTargets(settings: SettingsType, adoptions: AdoptionType[]): Promise<{ targets: Targets; logs?: any[] }> {
     return TargetCalculationService.fetchAndCalculateTargets(null, false, false); //always true for enableLogging for now  to audit calculations, always false for includeLogsInResponse.
   }
 
