@@ -13,7 +13,11 @@
           <p>Created: <strong>{{ seat.created_at | date:'MMM d, y, h:mm:ss a' }}</strong></p>
           <p>Last active: {{ seat.last_activity_at | date:'medium' }}</p>
           <p>Editor: {{ seat.last_activity_editor }}</p>
-          <p>Time spent on Copilot: {{ timeSpent }}</p>
+          <p>Hours with Copilot activity: {{ timeSpent }}</p>
+          <div class="additional-stats">
+            <p>Number of Estimates (surveys): <strong>{{ surveyCount }}</strong></p>
+            <p>Average Time Savings Reported: <strong>{{ avgTimeSavings }}</strong></p>
+          </div>
         </div>
       </div>
     </mat-card-content>
@@ -96,5 +100,17 @@
   height: 300px;
   font-size: 18px;
   color: #666;
+}
+
+.additional-stats {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.additional-stats h3 {
+  margin-bottom: 8px;
+  color: #333;
+  font-size: 16px;
 }
 </style>

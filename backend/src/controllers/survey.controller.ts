@@ -65,7 +65,7 @@ class SurveyController {
 
   async getAllSurveys(req: Request, res: Response): Promise<void> {
     try {
-      const { org, team, reasonLength, since, until, status } = req.query as { [key: string]: string | undefined };
+      const { org, team, reasonLength, since, until, status, userId } = req.query as { [key: string]: string | undefined };
       
       const surveys = await surveyService.getAllSurveys({
         org,
@@ -73,7 +73,8 @@ class SurveyController {
         reasonLength,
         since,
         until,
-        status
+        status,
+        userId
       });
       
       res.status(200).json(surveys);

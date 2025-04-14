@@ -13,10 +13,23 @@ import { FormsModule } from '@angular/forms';
 import dayjs from "dayjs";
 import duration from 'dayjs/plugin/duration';
 import relativeTime from 'dayjs/plugin/relativeTime';
+import { CopilotSurveyService, Survey } from '../../../../services/api/copilot-survey.service';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
 
 type TimeRange = '7days' | '30days' | 'all';
+
+// Define interfaces for the activity data structure
+interface Activity {
+  duration?: number;
+  // Add other activity properties as needed
+}
+
+interface SeatWithActivity extends Seat {
+  activity?: Activity[];
+}
 
 @Component({
   selector: 'app-copilot-seat',
@@ -76,12 +89,15 @@ export class CopilotSeatComponent implements OnInit {
   timeSpent?: string;
   selectedTimeRange: TimeRange = '7days';
   loading = false;
+  surveyCount: number = 0;
+  avgTimeSavings: string = 'N/A';
 
   constructor(
     private copilotSeatService: SeatService,
     private activatedRoute: ActivatedRoute,
     private highchartsService: HighchartsService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private surveyService: CopilotSurveyService
   ) { }
 
   ngOnInit() {
@@ -121,46 +137,95 @@ export class CopilotSeatComponent implements OnInit {
         break;
     }
 
-    // Fetch seat activity data using the ID and time range parameters
-    this.copilotSeatService.getSeat(this.id, params).subscribe({
-      next: (seatActivity: Seat[]) => {  // Add type annotation here
-        // Store the retrieved activity data
-        this.seatActivity = seatActivity;
+    // Create observables for all the data we need to fetch
+    const seatActivity$ = this.copilotSeatService.getSeat(this.id, params);
+    
+    // First get the seat data to access the assignee login
+    seatActivity$.pipe(
+      map(seatData => {
+        // Store the complete seat activity data
+        this.seatActivity = seatData;
         
-        // Set the current seat to the most recent activity record
-        this.seat = seatActivity.length > 0 ? 
-          seatActivity[seatActivity.length - 1] : 
-          undefined;
-
-        // Transform the activity data into Highcharts Gantt chart format
-        this._chartOptions = this.highchartsService.transformSeatActivityToGantt(seatActivity);
-        
-        // Merge the transformed options with default chart options
-        this.chartOptions = {
-          ...this.chartOptions,
-          ...this._chartOptions
-        };
-        
-        // Calculate total time spent based on Gantt data durations
-        this.timeSpent = " ~ " + Math.floor(dayjs.duration({
-          milliseconds: (this.chartOptions.series as Highcharts.SeriesGanttOptions[])?.reduce((total, series) => {
-            return total += series.data?.reduce((dataTotal, data) => dataTotal += (data.end || 0) - (data.start || 0), 0) || 0;
-          }, 0)
-        }).asHours()).toString() + " hrs"; // Formatted as hours
-        
-        // Hide loading indicator - SET TO FALSE after successful data load
-        this.loading = false;
-        
-        // Trigger chart update and refresh the component view
-        this.updateFlag = true;
-        this.cdr.detectChanges();
-      },
-      error: (error: any) => {  // Add type annotation here
-        console.error('Error loading seat activity:', error);
-        // Hide loading indicator - SET TO FALSE even if there's an error
+        if (seatData.length > 0) {
+          this.seat = seatData[seatData.length - 1];
+          return this.seat?.assignee?.login;
+        }
+        return null;
+      }),
+      catchError(error => {
+        console.error('Error loading seat data:', error);
+        return of(null);
+      })
+    ).subscribe(login => {
+      // Now that we have the login, we can make the subsequent requests
+      if (!login) {
+        // Complete the process with default empty values if no login is available
         this.loading = false;
         this.cdr.detectChanges();
+        return;
       }
+      
+      // We now have the login, use it for survey queries
+      const surveyParams = {
+        since: params.since,
+        until: params.until,
+        userId: login
+      };
+      
+      const surveys$ = this.surveyService.getAllSurveys(surveyParams).pipe(
+        catchError(error => {
+          console.error('Error loading survey data:', error);
+          return of([] as Survey[]);
+        })
+      );
+
+      // Update forkJoin to only include surveys
+      forkJoin({
+        surveys: surveys$
+      }).subscribe({
+        next: (results) => {
+          // Process survey data - ensure surveys is an array
+          const surveysArray = Array.isArray(results.surveys) ? results.surveys : [results.surveys];
+          this.surveyCount = surveysArray.length;
+          
+          if (this.surveyCount > 0) {
+            const totalTimeSavings = surveysArray.reduce((sum: number, survey: Survey) => 
+              sum + (survey.percentTimeSaved|| 0), 0);
+            const avgSavings = totalTimeSavings / this.surveyCount;
+            this.avgTimeSavings = avgSavings.toFixed(1) + '%';
+          }
+
+          // Transform the activity data into Highcharts Gantt chart format
+          // Use the full seatActivity array, not just the current seat
+          this._chartOptions = this.highchartsService.transformSeatActivityToGantt(this.seatActivity || []);
+          
+          // Merge the transformed options with default chart options
+          this.chartOptions = {
+            ...this.chartOptions,
+            ...this._chartOptions
+          };
+          
+          // Calculate total time spent based on Gantt data durations
+          this.timeSpent = " ~ " + Math.floor(dayjs.duration({
+            milliseconds: (this.chartOptions.series as Highcharts.SeriesGanttOptions[])?.reduce((total, series) => {
+              return total += series.data?.reduce((dataTotal, data) => dataTotal += (data.end || 0) - (data.start || 0), 0) || 0;
+            }, 0)
+          }).asHours()).toString() + " hrs"; // Formatted as hours
+          
+          // Hide loading indicator - SET TO FALSE after successful data load
+          this.loading = false;
+          
+          // Trigger chart update and refresh the component view
+          this.updateFlag = true;
+          this.cdr.detectChanges();
+        },
+        error: (error: any) => {
+          console.error('Error loading data:', error);
+          // Hide loading indicator - SET TO FALSE even if there's an error
+          this.loading = false;
+          this.cdr.detectChanges();
+        }
+      });
     });
   }
 

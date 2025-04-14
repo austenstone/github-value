@@ -76,25 +76,46 @@ class SurveyService {
     since?: string;
     until?: string;
     status?: string;
+    userId?: string;
   }) {
-    const { org, team, reasonLength, since, until, status } = params;
+    const { org, team, reasonLength, since, until, status, userId } = params;
     
-    const dateFilter: mongoose.FilterQuery<{
-      $gte: Date;
-      $lte: Date;
-    }> = {};
+    const dateFilter: mongoose.FilterQuery<any> = {};
     
+    // Validate the date strings before creating Date objects
     if (since) {
-      dateFilter.$gte = new Date(since);
+      try {
+        const sinceDate = new Date(since);
+        // Check if the date is valid
+        if (!isNaN(sinceDate.getTime())) {
+          dateFilter.$gte = sinceDate;
+        } else {
+          logger.warn(`Invalid 'since' date parameter: ${since}`);
+        }
+      } catch (error) {
+        logger.error(`Error parsing 'since' date: ${since}`, error);
+      }
     }
+    
     if (until) {
-      dateFilter.$lte = new Date(until);
+      try {
+        const untilDate = new Date(until);
+        // Check if the date is valid
+        if (!isNaN(untilDate.getTime())) {
+          dateFilter.$lte = untilDate;
+        } else {
+          logger.warn(`Invalid 'until' date parameter: ${until}`);
+        }
+      } catch (error) {
+        logger.error(`Error parsing 'until' date: ${until}`, error);
+      }
     }
 
     const query = {
       filter: {
         ...(org ? { org: String(org) } : {}),
         ...(team ? { team: String(team) } : {}),
+        ...(userId ? { userId: String(userId) } : {}),
         ...(reasonLength ? { $expr: { $and: [{ $gt: [{ $strLenCP: { $ifNull: ['$reason', ''] } }, 40] }, { $ne: ['$reason', null] }] } } : {}),
         ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}),
         ...(status ? { status } : {}),
