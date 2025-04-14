@@ -18,6 +18,8 @@ import { MatRadioModule } from '@angular/material/radio'; // Import MatRadioModu
 import { MatCardModule } from '@angular/material/card'; // Import MatCardModule
 import { MatSliderModule } from '@angular/material/slider'; // Import MatSliderModule
 import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
+import { Seat, SeatService } from '../../../../services/api/seat.service';
+import dayjs from "dayjs";
 
 export function userIdValidator(membersService: MembersService) {
   return (control: AbstractControl): Observable<ValidationErrors | null> => {
@@ -74,12 +76,19 @@ export class NewCopilotSurveyComponent implements OnInit {
   orgFromApp: string = '';
   hasQueryParams = false;
   
+  // Add these properties to fix the template error
+  repo: string = '';
+  prNumber: string = '';
+  
   // Use a subject to trigger searches
   private searchTerms = new Subject<string>();
   // Use BehaviorSubject for loading state
   isLoading$ = new BehaviorSubject<boolean>(false);
   // Results observable
   filteredMembers$: Observable<Member[]>;
+  copilotActivityHours = 0;
+  hasCopilotActivity = false;
+  assignee_id?: number; // Declare the assignee_id property
 
   constructor(
     private fb: FormBuilder,
@@ -87,7 +96,8 @@ export class NewCopilotSurveyComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private membersService: MembersService,
-    private installationsService: InstallationsService
+    private installationsService: InstallationsService,
+    private seatService: SeatService // Add the SeatService
   ) {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this.id = isNaN(id) ? 0 : id;
@@ -145,14 +155,19 @@ export class NewCopilotSurveyComponent implements OnInit {
       // Pre-fill the form only if params exist
       if (params['author']) {
         this.surveyForm.get('userId')?.setValue(params['author']);
+        
+        // Manually trigger activity lookup for pre-filled userID
+        this.loadUserCopilotActivity(params['author']);
       }
       
       if (params['repo']) {
         this.surveyForm.get('repo')?.setValue(params['repo']);
+        this.repo = params['repo'];  // Immediately set the property for template access
       }
       
       if (params['prno']) {
         this.surveyForm.get('prNumber')?.setValue(params['prno']);
+        this.prNumber = params['prno'];  // Immediately set the property for template access
       }
       
       // Handle GitHub URL parsing
@@ -160,9 +175,11 @@ export class NewCopilotSurveyComponent implements OnInit {
         const { org, repo, prNumber } = this.parseGitHubPRUrl(params['url']);
         if (!params['repo'] && repo) {
           this.surveyForm.get('repo')?.setValue(repo);
+          this.repo = repo;  // Immediately set the property for template access
         }
         if (!params['prno'] && prNumber) {
           this.surveyForm.get('prNumber')?.setValue(prNumber);
+          this.prNumber = String(prNumber);  // Immediately set the property for template access
         }
       }
     });
@@ -185,6 +202,27 @@ export class NewCopilotSurveyComponent implements OnInit {
 
     const id = this.route.snapshot.paramMap.get('id');
     this.id = id ? Number(id) : 0; // Correct type conversion
+
+    // Add user ID value changes listener to fetch activity data when a user is selected
+    this.surveyForm.get('userId')?.valueChanges.pipe(
+      filter(value => value && (typeof value === 'object' || value.length > 2)), // Filter empty or too short values
+      debounceTime(500) // Debounce to avoid too many requests during typing
+    ).subscribe(value => {
+      // Get the login from either a member object or string
+      const login = typeof value === 'object' && value?.login ? value.login : value;
+      if (login && typeof login === 'string') {
+        this.loadUserCopilotActivity(login);
+      }
+    });
+
+    // Subscribe to form value changes to keep properties in sync
+    this.surveyForm.get('repo')?.valueChanges.subscribe(value => {
+      this.repo = value;
+    });
+    
+    this.surveyForm.get('prNumber')?.valueChanges.subscribe(value => {
+      this.prNumber = value;
+    });
   }
   
   loadHistoricalReasons() {
@@ -405,5 +443,53 @@ export class NewCopilotSurveyComponent implements OnInit {
         }
       });
     }
+  }
+
+  /**
+   * Loads Copilot activity data for the specified user for the past 7 days
+   * and calculates the total hours of activity
+   */
+  loadUserCopilotActivity(login: string) {
+    // Calculate 7 days ago from now
+    const since = dayjs().subtract(7, 'day').toISOString();
+    const until = dayjs().toISOString();
+    
+    this.seatService.getSeatByLogin(login, { since, until }).subscribe({
+      next: (activity: Seat[]) => {
+        if (activity && activity.length > 0) {
+          // Count unique last_activity_at timestamps
+          const uniqueTimestamps = new Set();
+          activity.forEach(item => {
+            if (item.last_activity_at) {
+              // Round to the hour to group closely timed activities
+              const hourTimestamp = dayjs(item.last_activity_at).startOf('hour').format();
+              uniqueTimestamps.add(hourTimestamp);
+              
+              // This property doesn't exist on the item because it's not in the 
+              // Seat type definition in your service
+                this.assignee_id = item.assignee_id;
+            }
+          });
+          
+          // Calculate total hours of activity
+          this.copilotActivityHours = uniqueTimestamps.size;
+          this.hasCopilotActivity = this.copilotActivityHours > 0;
+          
+          
+          // Pre-select "Yes" for usedCopilot if there's recent activity
+          if (this.hasCopilotActivity) {
+            this.surveyForm.get('usedCopilot')?.setValue(true);
+          }
+        } else {
+          this.hasCopilotActivity = false;
+          this.copilotActivityHours = 0;
+        }
+      },
+      error: (error: any) => {  // Add type annotation here
+        console.error('Error fetching user Copilot activity:', error);
+        this.hasCopilotActivity = false;
+        this.copilotActivityHours = 0;
+      }
+    });
   }
 }

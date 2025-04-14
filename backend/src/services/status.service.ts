@@ -18,6 +18,7 @@ export interface StatusType {
     user?: string;
     email?: string;
     authenticated: boolean;
+    groups?: string[];
     headers?: string[]; // Add this to store header names
   };
 }
@@ -34,11 +35,13 @@ class StatusService {
     if (req) {
       const user = req.headers['x-auth-request-user'] as string;
       const email = req.headers['x-auth-request-email'] as string;
+      const groups = req.headers['x-auth-request-groups'] as string[];
       
       status.auth = {
         user,
         email,
         authenticated: !!user,
+        groups,
         headers: Object.keys(req.headers) // Add all header names as an array
       };
     }

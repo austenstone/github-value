@@ -5,6 +5,15 @@ import { MetricDailyResponseType } from "../models/metrics.model.js";
 import copilotSurveyService from './survey.service.js';
 import { SurveyType } from './survey.service.js'; // Import from survey.service.js instead
 import app from '../index.js';
+import dayjs from 'dayjs';
+
+// Define types for calculation logging
+interface CalcLogType {
+  name: string;
+  inputs: Record<string, unknown>;
+  formula: string;
+  result: unknown;
+}
 
 // Carefully typed interfaces based on actual service data structures
 interface Target {
@@ -35,7 +44,7 @@ interface Targets {
     annualTimeSavingsAsDollars: Target;
     productivityOrThroughputBoostPercent: Target;
   };
-  [key: string]: any; // Add this index signature
+  [key: string]: Record<string, Target>;
 }
 
 // More specific typed interfaces for metrics data
@@ -71,24 +80,19 @@ export class TargetCalculationService {
   dataFetched: boolean = false;
   
   // Collection of logs to return with the response
-  calculationLogs: Array<{
-    name: string;
-    inputs: Record<string, any>;
-    formula: string;
-    result: any;
-  }> = [];
+  calculationLogs: CalcLogType[] = [];
   
   /**
    * Log calculation details if debug logging is enabled
    * Each calculation name will only be logged once
    */
-  private logCalculation(name: string, inputs: Record<string, any>, formula: string, result: any): void {
+  private logCalculation(name: string, inputs: Record<string, unknown>, formula: string, result: unknown): void {
     // Only log if we haven't logged this calculation name before
     if (!this.loggedCalculations.has(name)) {
       // Mark this calculation name as logged
       this.loggedCalculations.add(name);
       
-      const logEntry = {
+      const logEntry: CalcLogType = {
         name,
         inputs,
         formula,
@@ -127,10 +131,10 @@ RESULT:
    */
   async fetchCalculationData(org: string | null, referenceDate: Date = new Date()): Promise<void> {
     // Format date ranges
-    const now = referenceDate;
-    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const now = dayjs(referenceDate);
+    const oneDayAgo = now.subtract(1, 'day').toDate();
+    const sevenDaysAgo = now.subtract(7, 'days').toDate();
+    const thirtyDaysAgo = now.subtract(30, 'days').toDate();
 
     // Create common params without org
     const baseMetricsParams: { since: string; until: string; org?: string } = {
@@ -884,7 +888,7 @@ RESULT:
     org: string | null, 
     enableLogging: boolean = false,
     includeLogsInResponse: boolean = false
-  ): Promise<{ targets: Targets; logs?: Array<any> }> {
+  ): Promise<{ targets: Targets; logs?: CalcLogType[] }> {
     this.debugLogging = enableLogging;
     this.resetLogging(); // Reset logging state
     console.log(`Calculation logging ${enableLogging ? 'enabled' : 'disabled'}`);
@@ -912,7 +916,7 @@ RESULT:
     org: string | null, 
     enableLogging: boolean = false,
     includeLogsInResponse: boolean = false
-  ): Promise<{ targets: Targets; logs?: Array<any> }> {
+  ): Promise<{ targets: Targets; logs?: CalcLogType[] }> {
     const service = new TargetCalculationService();
     return service.fetchAndCalculateTargets(org, enableLogging, includeLogsInResponse);
   }

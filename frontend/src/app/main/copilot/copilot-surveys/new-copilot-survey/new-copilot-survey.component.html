@@ -53,13 +53,31 @@
             <input matInput formControlName="prNumber" placeholder="Ex. 23">
           </mat-form-field>
         </div>
-        <label for="usedCopilot" class="label-large">1. Did you use Copilot for this PR?</label>
+        <label for="usedCopilot" class="label-large">
+          <ng-container *ngIf="hasCopilotActivity; else defaultQuestion">
+            <span class="activity-info">
+              <a [routerLink]="['/copilot/seats', assignee_id]" *ngIf="assignee_id" class="activity-link" target="_blank" rel="noopener">
+                Based on your Copilot activity ... 
+                
+                <mat-icon class="link-icon" inline>link</mat-icon>
+              </a>
+              <ng-container *ngIf="!assignee_id">It looks like you used Copilot</ng-container>
+               <br>It looks like you used Copilot at least once per hour across <strong class="highlight-data">{{ copilotActivityHours }} hrs </strong><br>during the past <em>7 days</em>.
+              <span class="time-hint">(View your detailed Copilot usage statistics by clicking the link above - opens in a new tab)</span>
+            </span>
+            <br>1. Was Copilot useful for PR <strong class="highlight-data">#{{ prNumber }}</strong> in the <strong class="highlight-data">{{ repo }}</strong> repo?
+          </ng-container>
+          <ng-template #defaultQuestion>
+            1. Did you use Copilot for this PR?
+          </ng-template>
+        </label>
         <mat-radio-group id="usedCopilot" formControlName="usedCopilot" aria-labelledby="example-radio-group-label"
           class="example-radio-group">
           <mat-radio-button class="example-radio-button" [value]="true">Yes</mat-radio-button>
           <mat-radio-button class="example-radio-button" [value]="false">No</mat-radio-button>
         </mat-radio-group>
-        <label for="percentTimeSavedSlider" class="label-large">2. How much less time did the PR take with Copilot?
+        <label for="percentTimeSavedSlider" class="label-large">2. How much less time did the PR take with Copilot? 
+          <span class="time-hint">(Estimate the time savings as a percentage of the total time spent on the PR)</span>
         </label>
         <div id="slider">
           <mat-slider class="example-mat-slider" id="percentTimeSavedSlider" [max]="60" [min]="0" [step]="5"
@@ -76,14 +94,16 @@
             </div>
           </div>
         </div>
-        <label for="reason" class="label-large">3. Explain how Copilot enabled that level of Time Savings?</label>
+        <label for="reason" class="label-large">3. Explain how Copilot enabled that level of Time Savings?</label> 
+        <span class="time-hint">(e.g., Answering Questions, Planning and Deciding, Writing Testing and Debugging, Something Else? )</span>
         <mat-form-field class="example-form-field">
           <textarea class="example-form-field" formControlName="reason"
             placeholder="Ex. Write boilerplate code more quickly, freeing up time to focus on complex logic." matInput>
           </textarea>
         </mat-form-field>
         <label for="timeUsedForGroup" class="label-large">4. Given current priorities, where would the Copilot time
-          savings most likely show up?</label>
+          savings most likely show up?</label>  
+        <span class="time-hint">Time Savings can be used many ways, curious about where you think it will make a difference.</span>
         <mat-radio-group id="timeUsedForGroup" formControlName="timeUsedFor" aria-labelledby="example-radio-group-label"
           class="example-radio-group">
           <mat-radio-button class="example-radio-button" value="fasterPRs">Faster PR's</mat-radio-button>
@@ -173,3 +193,54 @@
     <p>Thank you for reading this! Your input helps the developer community learn from each other how to use it effectively. Every insight counts!</p>
       </div>
 </div>
+
+<style>
+.activity-info {
+  position: relative;
+}
+
+.activity-link {
+  color: #0366d6;
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+}
+
+.activity-link:hover {
+  text-decoration: underline;
+}
+
+.link-icon {
+  font-size: 16px;
+  height: 16px;
+  width: 16px;
+  margin-left: 4px;
+}
+
+.time-hint {
+  display: block;
+  font-size: 0.9em;
+  color: #666;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.highlight-data {
+  color: #0366d6;
+  font-weight: 600;
+  text-decoration: none;
+  position: relative;
+  padding: 0 2px;
+}
+
+.highlight-data::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: rgba(3, 102, 214, 0.2);
+}
+</style>

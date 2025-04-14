@@ -104,7 +104,7 @@ class TargetValuesService {
       },
     };
   }
-
+   //TODO: remove the unused parameters from this method
   calculateTargets(settings: SettingsType, adoptions: AdoptionType[]): Promise<{ targets: Targets; logs?: any[] }> {
     return TargetCalculationService.fetchAndCalculateTargets(null, false, false); //always true for enableLogging for now  to audit calculations, always false for includeLogsInResponse.
   }
@@ -115,7 +115,7 @@ class TargetValuesService {
       const Targets = mongoose.model('Targets');
       const existingTargets = await Targets.findOne();
 
-      if (!existingTargets || true) {
+      if (!existingTargets ) {
         const settings = await app.settingsService.getAllSettings();
         const adoptions = await adoptionService.getAllAdoptions2({
           filter: { enterprise: 'enterprise' },

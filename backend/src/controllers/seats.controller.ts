@@ -15,8 +15,17 @@ class SeatsController {
   async getSeat(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
     const idNumber = Number(id);
+    const { since, until } = req.query as { [key: string]: string | undefined };
+    
     try {
-      const seat = isNaN(idNumber) ? await SeatsService.getAssigneeByLogin(id) : await SeatsService.getAssignee(idNumber);
+      // Create params object with all query parameters
+      const params = { since, until };
+      
+      // Call appropriate service method with ID and params
+      const seat = isNaN(idNumber) 
+        ? await SeatsService.getAssigneeByLogin(id, params) 
+        : await SeatsService.getAssignee(idNumber, params);
+        
       res.status(200).json(seat);
     } catch (error) {
       res.status(500).json(error);

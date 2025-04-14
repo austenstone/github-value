@@ -8,11 +8,15 @@ import { ActivatedRoute } from '@angular/router';
 import { HighchartsService } from '../../../../services/highcharts.service';
 import { MatCardModule } from '@angular/material/card';
 import { CommonModule } from '@angular/common';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { FormsModule } from '@angular/forms';
 import dayjs from "dayjs";
 import duration from 'dayjs/plugin/duration';
 import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
+
+type TimeRange = '7days' | '30days' | 'all';
 
 @Component({
   selector: 'app-copilot-seat',
@@ -20,7 +24,9 @@ dayjs.extend(relativeTime);
   imports: [
     HighchartsChartModule,
     MatCardModule,
-    CommonModule
+    CommonModule,
+    MatButtonToggleModule,
+    FormsModule
   ],
   templateUrl: './copilot-seat.component.html',
   styleUrl: './copilot-seat.component.scss',
@@ -68,6 +74,8 @@ export class CopilotSeatComponent implements OnInit {
   seat?: Seat;
   seatActivity?: Seat[];
   timeSpent?: string;
+  selectedTimeRange: TimeRange = '7days';
+  loading = false;
 
   constructor(
     private copilotSeatService: SeatService,
@@ -77,26 +85,89 @@ export class CopilotSeatComponent implements OnInit {
   ) { }
 
   ngOnInit() {
+    // Extract the seat ID from the URL route parameters
     const id = this.activatedRoute.snapshot.paramMap.get('id');
-    if (!id) return;
+    if (!id) return; // Exit if no ID is found
     this.id = id;
 
-    this.copilotSeatService.getSeat(this.id).subscribe(seatActivity => {
-      this.seatActivity = seatActivity;
-      this.seat = seatActivity[this.seatActivity.length - 1];
+    // Load the initial data with default timerange
+    this.loadData();
+  }
 
-      this._chartOptions = this.highchartsService.transformSeatActivityToGantt(seatActivity);
-      this.chartOptions = {
-        ...this.chartOptions,
-        ...this._chartOptions
-      };
-      this.timeSpent = " ~ " + Math.floor(dayjs.duration({
-        milliseconds: (this.chartOptions.series as Highcharts.SeriesGanttOptions[])?.reduce((total, series) => {
-          return total += series.data?.reduce((dataTotal, data) => dataTotal += (data.end || 0) - (data.start || 0), 0) || 0;
-        }, 0)
-      }).asHours()).toString() + " hrs"; //.humanize();
-      this.updateFlag = true;
-      this.cdr.detectChanges();
+  /**
+   * Loads seat activity data based on the selected time range
+   */
+  loadData() {
+    if (!this.id) return;
+
+    // Show loading indicator - SET TO TRUE at the start of data loading
+    this.loading = true;
+    this.cdr.detectChanges();
+
+    let params: { since?: string; until?: string } = {};
+    const until = dayjs().toISOString();
+
+    // Set the since date based on the selected time range
+    switch (this.selectedTimeRange) {
+      case '7days':
+        params = { since: dayjs().subtract(7, 'day').toISOString(), until };
+        break;
+      case '30days':
+        params = { since: dayjs().subtract(30, 'day').toISOString(), until };
+        break;
+      case 'all':
+        // No since parameter means all time
+        params = { };
+        break;
+    }
+
+    // Fetch seat activity data using the ID and time range parameters
+    this.copilotSeatService.getSeat(this.id, params).subscribe({
+      next: (seatActivity: Seat[]) => {  // Add type annotation here
+        // Store the retrieved activity data
+        this.seatActivity = seatActivity;
+        
+        // Set the current seat to the most recent activity record
+        this.seat = seatActivity.length > 0 ? 
+          seatActivity[seatActivity.length - 1] : 
+          undefined;
+
+        // Transform the activity data into Highcharts Gantt chart format
+        this._chartOptions = this.highchartsService.transformSeatActivityToGantt(seatActivity);
+        
+        // Merge the transformed options with default chart options
+        this.chartOptions = {
+          ...this.chartOptions,
+          ...this._chartOptions
+        };
+        
+        // Calculate total time spent based on Gantt data durations
+        this.timeSpent = " ~ " + Math.floor(dayjs.duration({
+          milliseconds: (this.chartOptions.series as Highcharts.SeriesGanttOptions[])?.reduce((total, series) => {
+            return total += series.data?.reduce((dataTotal, data) => dataTotal += (data.end || 0) - (data.start || 0), 0) || 0;
+          }, 0)
+        }).asHours()).toString() + " hrs"; // Formatted as hours
+        
+        // Hide loading indicator - SET TO FALSE after successful data load
+        this.loading = false;
+        
+        // Trigger chart update and refresh the component view
+        this.updateFlag = true;
+        this.cdr.detectChanges();
+      },
+      error: (error: any) => {  // Add type annotation here
+        console.error('Error loading seat activity:', error);
+        // Hide loading indicator - SET TO FALSE even if there's an error
+        this.loading = false;
+        this.cdr.detectChanges();
+      }
     });
+  }
+
+  /**
+   * Handles time range selection change
+   */
+  onTimeRangeChange() {
+    this.loadData();
   }
 }

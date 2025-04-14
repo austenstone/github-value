@@ -46,19 +46,39 @@ class SeatsService {
     return seats;
   }
 
-  async getAssignee(id: number) {
+  /**
+   * Retrieves all seat activity records for a user by their GitHub ID
+   * @param id GitHub user ID
+   * @param params Optional parameters for filtering (since, until)
+   */
+  async getAssignee(id: number, params: { since?: string; until?: string } = {}) {
     const Seats = mongoose.model('Seats');
     const Member = mongoose.model('Member');
+    // First find the member document by GitHub user ID
     const member = await Member.findOne({ id }).sort({ org: -1 }); //this temporarily resolves a bug where one org fails but the other one succeeds
 
     if (!member) {
       throw `Member with id ${id} not found`
     }
 
-    return Seats.find({
-      assignee: member._id
-    })
-      .lean()
+    // Build query with date range filtering if provided
+    const query: mongoose.FilterQuery<any> = {
+      assignee: member._id  // This is the MongoDB ObjectId that links to the Member document
+    };
+
+    // Add date range filters if provided
+    if (params.since || params.until) {
+      query.createdAt = {
+        ...(params.since && { $gte: new Date(params.since) }),
+        ...(params.until && { $lte: new Date(params.until) })
+      };
+    }
+
+    // Query all seat activity records where the assignee field matches the member's _id
+    // This returns the complete activity history for this user
+    return Seats.find(query)
+      .sort({ createdAt: 1 }) // Sort by creation time ascending (oldest first)
+      .lean()  // Convert Mongoose documents to plain JavaScript objects
       .populate({
         path: 'assignee',  // Link to Member model 👤
         model: Member,
@@ -66,18 +86,38 @@ class SeatsService {
       });
   }
 
-  async getAssigneeByLogin(login: string) {
+  /**
+   * Retrieves all seat activity records for a user by their GitHub login (username)
+   * @param login GitHub username
+   * @param params Optional parameters for filtering (since, until)
+   */
+  async getAssigneeByLogin(login: string, params: { since?: string; until?: string } = {}) {
     const Seats = mongoose.model('Seats');
     const Member = mongoose.model('Member');
+    // First find the member document by GitHub username
     const member = await Member.findOne({ login });
 
     if (!member) {
       throw `Member with id ${login} not found`
     }
 
-    return Seats.find({
+    // Build query with date range filtering if provided
+    const query: mongoose.FilterQuery<any> = {
       assignee: member._id
-    })
+    };
+
+    // Add date range filters if provided
+    if (params.since || params.until) {
+      query.createdAt = {
+        ...(params.since && { $gte: new Date(params.since) }),
+        ...(params.until && { $lte: new Date(params.until) })
+      };
+    }
+
+    // Query all seat activity records where the assignee field matches the member's _id
+    // This returns the complete activity history for this user
+    return Seats.find(query)
+      .sort({ createdAt: 1 }) // Sort by creation time ascending (oldest first)
       .lean()
       .populate({
         path: 'assignee',  // Link to Member model 👤
