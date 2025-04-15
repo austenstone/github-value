@@ -105,8 +105,8 @@ class TargetValuesService {
     };
   }
    //TODO: remove the unused parameters from this method
-  calculateTargets(settings: SettingsType, adoptions: AdoptionType[]): Promise<{ targets: Targets; logs?: any[] }> {
-    return TargetCalculationService.fetchAndCalculateTargets(null, false, false); //always true for enableLogging for now  to audit calculations, always false for includeLogsInResponse.
+  calculateTargets(): Promise<{ targets: Targets; logs?: any[] }> {
+    return TargetCalculationService.fetchAndCalculateTargets(null, true, false); //always true for enableLogging for now  to audit calculations, always false for includeLogsInResponse.
   }
 
   //create default targets if they don't exist  
@@ -116,12 +116,8 @@ class TargetValuesService {
       const existingTargets = await Targets.findOne();
 
       if (!existingTargets ) {
-        const settings = await app.settingsService.getAllSettings();
-        const adoptions = await adoptionService.getAllAdoptions2({
-          filter: { enterprise: 'enterprise' },
-          projection: {}
-        });
-        const initialData = await this.calculateTargets(settings, adoptions);
+        
+        const initialData = await this.calculateTargets();
         await Targets.create(initialData);
         console.log('Default  targets created successfully.');
       }

@@ -186,8 +186,24 @@ RESULT:
     ] = await Promise.all([
       app.settingsService.getAllSettings(), // Use app-level settings service
       adoptionService.getAllAdoptions2({
-        filter: { enterprise: 'enterprise' },
-        projection: {}
+        filter: { 
+          // Only set enterprise if no org is provided
+          ...(org ? { org } : { enterprise: 'enterprise' }),
+          // Only get adoption data from the last 7 days
+          date: {
+            $gte: sevenDaysAgo,
+            $lte: now.toDate()
+          },
+        },
+        projection: {
+          // Only select fields needed for calculations
+          totalSeats: 1,
+          totalActive: 1,
+          totalInactive: 1,
+          date: 1,
+          org: 1,
+          enterprise: 1
+        }
       }),
       metricsService.getMetrics(baseMetricsParams),
       metricsService.getMetrics(weeklyMetricsParams),
@@ -201,14 +217,24 @@ RESULT:
   // === UTILITY CALCULATION METHODS ===
   
   /**
+   * Round a number to a specified number of decimal places
+   * @param value The number to round
+   * @param decimals The number of decimal places (default: 1)
+   */
+  private roundToDecimal(value: number, decimals: number = 1): number {
+    const factor = Math.pow(10, decimals);
+    return Math.round(value * factor) / factor;
+  }
+  
+  /**
    * Calculate percentage with protection against division by zero
    */
   calculatePercentage(numerator: number, denominator: number): number {
     if (denominator === 0) {
       return 0;
     }
-    // Correct calculation: (numerator / denominator) * 100
-    return (numerator / denominator) * 100;
+    // Calculate and round to one decimal place
+    return this.roundToDecimal((numerator / denominator) * 100);
   }
   
   /**
@@ -282,11 +308,13 @@ RESULT:
     this.logCalculation(
       'ADOPTED DEVS',
       {
-        topAdoptions: topAdoptions.map(a => ({ totalActive: a.totalActive })),
+        topAdoptions: topAdoptions.map(a => ({ totalSeats: a.totalSeats, totalActive: a.totalActive })),
+        totalActive: totalActive,
+        avgTotalActive: avgTotalActive,
         developerCount: this.settings.developerCount,
-        adoptionsCount: this.adoptions.length
+        adoptionsRecordCount: this.adoptions.length
       },
-      'Sort adoptions by totalActive, take top 10, average totalActive, set current = target = avgTotalActive, max = developerCount',
+      'Get total active developers from top 10 orgs, calculate average (totalActive / topAdoptions.length), set current = target = avgTotalActive, max = developerCount',
       result
     );
     
@@ -315,9 +343,10 @@ RESULT:
       {
         monthlySurveysCount: this.surveysMonthly.length,
         distinctUsersCount: distinctUsers.length,
-        developerCount: this.settings.developerCount
+        developerCount: this.settings.developerCount,
+        timeRange: '30 days'
       },
-      'Count distinct userIds from monthly surveys, set current = distinctUsers.length, max = developerCount',
+      'Count distinct userIds from monthly surveys (last 30 days), set current = distinctUsers.length, target = current * 2, max = developerCount',
       result
     );
     
@@ -428,24 +457,25 @@ RESULT:
   calculateDailySuggestions(): Target {
     const adoptedDevs = this.calculateAdoptedDevs().current;
     
-    // Extract metrics from the 5 largest values in the array, with fallbacks if there are less.
-      
+    // Extract metrics from the 5 most recent days in the array
     const metricsWeekly = this.metricsWeekly.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
     const metricsAvg = metricsWeekly.reduce((acc, curr) => {
       acc.copilot_ide_code_completions.total_code_suggestions += curr.copilot_ide_code_completions?.total_code_suggestions || 0;
       return acc;
     }
     , { copilot_ide_code_completions: { total_code_suggestions: 0 } });
+    
+    // Calculate the average suggestions per day
     metricsAvg.copilot_ide_code_completions.total_code_suggestions /= metricsWeekly.length || 1;
     const totalSuggestions = metricsAvg.copilot_ide_code_completions.total_code_suggestions || 0;
     const timestamp = metricsWeekly.length > 0 ? new Date(metricsWeekly[0].date).toISOString() : 'unknown';
-    const rowCount = this.metricsWeekly?.length || 0;
+    const rowCount = metricsWeekly.length;
     
     const suggestionsPerDev = adoptedDevs > 0 ? totalSuggestions / adoptedDevs : 0;
     
     const result = {
-      current: suggestionsPerDev,
-      target: suggestionsPerDev * 2, // Target is user-defined
+      current: this.roundToDecimal(suggestionsPerDev),
+      target: this.roundToDecimal(suggestionsPerDev * 2), // Target is user-defined
       max: 150 // Based on frontend hardcoded value
     };
     
@@ -455,10 +485,12 @@ RESULT:
         totalSuggestions: totalSuggestions,
         adoptedDevsCount: adoptedDevs,
         metricsRowCount: rowCount,
+        metricsDataPoints: metricsWeekly.length,
+        avgSuggestionsPerDay: totalSuggestions,
         timestamp: timestamp,
-        metricsSource: 'metricsDaily[0].copilot_ide_code_completions.total_code_suggestions'
+        metricsSource: 'Average from 5 most recent days of weekly metrics'
       },
-      'Calculate totalSuggestions / adoptedDevs, set current = suggestionsPerDev, max = 150',
+      'Sort metrics by date, take 5 most recent, calculate average daily suggestions, divide by adoptedDevs to get per-developer rate',
       result
     );
     
@@ -491,8 +523,8 @@ RESULT:
     const chatTurnsPerDev = totalChats / activeUsers;
     
     const result = {
-      current: chatTurnsPerDev,
-      target: chatTurnsPerDev * 1.5, // Target is 50% increase
+      current: this.roundToDecimal(chatTurnsPerDev),
+      target: this.roundToDecimal(chatTurnsPerDev * 1.5), // Target is 50% increase
       max: 50 // Based on frontend hardcoded value
     };
     
@@ -528,8 +560,8 @@ RESULT:
     const acceptancesPerDev = dailySuggestions * acceptanceRate;
     
     const result = {
-      current: acceptancesPerDev,
-      target: acceptancesPerDev * 1.2, // Target is 20% increase
+      current: this.roundToDecimal(acceptancesPerDev),
+      target: this.roundToDecimal(acceptancesPerDev * 1.2), // Target is 20% increase
       max: 100
     };
     
@@ -580,8 +612,8 @@ RESULT:
     }
     
     const result = {
-      current: dotComChatsPerDev,
-      target: dotComChatsPerDev * 1.5, // Target is 50% increase
+      current: this.roundToDecimal(dotComChatsPerDev),
+      target: this.roundToDecimal(dotComChatsPerDev * 1.5), // Target is 50% increase
       max: 100
     };
     
@@ -630,8 +662,8 @@ RESULT:
     const prSummariesPerDev = adoptedDevs > 0 ? totalPRSummaries / adoptedDevs : 0;
     
     const result = {
-      current: prSummariesPerDev,
-      target: prSummariesPerDev * 2, // Target is double current
+      current: this.roundToDecimal(prSummariesPerDev),
+      target: this.roundToDecimal(prSummariesPerDev * 2), // Target is double current
       max: 5 // Based on frontend hardcoded value
     };
     
@@ -693,9 +725,9 @@ RESULT:
     const maxWeeklyTimeSaved = weeklyDevHours * (maxPercentTimeSaved / 100);
     
     const result = {
-      current: avgWeeklyTimeSaved,
-      target: Math.min(avgWeeklyTimeSaved * 1.5, maxWeeklyTimeSaved * 0.8), // Target is 50% increase, capped at 80% of max
-      max: maxWeeklyTimeSaved || 10 // Provide a fallback
+      current: this.roundToDecimal(avgWeeklyTimeSaved),
+      target: this.roundToDecimal(Math.min(avgWeeklyTimeSaved * 1.5, maxWeeklyTimeSaved * 0.8)), // Target is 50% increase, capped at 80% of max
+      max: this.roundToDecimal(maxWeeklyTimeSaved || 10) // Provide a fallback
     };
     
     this.logCalculation(
@@ -727,9 +759,9 @@ RESULT:
     const monthlyTimeSavings = adoptedDevs * weeklyTimeSavedHrs * 4; // Assuming 4 weeks per month
     
     const result = {
-      current: monthlyTimeSavings,
+      current: this.roundToDecimal(monthlyTimeSavings),
       target: 0, // Target is user-defined
-      max: 80 * this.calculateSeats().current // Based on target.service.ts
+      max: this.roundToDecimal(80 * this.calculateSeats().current) // Based on target.service.ts
     };
     
     this.logCalculation(
@@ -762,10 +794,11 @@ RESULT:
     
     const annualSavings = weeklyTimeSavedHrs * weeksInYear * hourlyRate * adoptedDevs;
     
+    // For dollar values, we can use 0 decimals (whole dollars)
     const result = {
-      current: annualSavings || 0, // Ensure non-null
+      current: Math.round(annualSavings || 0), // Round to whole dollars
       target: 0,
-      max: 12 * this.calculateSeats().current * weeksInYear * hourlyRate || 10000 // Provide fallback
+      max: Math.round(12 * this.calculateSeats().current * weeksInYear * hourlyRate || 10000) // Provide fallback
     };
     
     this.logCalculation(
@@ -790,7 +823,7 @@ RESULT:
   calculateProductivityOrThroughputBoostPercent(): Target {
     const adoptedDevs = this.calculateAdoptedDevs().current;
     const weeklyTimeSavedHrs = this.calculateWeeklyTimeSavedHrs().current;
-    const monthlyTimeSavings = adoptedDevs * weeklyTimeSavedHrs * 4; // Assuming 4 weeks per month
+const monthlyTimeSavings = adoptedDevs * weeklyTimeSavedHrs * 4; // Assuming 4 weeks per month
     
     // Convert hours per year to number
     const hoursPerYear = typeof this.settings.hoursPerYear === 'number' ? this.settings.hoursPerYear : 2000;
@@ -798,10 +831,13 @@ RESULT:
     
     // Calculate productivity boost factor (not percentage)
     const productivityBoost = (hoursPerWeek + weeklyTimeSavedHrs) / hoursPerWeek;
+    
+    // Convert to percentage increase (e.g., 1.2 becomes 20%)
+    const productivityBoostPercent = (productivityBoost - 1) * 100;
   
     const result = {
-      current: productivityBoost,
-      target: 10, // Target is user-defined
+      current: this.roundToDecimal(productivityBoostPercent),
+      target: this.roundToDecimal(Math.min(productivityBoostPercent * 1.5, 20)), // Target is 50% higher, capped at 20%
       max: 25 // Based on target.service.ts
     };
     
@@ -810,11 +846,11 @@ RESULT:
       {
         adoptedDevsCount: adoptedDevs,                  
         weeklyTimeSavedHrs: weeklyTimeSavedHrs,
-        monthlyTimeSavings: monthlyTimeSavings,
         hoursPerWeek: hoursPerWeek,
-        productivityBoost: productivityBoost
+        productivityBoostFactor: productivityBoost,
+        productivityBoostPercent: productivityBoostPercent
       },
-      'Calculate (hoursPerWeek + weeklyTimeSavedHrs) / hoursPerWeek, set current = productivityBoost, max = 25',
+      'Calculate boost factor as (hoursPerWeek + weeklyTimeSavedHrs) / hoursPerWeek, then convert to percentage by (factor - 1) * 100',
       result
     );
     
@@ -917,8 +953,26 @@ RESULT:
     enableLogging: boolean = false,
     includeLogsInResponse: boolean = false
   ): Promise<{ targets: Targets; logs?: CalcLogType[] }> {
+    console.log('Static method received params:', {
+      org: org || 'null',
+      enableLogging, 
+      includeLogsInResponse
+    });
+    
     const service = new TargetCalculationService();
-    return service.fetchAndCalculateTargets(org, enableLogging, includeLogsInResponse);
+    
+    // Explicitly pass all parameters to ensure they're not overwritten
+    const result = await service.fetchAndCalculateTargets(
+      org, 
+      enableLogging, 
+      includeLogsInResponse
+    );
+    
+    // Verify the structure of the result before returning
+    const hasLogs = Boolean(result.logs && result.logs.length > 0);
+    console.log(`Result has logs: ${hasLogs}, includeLogsInResponse: ${includeLogsInResponse}`);
+    
+    return result;
   }
 }
 

@@ -27,24 +27,28 @@ class TargetValuesController {
    */
   async calculateTargetValues(req: Request, res: Response): Promise<void> {
     try {
-      const org = req.query.org || 'enterprise';
+      // Only use org if it's explicitly passed in the query parameters
+      const org = req.query.org ? String(req.query.org) : null;
       const enableLogging = req.query.enableLogging === 'true';
       const includeLogsInResponse = req.query.includeLogs === 'true';
       
-      // Create an instance of the calculation service
-      const calculationService = new TargetCalculationService();
       
-      // Fetch data and calculate targets with optional logging and logs in response
-      const result = await calculationService.fetchAndCalculateTargets(
-        org as string, 
+      // Use the static method from TargetCalculationService to avoid instantiation issues
+      const result = await TargetCalculationService.fetchAndCalculateTargets(
+        org,  // Pass null if no org was provided
         enableLogging,
         includeLogsInResponse
       );
       
+      // Check if we have logs before sending the response
+      if (includeLogsInResponse) {
+        console.log(`Response will include ${result.logs?.length || 0} logs`);
+      }
+      
       res.status(200).json(result);
     } catch (error) {
       console.error('Error calculating target values:', error);
-      res.status(500).json({ error: 'Failed to calculate target values' });
+      res.status(500).json({ error: `Failed to calculate target values: ${error}` });
     }
   }
 }
