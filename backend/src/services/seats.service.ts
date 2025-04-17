@@ -126,6 +126,116 @@ class SeatsService {
       });
   }
 
+  /**
+   * Improved method to find seat information by either ID or login
+   * @param identifier Either a numeric ID or string login
+   * @param params Optional parameters for filtering (since, until, org)
+   */
+  async getSeat(identifier: string | number, params: { since?: string; until?: string; org?: string } = {}) {
+    const Seats = mongoose.model('Seats');
+    const Member = mongoose.model('Member');
+    
+    try {
+      //console.log('========== SEAT LOOKUP START ==========');
+      //console.log(`Looking up seat for identifier: ${identifier}, params:`, JSON.stringify(params));
+      
+      // Force console output to appear immediately
+      process.stdout.write(''); 
+      
+      // Determine if identifier is numeric
+      const isNumeric = !isNaN(Number(identifier)) && String(Number(identifier)) === String(identifier);
+      let numericId: number | null = null;
+      
+      // If it's a login, look up the ID first
+      if (!isNumeric) {
+      //  console.log(`Looking up member by login: ${identifier}`);
+        
+        try {
+          // Find the member by login - exact match
+          const member = await Member.findOne({ login: identifier }).lean();
+       //   console.log(`Exact login search result:`, member ? `Found ${member.login}` : 'Not found');
+          
+          if (!member) {
+            // Try case-insensitive search as a fallback
+         //   console.log(`Trying case-insensitive search for login: ${identifier}`);
+            const regex = new RegExp(`^${identifier.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i');
+            const memberCaseInsensitive = await Member.findOne({ 
+              login: regex
+            }).lean();
+            
+            console.log(`Case-insensitive search result:`, memberCaseInsensitive ? `Found ${memberCaseInsensitive.login}` : 'Not found');
+            
+            if (!memberCaseInsensitive) {
+           //   console.log(`No member found with login: ${identifier}`);
+              return []; // Return empty array if no member found
+            }
+            
+            numericId = memberCaseInsensitive.id;
+           // console.log(`Found member ${memberCaseInsensitive.login} with id: ${numericId}`);
+          } else {
+            numericId = member.id;
+           // console.log(`Found member ${member.login} with id: ${numericId}`);
+          }
+        } catch (memberLookupError) {
+         // console.error(`Error during member lookup:`, memberLookupError);
+          return []; // Return empty array on error
+        }
+      } else {
+        numericId = Number(identifier);
+        //console.log(`Using numeric ID directly: ${numericId}`);
+      }
+      
+      // Build query
+      const query: Record<string, any> = { assignee_id: numericId };
+      
+      // Add filters
+      if (params.org) {
+        query.org = params.org;
+       // console.log(`Added org filter: ${params.org}`);
+      }
+      
+      if (params.since || params.until) {
+        query.createdAt = {};
+        if (params.since) {
+          query.createdAt.$gte = new Date(params.since);
+          console.log(`Added since filter: ${params.since}`);
+        }
+        if (params.until) {
+          query.createdAt.$lte = new Date(params.until);
+        //  console.log(`Added until filter: ${params.until}`);
+        }
+      }
+      
+     // console.log(`Final query:`, JSON.stringify(query));
+      
+      // Execute the query
+      //console.log(`Executing Seats.find() with query`);
+      const results = await Seats.find(query)
+        .sort({ createdAt: 1 })
+        .populate({
+          path: 'assignee',
+          model: Member,
+          select: 'login id avatar_url name url html_url'
+        })
+        .lean()
+        .exec(); // Explicitly call exec()
+      
+      //console.log(`Query complete. Found ${results?.length || 0} seat records`);
+      //console.log('========== SEAT LOOKUP END ==========');
+      
+      return results || [];
+      
+    } catch (error) {
+      console.error('========== SEAT LOOKUP ERROR ==========');
+      console.error(`Error retrieving seat data for ${identifier}:`, error);
+      console.error(`Stack trace:`, error.stack);
+      console.error('=======================================');
+      
+      // Return empty results rather than throwing error
+      return [];
+    }
+  }
+
   async insertSeats(org: string, queryAt: Date, data: SeatEntry[], team?: string) {
     const Members = mongoose.model('Member');
     const Seats = mongoose.model('Seats');

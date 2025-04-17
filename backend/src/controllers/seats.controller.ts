@@ -14,21 +14,20 @@ class SeatsController {
 
   async getSeat(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
-    const idNumber = Number(id);
-    const { since, until } = req.query as { [key: string]: string | undefined };
+    const { since, until, org } = req.query as { [key: string]: string | undefined };
     
     try {
       // Create params object with all query parameters
-      const params = { since, until };
+      const params = { since, until, org };
       
-      // Call appropriate service method with ID and params
-      const seat = isNaN(idNumber) 
-        ? await SeatsService.getAssigneeByLogin(id, params) 
-        : await SeatsService.getAssignee(idNumber, params);
-        
+      // Use our new unified getSeat method that handles both ID and login
+      // Pass the ID directly without conversion - the service will handle it
+      const seat = await SeatsService.getSeat(id, params);
+      
       res.status(200).json(seat);
     } catch (error) {
-      res.status(500).json(error);
+      console.error(`Error in getSeat controller for id=${id}:`, error);
+      res.status(500).json({ error: error.message || 'Failed to retrieve seat data' });
     }
   }
 

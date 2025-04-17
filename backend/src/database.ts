@@ -194,6 +194,10 @@ class Database {
     }, {
       timestamps: true,
     });
+    // Add to Member schema
+    memberSchema.index({ login: 1 }); // Standalone index for login lookups
+    memberSchema.index({ id: 1 });    // Standalone index for id lookups
+    memberSchema.index({ org: 1 });   // Standalone index for org lookups
     memberSchema.index({ org: 1, login: 1, id: 1 }, { unique: true });
     memberSchema.index({ seat: 1 });
     memberSchema.index({ updatedAt: -1 });
@@ -237,6 +241,11 @@ class Database {
 
     seatsSchema.index({ org: 1, queryAt: 1, last_activity_at: -1 });
     seatsSchema.index({ org: 1, team: 1, queryAt: 1, assignee_id: 1 }, { unique: true });
+    // Add to Seats schema (if not already present)
+    seatsSchema.index({ assignee_login: 1 });
+    seatsSchema.index({ assignee_id: 1 }); 
+    seatsSchema.index({ org: 1 });
+    
     mongoose.model('Seats', seatsSchema);
 
     const adoptionSchema = new Schema({
