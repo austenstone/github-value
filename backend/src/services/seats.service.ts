@@ -6,7 +6,6 @@ import { MemberActivityType, MemberType } from 'models/teams.model.js';
 import fs from 'fs';
 import adoptionService from './adoption.service.js';
 import logger from './logger.js';
-import User from '../models/user.model.js';
 
 type _Seat = NonNullable<Endpoints["GET /orgs/{org}/copilot/billing/seats"]["response"]["data"]["seats"]>[0];
 export interface SeatEntry extends _Seat {
@@ -27,6 +26,24 @@ type MemberDailyActivity = {
     }
   };
 };
+
+interface ActivityTotalDocument {
+  org: string;
+  date: Date;
+  assignee: mongoose.Types.ObjectId;
+  assignee_id: number;
+  assignee_login: string;
+  total_active_time_ms?: number;
+  last_activity_at?: Date;
+  last_activity_editor?: string;
+}
+
+interface MemberDocument {
+  _id: mongoose.Types.ObjectId;
+  id: number;
+  login: string;
+  [key: string]: any; // For other properties
+}
 
 class SeatsService {
   async getAllSeats(org?: string) {
@@ -59,11 +76,20 @@ class SeatsService {
     const member = await Member.findOne({ id }).sort({ org: -1 }); //this temporarily resolves a bug where one org fails but the other one succeeds
 
     if (!member) {
-      throw `Member with id ${id} not found`
+      throw new Error(`Member with id ${id} not found`); // Updated to throw a proper Error
     }
 
     // Build query with date range filtering if provided
-    const query: mongoose.FilterQuery<any> = {
+    // Using a more specific type instead of any
+    interface SeatQuery {
+      assignee: mongoose.Types.ObjectId;
+      createdAt?: {
+        $gte?: Date;
+        $lte?: Date;
+      };
+    }
+    
+    const query: SeatQuery = {
       assignee: member._id  // This is the MongoDB ObjectId that links to the Member document
     };
 
@@ -149,36 +175,36 @@ class SeatsService {
       
       // If it's a login, look up the ID first
       if (!isNumeric) {
-      //  console.log(`Looking up member by login: ${identifier}`);
+        // Ensure identifier is treated as string before calling replace
+        const identifierString = String(identifier);
         
         try {
-          // Find the member by login - exact match
-          const member = await Member.findOne({ login: identifier }).lean();
-       //   console.log(`Exact login search result:`, member ? `Found ${member.login}` : 'Not found');
+          // Find the member by login - exact match with explicit type casting
+          const member = await Member.findOne({ login: identifierString }).lean() as MemberDocument | null;
           
           if (!member) {
             // Try case-insensitive search as a fallback
-         //   console.log(`Trying case-insensitive search for login: ${identifier}`);
-            const regex = new RegExp(`^${identifier.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i');
+            const regex = new RegExp(`^${identifierString.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i');
             const memberCaseInsensitive = await Member.findOne({ 
               login: regex
-            }).lean();
+            }).lean() as MemberDocument | null;
             
-            console.log(`Case-insensitive search result:`, memberCaseInsensitive ? `Found ${memberCaseInsensitive.login}` : 'Not found');
+            // Check if we got a document and then safely access properties
+            console.log(`Case-insensitive search result:`, 
+                        memberCaseInsensitive ? `Found ${memberCaseInsensitive.login}` : 'Not found');
             
             if (!memberCaseInsensitive) {
-           //   console.log(`No member found with login: ${identifier}`);
               return []; // Return empty array if no member found
             }
             
+            // Now TypeScript knows memberCaseInsensitive has these properties
             numericId = memberCaseInsensitive.id;
-           // console.log(`Found member ${memberCaseInsensitive.login} with id: ${numericId}`);
           } else {
+            // Now TypeScript knows member has these properties
             numericId = member.id;
-           // console.log(`Found member ${member.login} with id: ${numericId}`);
           }
-        } catch (memberLookupError) {
-         // console.error(`Error during member lookup:`, memberLookupError);
+        } catch (memberLookupError: unknown) {
+          // Properly type the error
           return []; // Return empty array on error
         }
       } else {
@@ -199,7 +225,7 @@ class SeatsService {
         query.createdAt = {};
         if (params.since) {
           query.createdAt.$gte = new Date(params.since);
-          console.log(`Added since filter: ${params.since}`);
+        //  console.log(`Added since filter: ${params.since}`);
         }
         if (params.until) {
           query.createdAt.$lte = new Date(params.until);
@@ -221,15 +247,15 @@ class SeatsService {
         .lean()
         .exec(); // Explicitly call exec()
       
-      //console.log(`Query complete. Found ${results?.length || 0} seat records`);
+      logger.debug(`Query complete. Found ${results?.length || 0} seat records`);
       //console.log('========== SEAT LOOKUP END ==========');
       
       return results || [];
       
     } catch (error: unknown) {
       console.error('========== SEAT LOOKUP ERROR ==========');
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      console.error(`Error retrieving seat data for ${identifier}:`, errorMessage);
+      console.error(`Error retrieving seat data for ${identifier}:`, error);
+      // Safe access to stack property
       console.error(`Stack trace:`, error instanceof Error ? error.stack : 'No stack trace available');
       console.error('=======================================');
       
@@ -599,7 +625,7 @@ class SeatsService {
     const { org, since, until } = params;
     const limit = typeof params.limit === 'string' ? parseInt(params.limit) : (params.limit || 100);
 
-    const match: mongoose.FilterQuery<MemberActivityType> = {};
+        const match: mongoose.FilterQuery<MemberActivityType> = {};
     if (org) match.org = org;
     if (since || until) {
       match.date = {
@@ -675,51 +701,6 @@ class SeatsService {
 
     return totals;
   }
-}
-
-// Fix for replace not existing on type 'string | number'
-const transformIssue = (issue: any) => {
-  if (typeof issue.number === 'string') {
-    return issue.number.replace('#', '');
-  }
-  return issue.number;
-};
-
-// Fix for login and id property errors
-async function fetchUserByLogin(login: string) {
-  const users = await User.find({ login });
-  // Check if users is an array and has elements
-  if (Array.isArray(users) && users.length > 0) {
-    return users[0];
-  }
-  return users; // If it's a single document or empty
-}
-
-// Fix for id property not existing on type
-const getUserById = async (userId: string) => {
-  const user = await User.findById(userId);
-  return user;
-};
-
-// Use the fixed functions in your existing code
-// ...existing code where line 166 has the error...
-const user = Array.isArray(existingUser) && existingUser.length > 0 
-  ? existingUser[0] 
-  : existingUser;
-const userLogin = user?.login;
-
-// ...existing code where line 173 and 176 have errors...
-const user = Array.isArray(existingUser) && existingUser.length > 0 
-  ? existingUser[0] 
-  : existingUser;
-const userId = user?.id || user?._id;
-
-// ...existing code where line 231 has error...
-try {
-  // ...existing code...
-} catch (error: unknown) {
-  const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-  throw new Error(errorMessage);
 }
 
 export default new SeatsService();
