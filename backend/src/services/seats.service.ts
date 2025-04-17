@@ -6,6 +6,7 @@ import { MemberActivityType, MemberType } from 'models/teams.model.js';
 import fs from 'fs';
 import adoptionService from './adoption.service.js';
 import logger from './logger.js';
+import User from '../models/user.model.js';
 
 type _Seat = NonNullable<Endpoints["GET /orgs/{org}/copilot/billing/seats"]["response"]["data"]["seats"]>[0];
 export interface SeatEntry extends _Seat {
