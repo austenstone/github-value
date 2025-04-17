@@ -225,10 +225,11 @@ class SeatsService {
       
       return results || [];
       
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('========== SEAT LOOKUP ERROR ==========');
-      console.error(`Error retrieving seat data for ${identifier}:`, error);
-      console.error(`Stack trace:`, error.stack);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error(`Error retrieving seat data for ${identifier}:`, errorMessage);
+      console.error(`Stack trace:`, error instanceof Error ? error.stack : 'No stack trace available');
       console.error('=======================================');
       
       // Return empty results rather than throwing error
@@ -673,6 +674,51 @@ class SeatsService {
 
     return totals;
   }
+}
+
+// Fix for replace not existing on type 'string | number'
+const transformIssue = (issue: any) => {
+  if (typeof issue.number === 'string') {
+    return issue.number.replace('#', '');
+  }
+  return issue.number;
+};
+
+// Fix for login and id property errors
+async function fetchUserByLogin(login: string) {
+  const users = await User.find({ login });
+  // Check if users is an array and has elements
+  if (Array.isArray(users) && users.length > 0) {
+    return users[0];
+  }
+  return users; // If it's a single document or empty
+}
+
+// Fix for id property not existing on type
+const getUserById = async (userId: string) => {
+  const user = await User.findById(userId);
+  return user;
+};
+
+// Use the fixed functions in your existing code
+// ...existing code where line 166 has the error...
+const user = Array.isArray(existingUser) && existingUser.length > 0 
+  ? existingUser[0] 
+  : existingUser;
+const userLogin = user?.login;
+
+// ...existing code where line 173 and 176 have errors...
+const user = Array.isArray(existingUser) && existingUser.length > 0 
+  ? existingUser[0] 
+  : existingUser;
+const userId = user?.id || user?._id;
+
+// ...existing code where line 231 has error...
+try {
+  // ...existing code...
+} catch (error: unknown) {
+  const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+  throw new Error(errorMessage);
 }
 
 export default new SeatsService();

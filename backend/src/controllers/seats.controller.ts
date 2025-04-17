@@ -7,8 +7,9 @@ class SeatsController {
     try {
       const seats = await SeatsService.getAllSeats(org);
       res.status(200).json(seats);
-    } catch (error) {
-      res.status(500).json(error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      res.status(500).json({ error: errorMessage });
     }
   }
 
@@ -25,9 +26,11 @@ class SeatsController {
       const seat = await SeatsService.getSeat(id, params);
       
       res.status(200).json(seat);
-    } catch (error) {
-      console.error(`Error in getSeat controller for id=${id}:`, error);
-      res.status(500).json({ error: error.message || 'Failed to retrieve seat data' });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      const sanitizedId = encodeURIComponent(id);
+      console.error(`Error in getSeat controller for id=${sanitizedId}:`, errorMessage);
+      res.status(500).json({ error: errorMessage });
     }
   }
 
@@ -46,8 +49,9 @@ class SeatsController {
         precision: precision as 'hour' | 'day'
       });
       res.status(200).json(activityDays);
-    } catch (error) {
-      res.status(500).json(error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      res.status(500).json({ error: errorMessage });
     }
   }
 }
