@@ -4,15 +4,26 @@ import surveyService from '../services/survey.service.js';
 import app from '../index.js';
 import teamsService from '../services/teams.service.js';
 import { Endpoints } from '@octokit/types';
+import duplicateService from '../services/duplicate.service.js';
 
 export const setupWebhookListeners = (github: App) => {
   github.webhooks.onAny(async ({ id, name, payload }) => {
+    if (await duplicateService.isDuplicate(id)) {
+      logger.info('Duplicate webhook event skipped', { id, name });
+      return;
+    }
+    await duplicateService.register(id);
     app.github.webhookPingReceived = true;
     logger.debug(`GitHub Webhook event`, { id, name, payload });
     logger.info(`GitHub Webhook event`, { id, name });
   });
 
-  github.webhooks.on(["pull_request.opened"], async ({ octokit, payload }) => {
+  github.webhooks.on(["pull_request.opened"], async ({ id, octokit, payload }) => {
+    if (await duplicateService.isDuplicate(id)) {
+      logger.info('Duplicate PR event skipped', { id });
+      return;
+    }
+    await duplicateService.register(id);
     try {
       if (payload.pull_request.user.type === 'Bot') {
         logger.debug(`Ignoring PR from bot user: ${payload.pull_request.user.login}`);
@@ -66,7 +77,12 @@ export const setupWebhookListeners = (github: App) => {
     };
   });
 
-  github.webhooks.on("team", async ({ payload }) => {
+  github.webhooks.on("team", async ({ id, payload }) => {
+    if (await duplicateService.isDuplicate(id)) {
+      logger.info('Duplicate team event skipped', { id });
+      return;
+    }
+    await duplicateService.register(id);
     try {
       switch (payload.action) {
         case 'created':
@@ -82,7 +98,12 @@ export const setupWebhookListeners = (github: App) => {
     }
   });
 
-  github.webhooks.on("membership", async ({ payload }) => {
+  github.webhooks.on("membership", async ({ id, payload }) => {
+    if (await duplicateService.isDuplicate(id)) {
+      logger.info('Duplicate membership event skipped', { id });
+      return;
+    }
+    await duplicateService.register(id);
     const queryService = app.github.queryService;
     if (!queryService) throw new Error('No query service found');
     try {
@@ -101,7 +122,12 @@ export const setupWebhookListeners = (github: App) => {
     }
   });
 
-  github.webhooks.on("member", async ({ payload }) => {
+  github.webhooks.on("member", async ({ id, payload }) => {
+    if (await duplicateService.isDuplicate(id)) {
+      logger.info('Duplicate member event skipped', { id });
+      return;
+    }
+    await duplicateService.register(id);
     try {
       if (payload.member) {
         switch (payload.action) {

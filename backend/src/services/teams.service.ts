@@ -33,6 +33,12 @@ class TeamsService {
       }
     }
 
+    // const updated = await Team.findOneAndUpdate(
+    //   { organization: org },
+    //   { parent: teams[0] },
+    //   { upsert: true }
+    // );
+
     await Team.findOneAndUpdate(
       { githubId: -1 },
       {
