@@ -6,9 +6,9 @@
   <mat-card class="info-card">
     <mat-card-content>
       <div class="user-info">
-        <img *ngIf="seat.assignee?.avatar_url" [src]="seat.assignee?.avatar_url" alt="User avatar" class="avatar">
+        <img [src]="seat.assignee.avatar_url" alt="User avatar" class="avatar">
         <div class="details">
-          <h2>{{ seat.assignee?.login }}</h2>
+          <h2>{{ seat.assignee.login }}</h2>
           <p>Plan Type: <strong>{{ seat.plan_type | titlecase }}</strong></p>
           <p>Created: <strong>{{ seat.created_at | date:'MMM d, y, h:mm:ss a' }}</strong></p>
           <p>Last active: {{ seat.last_activity_at | date:'medium' }}</p>

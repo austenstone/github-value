@@ -29,8 +29,13 @@ class WebhookService {
       }
     }
 
-    if (!this.options.url && this.options.url !== '') {
+    // Only create a new webhook URL if one isn't provided at all
+    // This check was allowing new URL creation even when an empty string was set
+    if (!this.options.url) {
+      logger.info('No webhook URL provided, creating new Smee channel');
       this.options.url = await this.createSmeeWebhookUrl();
+    } else {
+      logger.info(`Using existing webhook URL: ${this.options.url}`);
     }
 
     const parsedUrl = new URL(this.options.url);
@@ -43,12 +48,27 @@ class WebhookService {
           source: this.options.url,
           target: `http://localhost:${this.options.port}${this.options.path}`,
           logger: {
-            info: (msg: string, ...args) => logger.info('Smee', msg, ...args),
-            error: (msg: string, ...args) => logger.error('Smee', msg, ...args),
+            info: (msg: string, ...args) =>
+              logger.info('Smee', msg, ...args),
+            error: (msg: string, ...args) => {
+              if (typeof msg === 'string' && msg.includes('ECONNRESET')) {
+                logger.warn('Smee', 'Connection reset by peer, auto‑reconnecting');
+              } else {
+                logger.error('Smee', msg, ...args);
+              }
+            }
           }
         });
-      
-        this.eventSource = await this.smee.start()
+        this.eventSource = await this.smee.start();
+        // also catch any lower‑level EventSource errors
+        this.eventSource.addEventListener('error', (err: any) => {
+          const m = err?.message || err;
+          if (typeof m === 'string' && m.includes('ECONNRESET')) {
+            logger.warn('Smee EventSource', 'read ECONNRESET, reconnecting');
+          } else {
+            logger.error('Smee EventSource', err);
+          }
+        });
       } catch {
         logger.error('Failed to create Smee client');
       };

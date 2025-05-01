@@ -132,8 +132,12 @@ export class CopilotSeatComponent implements OnInit {
         params = { since: dayjs().subtract(30, 'day').toISOString(), until };
         break;
       case 'all':
-        // No since parameter means all time
-        params = { };
+        // Instead of empty params, use a far past date (e.g., 5 years ago)
+        // This ensures we don't send 'undefined' to the API
+        params = { 
+          since: dayjs().subtract(5, 'year').toISOString(),
+          until 
+        };
         break;
     }
 
