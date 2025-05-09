@@ -52,14 +52,19 @@ interface Targets {
 interface MetricsData {
   copilot_ide_code_completions?: {
     total_code_suggestions: number;
+    total_engaged_users: number;   // NEW
   };
   copilot_ide_chat?: {
+    total_chats: number;
+  };
+  copilot_dotcom_chat?: {          // NEW
     total_chats: number;
   };
   copilot_dotcom_pull_requests?: {
     total_pr_summaries_created: number;
   };
   total_active_users: number;
+  total_engaged_users?: number;    // NEW (top-level, used in debug log)
 }
 
 export class TargetCalculationService {
@@ -502,29 +507,33 @@ RESULT:
     // Calculate average directly into per-developer metrics
     metricsWeekly.forEach(curr => {
       // Process code suggestions data
-      if (curr.copilot_ide_code_completions && 
-          curr.copilot_ide_code_completions.total_code_suggestions > 0 && 
-          curr.copilot_ide_code_completions.total_engaged_users > 0) {  
-        suggestionsPerDev += curr.copilot_ide_code_completions.total_code_suggestions / 
-                           curr.copilot_ide_code_completions.total_engaged_users;
+      if (curr.copilot_ide_code_completions &&
+          curr.copilot_ide_code_completions.total_code_suggestions > 0 &&
+          curr.copilot_ide_code_completions.total_engaged_users > 0) {
+        suggestionsPerDev +=
+          curr.copilot_ide_code_completions.total_code_suggestions /
+          curr.copilot_ide_code_completions.total_engaged_users;
         validSuggestionsCount++;
       }
-      
-      // Process chat data
-      if (curr.copilot_ide_chat?.total_chats > 0 && curr.total_active_users > 0) {
-        chatsPerDev += curr.copilot_ide_chat.total_chats / curr.total_active_users;
+
+      // Process IDE chat data
+      const ideChat = curr.copilot_ide_chat;
+      if (ideChat && ideChat.total_chats > 0 && curr.total_active_users > 0) {
+        chatsPerDev += ideChat.total_chats / curr.total_active_users;
         validChatsCount++;
       }
-      
-      // Process dotcom chat data
-      if (curr.copilot_dotcom_chat?.total_chats > 0 && curr.total_active_users > 0) {
-        dotcomChatsPerDev += curr.copilot_dotcom_chat.total_chats / curr.total_active_users;
+
+      // Process dot-com chat data
+      const dotcomChat = curr.copilot_dotcom_chat;
+      if (dotcomChat && dotcomChat.total_chats > 0 && curr.total_active_users > 0) {
+        dotcomChatsPerDev += dotcomChat.total_chats / curr.total_active_users;
         validDotcomChatsCount++;
       }
-      
+
       // Process PR summaries data
-      if (curr.copilot_dotcom_pull_requests?.total_pr_summaries_created > 0 && curr.total_active_users > 0) {
-        prSummariesPerDev += curr.copilot_dotcom_pull_requests.total_pr_summaries_created / curr.total_active_users;
+      const prSummaries = curr.copilot_dotcom_pull_requests;
+      if (prSummaries && prSummaries.total_pr_summaries_created > 0 && curr.total_active_users > 0) {
+        prSummariesPerDev += prSummaries.total_pr_summaries_created / curr.total_active_users;
         validPrSummariesCount++;
       }
     });
@@ -557,31 +566,31 @@ RESULT:
     // Create results for each metric
     const suggestionsResult = {
       current: this.roundToDecimal(suggestionsPerDev),
-      target: this.roundToDecimal(suggestionsPerDev * 2),
+      target: 100,
       max: 150 // Based on frontend hardcoded value
     };
     
     const chatsResult = {
       current: this.roundToDecimal(chatsPerDev),
-      target: this.roundToDecimal(chatsPerDev * 1.5), // Target is 50% increase
-      max: 50 // Based on frontend hardcoded value
+      target: 30, 
+      max: 60 // Based on frontend hardcoded value
     };
     
     const acceptancesResult = {
       current: this.roundToDecimal(acceptancesPerDev),
-      target: this.roundToDecimal(acceptancesPerDev * 1.2), // Target is 20% increase
+      target: 35, 
       max: 100
     };
     
     const dotcomChatsResult = {
       current: this.roundToDecimal(dotcomChatsPerDev),
-      target: this.roundToDecimal(dotcomChatsPerDev * 1.5), // Target is 50% increase
+      target: this.roundToDecimal(dotcomChatsPerDev) * 1.25, // Target is 25% higher
       max: 100
     };
     
     const prSummariesResult = {
       current: this.roundToDecimal(prSummariesPerDev),
-      target: this.roundToDecimal(prSummariesPerDev * 2), // Target is double current
+      target: this.roundToDecimal(prSummariesPerDev * 1.5), // Target is 50% higher
       max: 5 // Based on frontend hardcoded value
     };
     

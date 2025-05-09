@@ -10,7 +10,13 @@
       <mat-card-header>
         <mat-card-title>Adoption</mat-card-title>
       </mat-card-header>
-      <app-adoption-chart [data]="activityData" [targets]="targetsData"  [yMax]="targetsData.org.seats.max" [chartOptions]="chartOptions" (chartInstanceChange)="chartChanged($event)"></app-adoption-chart>
+      <app-adoption-chart
+        [data]="activityData"
+        [targets]="targetsData"
+        [yMax]="targetsData?.org?.seats?.max || 1000"
+        [chartOptions]="chartOptions"
+        (chartInstanceChange)="chartChanged($event)">
+      </app-adoption-chart>
     </mat-card>
     <mat-card class="chart-card" id="activity" appearance="outlined">
       <mat-card-header>
