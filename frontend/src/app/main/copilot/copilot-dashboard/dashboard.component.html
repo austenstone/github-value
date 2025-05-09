@@ -19,7 +19,7 @@
         <mat-card-title>Adoption</mat-card-title>
       </mat-card-header>
       <ng-container *ngIf="activityData; else loading">
-        <app-adoption-chart [data]="activityData" [chartOptions]="chartOptions"></app-adoption-chart>
+        <app-adoption-chart [data]="activityData" [yMax]="targetsData?.org?.seats?.max || 1000" [chartOptions]="chartOptions"></app-adoption-chart>
       </ng-container>
     </mat-card>
     <mat-card id="activity" appearance="outlined" routerLink="/copilot/value" fragment="activity">

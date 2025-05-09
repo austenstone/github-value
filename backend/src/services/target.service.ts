@@ -105,7 +105,7 @@ class TargetValuesService {
     };
   }
    //TODO: remove the unused parameters from this method
-  calculateTargets(): Promise<{ targets: Targets; logs?: any[] }> {
+  calculateTargets(): Promise<{ targets: Targets; logs?: unknown[] }> {
     return TargetCalculationService.fetchAndCalculateTargets(null, true, false); //always true for enableLogging for now  to audit calculations, always false for includeLogsInResponse.
   }
 
@@ -116,10 +116,10 @@ class TargetValuesService {
       const existingTargets = await Targets.findOne();
 
       if (!existingTargets ) {
-        
-        const initialData = await this.calculateTargets();
-        await Targets.create(initialData);
-        console.log('Default  targets created successfully.');
+        const result = await this.calculateTargets();
+        // Extract the targets property from the result
+        await Targets.create(result.targets);
+        console.log('Default targets created successfully.');
       }
     } catch (error) {
       throw new Error(`Error initializing target values: ${error}`);

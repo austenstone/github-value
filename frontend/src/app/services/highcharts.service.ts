@@ -496,14 +496,14 @@ export class HighchartsService {
     ];
   }
 
-  transformActivityMetricsToLine(data: ActivityResponse): Highcharts.Options {
+  transformActivityMetricsToLine(data: ActivityResponse, maxDevs: number): Highcharts.Options {
     const activeUsersSeries = {
       name: 'Users',
       type: 'spline' as const,
       data: Object.entries(data).map(([date, dateData]) => {
         return {
           x: new Date(date).getTime(),
-          y: (dateData.totalActive / dateData.totalSeats) * 100,
+          y: (dateData.totalActive / maxDevs) * 100,
           raw: dateData.totalActive  // Store original value for tooltip
         };
       }),
@@ -589,14 +589,14 @@ export class HighchartsService {
       if (currentMetrics?.copilot_ide_code_completions) {
         (dailyActiveIdeCompletionsSeries.data).push({
           x: new Date(date).getTime(),
-          y: (currentMetrics.copilot_ide_code_completions.total_code_suggestions / dateData.totalActive),
+          y: (currentMetrics.copilot_ide_code_completions.total_code_suggestions / currentMetrics.copilot_ide_code_completions.total_engaged_users),
           raw: date
         });
 
         if (dailyActiveIdeAcceptsSeries && dailyActiveIdeAcceptsSeries.data) {
           dailyActiveIdeAcceptsSeries.data.push({
             x: new Date(date).getTime(),
-            y: (currentMetrics.copilot_ide_code_completions.total_code_acceptances / dateData.totalActive),
+            y: (currentMetrics.copilot_ide_code_completions.total_code_acceptances / currentMetrics.copilot_ide_code_completions.total_engaged_users),
             raw: date
           });
         }
@@ -604,21 +604,21 @@ export class HighchartsService {
       if (currentMetrics?.copilot_ide_chat) {
         (dailyActiveIdeChatSeries.data).push({
           x: new Date(date).getTime(),
-          y: (currentMetrics.copilot_ide_chat.total_chats / dateData.totalActive),
+          y: (currentMetrics.copilot_ide_chat.total_chats / currentMetrics.copilot_ide_chat.total_engaged_users),
           raw: date
         });
       }
       if (currentMetrics?.copilot_dotcom_chat) {
         (dailyActiveDotcomChatSeries.data).push({
           x: new Date(date).getTime(),
-          y: (currentMetrics.copilot_dotcom_chat.total_chats / dateData.totalActive),
+          y: (currentMetrics.copilot_dotcom_chat.total_chats / currentMetrics.copilot_dotcom_chat.total_engaged_users),
           raw: date
         });
       }
       if (currentMetrics?.copilot_dotcom_pull_requests) {
         (dailyActiveDotcomPrSeries.data).push({
           x: new Date(date).getTime(),
-          y: (currentMetrics.copilot_dotcom_pull_requests.total_pr_summaries_created / dateData.totalActive),
+          y: (currentMetrics.copilot_dotcom_pull_requests.total_pr_summaries_created / currentMetrics.copilot_dotcom_pull_requests.total_engaged_users),
           raw: date
         });
       }

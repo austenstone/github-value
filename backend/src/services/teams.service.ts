@@ -27,7 +27,7 @@ class TeamsService {
         if (parentTeam) {
           await Team.findOneAndUpdate(
             { githubId: team.id },
-            { parent: parentTeam._id }
+            { parent: parentTeam._id }, // Use MongoDB _id for the parent
           );
         }
       }

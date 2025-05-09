@@ -13,6 +13,7 @@ import { TimeSavedChartComponent } from '../copilot-value/time-saved-chart/time-
 import { LoadingSpinnerComponent } from '../../../shared/loading-spinner/loading-spinner.component';
 import { InstallationsService } from '../../../services/api/installations.service';
 import { StatusComponent } from './status/status.component';
+import { Targets, TargetsService } from '../../../services/api/targets.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -33,6 +34,7 @@ export class CopilotDashboardComponent implements OnInit, OnDestroy {
   subscriptions = [] as Subscription[];
   metricsData?: CopilotMetrics[];
   activityData?: ActivityResponse;
+  targetsData?: Targets;
   surveysData?: Survey[];
   chartOptions: Highcharts.Options = {
     chart: {
@@ -99,12 +101,14 @@ export class CopilotDashboardComponent implements OnInit, OnDestroy {
     { title: 'Target Levels Acquired', statusMessage: '0 Levels Acquired' }
   ];
 
+
   constructor(
     private metricsService: MetricsService,
     private membersService: MembersService,
     private seatService: SeatService,
     private surveyService: CopilotSurveyService,
     private installationsService: InstallationsService,
+    private targetsService: TargetsService,
     private cdr: ChangeDetectorRef
   ) { }
 
@@ -166,6 +170,8 @@ export class CopilotDashboardComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         })
       )
+
+
     });
   }
 

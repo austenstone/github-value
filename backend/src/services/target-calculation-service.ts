@@ -6,6 +6,7 @@ import copilotSurveyService from './survey.service.js';
 import { SurveyType } from './survey.service.js'; // Import from survey.service.js instead
 import app from '../index.js';
 import dayjs from 'dayjs';
+import util from 'util';           // NEW
 
 // Define types for calculation logging
 interface CalcLogType {
@@ -103,17 +104,17 @@ export class TargetCalculationService {
       if (this.debugLogging) {
         this.calculationLogs.push(logEntry);
         
-        // Also print to console
+        // Also pretty print to console
         console.log(`
 ========== CALCULATION: ${name} ==========
 INPUTS:
-${Object.entries(inputs).map(([key, value]) => `  ${key}: ${JSON.stringify(value)}`).join('\n')}
+${util.inspect(inputs, { depth: null, colors: false, compact: false })}
 
 FORMULA/ALGORITHM:
   ${formula}
 
 RESULT:
-  ${JSON.stringify(result)}
+  ${util.inspect(result, { depth: null, colors: false, compact: false })}
 ========================================
 `);
       }
@@ -452,235 +453,243 @@ RESULT:
   // === USER-LEVEL CALCULATIONS ===
   
   /**
-   * Calculate daily suggestions per developer
+   * Calculate daily suggestions, accepts, chats, etc. per developer
    */
-  calculateDailySuggestions(): Target {
-    const adoptedDevs = this.calculateAdoptedDevs().current;
-    
+  calculateDailyMetrics(): {
+    suggestions: Target;
+    chats: Target;
+    acceptances: Target;
+    dotcomChats: Target;
+    prSummaries: Target;
+  } {
     // Extract metrics from the 5 most recent days in the array
-    const metricsWeekly = this.metricsWeekly.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
-    const metricsAvg = metricsWeekly.reduce((acc, curr) => {
-      acc.copilot_ide_code_completions.total_code_suggestions += curr.copilot_ide_code_completions?.total_code_suggestions || 0;
-      return acc;
+    let suggestionsPerDev = 0;
+    let chatsPerDev = 0;
+    let dotcomChatsPerDev = 0;
+    let prSummariesPerDev = 0;
+    const acceptanceRate = 0.7; // Placeholder assumption for acceptance rate
+    
+    const metricsWeekly = this.metricsWeekly
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, 5);
+
+    // --- NEW DEBUG LOG ----------------------------------------------------
+    this.logCalculation(
+      'METRICS WEEKLY DATA',
+      {
+        // capture only the most relevant fields for quick inspection
+        metricsWeekly: metricsWeekly.map(m => ({
+          date: m.date,
+          total_active_users: m.total_active_users,
+          total_engaged_users: m.total_engaged_users,
+          total_code_suggestions: m.copilot_ide_code_completions?.total_code_suggestions ?? 0,
+          total_chats: m.copilot_ide_chat?.total_chats ?? 0,
+          dotcom_total_chats: m.copilot_dotcom_chat?.total_chats ?? 0,
+          pr_summaries_created: m.copilot_dotcom_pull_requests?.total_pr_summaries_created ?? 0
+        }))
+      },
+      'Sort metrics by date descending and take the 5 most recent entries.',
+      metricsWeekly.length   // result: number of entries logged 
+    );
+    // ----------------------------------------------------------------------
+    
+    // Count how many metrics entries had valid data
+    let validSuggestionsCount = 0;
+    let validChatsCount = 0;
+    let validDotcomChatsCount = 0;
+    let validPrSummariesCount = 0;
+    
+    // Calculate average directly into per-developer metrics
+    metricsWeekly.forEach(curr => {
+      // Process code suggestions data
+      if (curr.copilot_ide_code_completions && 
+          curr.copilot_ide_code_completions.total_code_suggestions > 0 && 
+          curr.copilot_ide_code_completions.total_engaged_users > 0) {  
+        suggestionsPerDev += curr.copilot_ide_code_completions.total_code_suggestions / 
+                           curr.copilot_ide_code_completions.total_engaged_users;
+        validSuggestionsCount++;
+      }
+      
+      // Process chat data
+      if (curr.copilot_ide_chat?.total_chats > 0 && curr.total_active_users > 0) {
+        chatsPerDev += curr.copilot_ide_chat.total_chats / curr.total_active_users;
+        validChatsCount++;
+      }
+      
+      // Process dotcom chat data
+      if (curr.copilot_dotcom_chat?.total_chats > 0 && curr.total_active_users > 0) {
+        dotcomChatsPerDev += curr.copilot_dotcom_chat.total_chats / curr.total_active_users;
+        validDotcomChatsCount++;
+      }
+      
+      // Process PR summaries data
+      if (curr.copilot_dotcom_pull_requests?.total_pr_summaries_created > 0 && curr.total_active_users > 0) {
+        prSummariesPerDev += curr.copilot_dotcom_pull_requests.total_pr_summaries_created / curr.total_active_users;
+        validPrSummariesCount++;
+      }
+    });
+    
+    // Calculate the averages by dividing by the number of valid days found
+    if (validSuggestionsCount > 0) {
+      suggestionsPerDev /= validSuggestionsCount;
     }
-    , { copilot_ide_code_completions: { total_code_suggestions: 0 } });
     
-    // Calculate the average suggestions per day
-    metricsAvg.copilot_ide_code_completions.total_code_suggestions /= metricsWeekly.length || 1;
-    const totalSuggestions = metricsAvg.copilot_ide_code_completions.total_code_suggestions || 0;
+    if (validChatsCount > 0) {
+      chatsPerDev /= validChatsCount;
+    }
+    
+    if (validDotcomChatsCount > 0) {
+      dotcomChatsPerDev /= validDotcomChatsCount;
+    } else {
+      // Fallback to ratio estimation if no direct data
+      dotcomChatsPerDev = chatsPerDev * 0.33; // Placeholder assumption
+    }
+    
+    if (validPrSummariesCount > 0) {
+      prSummariesPerDev /= validPrSummariesCount;
+    }
+    
+    // Calculate acceptance rate (placeholder until real data)
+    const acceptancesPerDev = suggestionsPerDev * acceptanceRate;
+    
     const timestamp = metricsWeekly.length > 0 ? new Date(metricsWeekly[0].date).toISOString() : 'unknown';
-    const rowCount = metricsWeekly.length;
     
-    const suggestionsPerDev = adoptedDevs > 0 ? totalSuggestions / adoptedDevs : 0;
-    
-    const result = {
+    // Create results for each metric
+    const suggestionsResult = {
       current: this.roundToDecimal(suggestionsPerDev),
-      target: this.roundToDecimal(suggestionsPerDev * 2), // Target is user-defined
+      target: this.roundToDecimal(suggestionsPerDev * 2),
       max: 150 // Based on frontend hardcoded value
     };
     
+    const chatsResult = {
+      current: this.roundToDecimal(chatsPerDev),
+      target: this.roundToDecimal(chatsPerDev * 1.5), // Target is 50% increase
+      max: 50 // Based on frontend hardcoded value
+    };
+    
+    const acceptancesResult = {
+      current: this.roundToDecimal(acceptancesPerDev),
+      target: this.roundToDecimal(acceptancesPerDev * 1.2), // Target is 20% increase
+      max: 100
+    };
+    
+    const dotcomChatsResult = {
+      current: this.roundToDecimal(dotcomChatsPerDev),
+      target: this.roundToDecimal(dotcomChatsPerDev * 1.5), // Target is 50% increase
+      max: 100
+    };
+    
+    const prSummariesResult = {
+      current: this.roundToDecimal(prSummariesPerDev),
+      target: this.roundToDecimal(prSummariesPerDev * 2), // Target is double current
+      max: 5 // Based on frontend hardcoded value
+    };
+    
+    // Log the calculations
     this.logCalculation(
       'DAILY SUGGESTIONS PER DEVELOPER',
       {
-        totalSuggestions: totalSuggestions,
-        adoptedDevsCount: adoptedDevs,
-        metricsRowCount: rowCount,
+        validMetricsCount: validSuggestionsCount,
         metricsDataPoints: metricsWeekly.length,
-        avgSuggestionsPerDay: totalSuggestions,
-        timestamp: timestamp,
-        metricsSource: 'Average from 5 most recent days of weekly metrics'
+        avgSuggestionsPerDay: suggestionsPerDev,
+        timestamp: timestamp
       },
-      'Sort metrics by date, take 5 most recent, calculate average daily suggestions, divide by adoptedDevs to get per-developer rate',
-      result
+      'Sort metrics by date, take 5 most recent, calculate average daily suggestions per developer',
+      suggestionsResult
     );
     
-    return result;
+    this.logCalculation(
+      'DAILY CHAT TURNS PER DEVELOPER',
+      {
+        validMetricsCount: validChatsCount,
+        metricsDataPoints: metricsWeekly.length,
+        avgChatsPerDay: chatsPerDev,
+        timestamp: timestamp
+      },
+      'Calculate average totalChats / activeUsers from 5 most recent days',
+      chatsResult
+    );
+    
+    this.logCalculation(
+      'DAILY ACCEPTANCES PER DEVELOPER',
+      {
+        dailySuggestions: suggestionsPerDev,
+        assumedAcceptanceRate: acceptanceRate,
+        timestamp: timestamp
+      },
+      'Calculate dailySuggestions * assumedAcceptanceRate (placeholder until actual data available)',
+      acceptancesResult
+    );
+    
+    this.logCalculation(
+      'DAILY DOTCOM CHATS PER DEVELOPER',
+      {
+        validMetricsCount: validDotcomChatsCount,
+        hasDirectData: validDotcomChatsCount > 0,
+        fallbackChatsPerDev: validDotcomChatsCount === 0 ? chatsPerDev : null,
+        assumedDotComRatio: validDotcomChatsCount === 0 ? 0.33 : null,
+        timestamp: timestamp
+      },
+      validDotcomChatsCount > 0 ? 
+        'Calculate average dotcomChats / activeUsers from 5 most recent days' : 
+        'Calculate chatsPerDev * assumedDotComRatio (using fallback ratio)',
+      dotcomChatsResult
+    );
+    
+    this.logCalculation(
+      'WEEKLY PR SUMMARIES PER DEVELOPER',
+      {
+        validMetricsCount: validPrSummariesCount,
+        metricsDataPoints: metricsWeekly.length,
+        avgPrSummariesPerDev: prSummariesPerDev,
+        timestamp: timestamp
+      },
+      'Calculate average prSummaries / activeUsers from 5 most recent days',
+      prSummariesResult
+    );
+    
+    return {
+      suggestions: suggestionsResult,
+      chats: chatsResult,
+      acceptances: acceptancesResult,
+      dotcomChats: dotcomChatsResult,
+      prSummaries: prSummariesResult
+    };
+  }
+  
+  /**
+   * Calculate daily suggestions per developer
+   */
+  calculateDailySuggestions(): Target {
+    return this.calculateDailyMetrics().suggestions;
   }
   
   /**
    * Calculate daily chat turns per developer
    */
   calculateDailyChatTurns(): Target {
-    const adoptedDevs = this.calculateAdoptedDevs().current;
-    
-    // Extract metrics from the 5 most recent days in the array
-    const metricsDaily = this.metricsDaily.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
-    const metricsAvg = metricsDaily.reduce((acc, curr) => {
-      acc.copilot_ide_chat.total_chats += curr.copilot_ide_chat?.total_chats || 0;
-      acc.total_active_users += curr.total_active_users || 0;
-      return acc;
-    }, { copilot_ide_chat: { total_chats: 0 }, total_active_users: 0 });
-    
-    // Calculate averages
-    metricsAvg.copilot_ide_chat.total_chats /= metricsDaily.length || 1;
-    metricsAvg.total_active_users = Math.max(metricsAvg.total_active_users / (metricsDaily.length || 1), 1); // Avoid division by zero
-    
-    const totalChats = metricsAvg.copilot_ide_chat.total_chats;
-    const activeUsers = metricsAvg.total_active_users;
-    const timestamp = metricsDaily.length > 0 ? new Date(metricsDaily[0].date).toISOString() : 'unknown';
-    const rowCount = metricsDaily.length;
-    
-    const chatTurnsPerDev = totalChats / activeUsers;
-    
-    const result = {
-      current: this.roundToDecimal(chatTurnsPerDev),
-      target: this.roundToDecimal(chatTurnsPerDev * 1.5), // Target is 50% increase
-      max: 50 // Based on frontend hardcoded value
-    };
-    
-    this.logCalculation(
-      'DAILY CHAT TURNS PER DEVELOPER',
-      {
-        totalChats: totalChats,
-        activeUsersCount: activeUsers, 
-        metricsRowCount: rowCount,
-        timestamp: timestamp,
-        metricsSource: 'Average of top 5 recent daily metrics'
-      },
-      'Calculate average totalChats / activeUsers from 5 most recent days, set target = current * 1.5',
-      result
-    );
-    
-    return result;
+    return this.calculateDailyMetrics().chats;
   }
-
+  
   /**
    * Calculate daily acceptances
    */
   calculateDailyAcceptances(): Target {
-    const adoptedDevs = this.calculateAdoptedDevs().current;
-    
-    // Extract metrics from the 5 most recent days in the array
-    const metricsDaily = this.metricsDaily.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
-    
-    // We don't have acceptance data yet, but when we do, we can follow this pattern
-    // Placeholder formula: roughly 70% of suggestions get accepted
-    const dailySuggestions = this.calculateDailySuggestions().current;
-    const acceptanceRate = 0.7; // Placeholder assumption
-    const acceptancesPerDev = dailySuggestions * acceptanceRate;
-    
-    const result = {
-      current: this.roundToDecimal(acceptancesPerDev),
-      target: this.roundToDecimal(acceptancesPerDev * 1.2), // Target is 20% increase
-      max: 100
-    };
-    
-    this.logCalculation(
-      'DAILY ACCEPTANCES PER DEVELOPER',
-      {
-        dailySuggestions: dailySuggestions,
-        assumedAcceptanceRate: acceptanceRate,
-        adoptedDevsCount: adoptedDevs,
-        metricsRowCount: metricsDaily.length
-      },
-      'Calculate dailySuggestions * assumedAcceptanceRate (placeholder until actual data available)',
-      result
-    );
-    
-    return result;
+    return this.calculateDailyMetrics().acceptances;
   }
 
   /**
    * Calculate daily dot com chats
    */
   calculateDailyDotComChats(): Target {
-    const adoptedDevs = this.calculateAdoptedDevs().current;
-    
-    // Extract metrics from the 5 most recent days in the array
-    const metricsRecent = this.metricsWeekly.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
-    
-    // Currently we may not have direct dot com chat data in metrics, so we'll look for it or use a calculation
-    const metricsAvg = metricsRecent.reduce((acc, curr) => {
-      // Check if we have direct dot com chat data (future-proofing)
-      if (curr.copilot_dotcom_chat?.total_chats) {
-        acc.dotcom_chats += curr.copilot_dotcom_chat.total_chats;
-        acc.has_direct_data = true;
-      } 
-      return acc;
-    }, { dotcom_chats: 0, has_direct_data: false });
-    
-    let dotComChatsPerDev = 0;
-    
-    if (metricsAvg.has_direct_data) {
-      // If we have direct data, use it
-      dotComChatsPerDev = adoptedDevs > 0 ? (metricsAvg.dotcom_chats / metricsRecent.length) / adoptedDevs : 0;
-    } else {
-      // Otherwise use our ratio estimation from IDE chat data
-      const dailyChatTurns = this.calculateDailyChatTurns().current;
-      const dotComChatRatio = 0.33; // Placeholder assumption
-      dotComChatsPerDev = dailyChatTurns * dotComChatRatio;
-    }
-    
-    const result = {
-      current: this.roundToDecimal(dotComChatsPerDev),
-      target: this.roundToDecimal(dotComChatsPerDev * 1.5), // Target is 50% increase
-      max: 100
-    };
-    
-    this.logCalculation(
-      'DAILY DOTCOM CHATS PER DEVELOPER',
-      {
-        dotComChatsTotal: metricsAvg.dotcom_chats,
-        hasDirectData: metricsAvg.has_direct_data,
-        fallbackDailyChatTurns: !metricsAvg.has_direct_data ? this.calculateDailyChatTurns().current : null,
-        assumedDotComRatio: !metricsAvg.has_direct_data ? 0.33 : null,
-        adoptedDevsCount: adoptedDevs,
-        metricsRowCount: metricsRecent.length,
-        metricsTimeRange: metricsRecent.length > 0 ? 
-          `${new Date(metricsRecent[metricsRecent.length-1].date).toISOString()} to ${new Date(metricsRecent[0].date).toISOString()}` : 'unknown'
-      },
-      metricsAvg.has_direct_data ? 
-        'Average dotcom_chats / adoptedDevs from 5 most recent metrics days' : 
-        'Calculate dailyChatTurns * assumedDotComRatio (using fallback ratio)',
-      result
-    );
-    
-    return result;
+    return this.calculateDailyMetrics().dotcomChats;
   }
 
   /**
    * Calculate weekly PR summaries per developer
    */
   calculateWeeklyPRSummaries(): Target {
-    const adoptedDevs = this.calculateAdoptedDevs().current;
-    
-    // Extract metrics from the last 5 metrics points in the array (up to a week)
-    const metricsWeekly = this.metricsWeekly.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
-    const metricsAvg = metricsWeekly.reduce((acc, curr) => {
-      acc.copilot_dotcom_pull_requests.total_pr_summaries_created += 
-        curr.copilot_dotcom_pull_requests?.total_pr_summaries_created || 0;
-      return acc;
-    }, { copilot_dotcom_pull_requests: { total_pr_summaries_created: 0 } });
-    
-    // Calculate average
-    metricsAvg.copilot_dotcom_pull_requests.total_pr_summaries_created /= metricsWeekly.length || 1;
-    
-    const totalPRSummaries = metricsAvg.copilot_dotcom_pull_requests.total_pr_summaries_created;
-    const timestamp = metricsWeekly.length > 0 ? new Date(metricsWeekly[0].date).toISOString() : 'unknown';
-    const rowCount = metricsWeekly.length;
-    
-    const prSummariesPerDev = adoptedDevs > 0 ? totalPRSummaries / adoptedDevs : 0;
-    
-    const result = {
-      current: this.roundToDecimal(prSummariesPerDev),
-      target: this.roundToDecimal(prSummariesPerDev * 2), // Target is double current
-      max: 5 // Based on frontend hardcoded value
-    };
-    
-    this.logCalculation(
-      'WEEKLY PR SUMMARIES PER DEVELOPER',
-      {
-        totalPRSummaries: totalPRSummaries,
-        adoptedDevsCount: adoptedDevs,
-        metricsRowCount: rowCount,
-        timestamp: timestamp,
-        metricsSource: 'Average of recent weekly metrics'
-      },
-      'Calculate average totalPRSummaries / adoptedDevs, set target = current * 2',
-      result
-    );
-    
-    return result;
+    return this.calculateDailyMetrics().prSummaries;
   }
 
   /**
@@ -977,6 +986,8 @@ const monthlyTimeSavings = adoptedDevs * weeklyTimeSavedHrs * 4; // Assuming 4 w
 }
 
 // Allow isolated testing
+//to execute this module directly, use the command:
+// node --loader ts-node/esm backend/src/services/target-calculation-service.ts
 if (import.meta.url.endsWith(process.argv[1])) {
   (async () => {
     // Example of using the static method with logs included in response
