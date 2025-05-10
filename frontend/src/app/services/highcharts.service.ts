@@ -565,6 +565,12 @@ export class HighchartsService {
       name: 'IDE Accepts',
       data: [] as CustomHighchartsPointOptions[]
     };
+    // NEW: acceptance-rate (% of suggestions accepted)
+    const dailyActiveIdeAcceptanceRateSeries = {
+      ...initialSeries,
+      name: 'IDE Acceptance Rate',
+      data: [] as CustomHighchartsPointOptions[]
+    };
     const dailyActiveIdeChatSeries = {
       ...initialSeries,
       name: 'IDE Chats',
@@ -577,26 +583,38 @@ export class HighchartsService {
     };
     const dailyActiveDotcomPrSeries = {
       ...initialSeries,
-      name: '.COM Pull Requests',
+      name: 'Pull Requests',
       data: [] as CustomHighchartsPointOptions[]
     };
 
     Object.entries(activity).forEach(([date, dateData]) => {
-      // Skip if totalActive is undefined or 0
+      // Skip if totalActive is undefined or 0 or there is a data quality issue making daily suggestions per average user > 250
       const currentMetrics = metrics.find(m => m.date.startsWith(date.slice(0, 10)));
-      if (!currentMetrics || (currentMetrics.copilot_ide_code_completions?.total_engaged_users ?? 0) < 1) return;
+      if (!currentMetrics || (currentMetrics.copilot_ide_code_completions?.total_engaged_users ?? 0) < 1 || ((currentMetrics.copilot_ide_code_completions?.total_code_suggestions ?? 0) / (currentMetrics.copilot_ide_code_completions?.total_engaged_users ?? 1)) > 250) return;
       
       if (currentMetrics?.copilot_ide_code_completions) {
+        // Suggestions per user
         (dailyActiveIdeCompletionsSeries.data).push({
           x: new Date(date).getTime(),
           y: (currentMetrics.copilot_ide_code_completions.total_code_suggestions / currentMetrics.copilot_ide_code_completions.total_engaged_users),
           raw: date
         });
 
-        if (dailyActiveIdeAcceptsSeries && dailyActiveIdeAcceptsSeries.data) {
-          dailyActiveIdeAcceptsSeries.data.push({
+        // Accepts per user
+        (dailyActiveIdeAcceptsSeries.data).push({
+          x: new Date(date).getTime(),
+          y: (currentMetrics.copilot_ide_code_completions.total_code_acceptances /
+              currentMetrics.copilot_ide_code_completions.total_engaged_users),
+          raw: date
+        });
+
+        // NEW: acceptance-rate (%)
+        const sugg = currentMetrics.copilot_ide_code_completions.total_code_suggestions;
+        const acc  = currentMetrics.copilot_ide_code_completions.total_code_acceptances;
+        if (sugg > 0) {
+          (dailyActiveIdeAcceptanceRateSeries.data).push({
             x: new Date(date).getTime(),
-            y: (currentMetrics.copilot_ide_code_completions.total_code_acceptances / currentMetrics.copilot_ide_code_completions.total_engaged_users),
+            y: +(acc / sugg * 100).toFixed(2),
             raw: date
           });
         }
@@ -628,9 +646,10 @@ export class HighchartsService {
       series: [
         dailyActiveIdeCompletionsSeries,
         dailyActiveIdeAcceptsSeries,
+        dailyActiveIdeAcceptanceRateSeries, // NEW series added to output
         dailyActiveIdeChatSeries,
         dailyActiveDotcomChatSeries,
-        // dailyActiveDotcomPrSeries,
+        dailyActiveDotcomPrSeries        // ← was commented out
       ]
     }
   }
