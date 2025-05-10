@@ -583,9 +583,10 @@ export class HighchartsService {
 
     Object.entries(activity).forEach(([date, dateData]) => {
       // Skip if totalActive is undefined or 0
-      if (!dateData.totalActive) return;
-      
       const currentMetrics = metrics.find(m => m.date.startsWith(date.slice(0, 10)));
+      if (currentMetrics?.copilot_ide_code_completions?.total_engaged_users || 0 > 0) return;
+      
+      
       if (currentMetrics?.copilot_ide_code_completions) {
         (dailyActiveIdeCompletionsSeries.data).push({
           x: new Date(date).getTime(),

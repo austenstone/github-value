@@ -13,7 +13,7 @@
       <app-adoption-chart
         [data]="activityData"
         [targets]="targetsData"
-        [yMax]="targetsData?.org?.seats?.max || 1000"
+        [yMax]="targetsData?.org?.seats?.max || 10000"
         [chartOptions]="chartOptions"
         (chartInstanceChange)="chartChanged($event)">
       </app-adoption-chart>
