@@ -38,7 +38,19 @@ export class DailyActivityChartComponent implements OnInit, OnChanges {
             '.COM Chats': this.targets?.user.dailyDotComChats.target || 0
           };
 
+          // NEW: mapping for typical ranges (from, to)
+          const typicalRangeMapping: Record<string, [number, number]> = {
+            'IDE Suggestions': [50, 90],
+            'IDE Accepts': [20, 40],
+            'IDE Chats': [25, 40],
+            '.COM Chats': [4, 8]
+          };
+
+          // the code below is to set the target line on the chart, based on the series name
+          // and the target value from the targets service. Target line only shows if the series is visible and other series are not
           let newTarget = 1000;
+          let newTypicalFrom = 50;
+          let newTypicalTo = 90;
           const visibleSeries = this.chart.series.filter(s => s.visible);
 
           if (visibleSeries.length === 1) {
@@ -46,13 +58,20 @@ export class DailyActivityChartComponent implements OnInit, OnChanges {
             if (series.name && targetMapping[series.name]) {
               newTarget = targetMapping[series.name];
             }
+            // NEW: select typical range limits
+            if (series.name && typicalRangeMapping[series.name]) {
+              [newTypicalFrom, newTypicalTo] = typicalRangeMapping[series.name];
+            }
           }
 
           // Use chart instance to access yAxis
           const yAxis = this.chart.yAxis[0];
           const plotLineId = 'target-line';
+          const plotBandId = 'typical-range';
 
           yAxis.removePlotLine(plotLineId);
+          yAxis.removePlotBand?.(plotBandId);
+
           yAxis.addPlotLine({
             id: plotLineId,
             value: newTarget,
@@ -68,26 +87,42 @@ export class DailyActivityChartComponent implements OnInit, OnChanges {
             },
             zIndex: 2
           });
+
+          // also show typical range band only when one series is visible
+          if (visibleSeries.length === 1) {
+            yAxis.addPlotBand({
+              id: plotBandId,
+              from: newTypicalFrom,
+              to: newTypicalTo,
+              color: 'var(--sys-surface-variant)',
+              label: {
+                text: 'Typical Range',
+                style: { color: 'var(--sys-on-surface-variant)' }
+              },
+              zIndex: 1
+            });
+
+            // NEW: tighten y-axis max for the lone series
+            const dataMax = Math.max(
+              ...visibleSeries[0].data.filter(v => typeof v === 'number') as number[]
+            );
+            const proposedMax = Math.max(dataMax, newTarget, newTypicalTo) * 1.15; // 15 % head-room
+            
+            yAxis.setExtremes(undefined, proposedMax, false);
+          } else {
+            // reset to auto when multiple series are active
+            yAxis.setExtremes(undefined, undefined, false);
+          }
         }
       }
     },
     yAxis: {
       title: {
-        text: 'Daily Activity Per Avg User'
+        text: 'Daily Activity (per Avg User)'
       },
       min: 0,
-      maxPadding: 1.7,
-      plotBands: [{
-        from: 500,
-        to: 750,
-        color: 'var(--sys-surface-variant)',
-        label: {
-          text: 'Typical Range',
-          style: {
-            color: 'var(--sys-on-surface-variant)'
-          }
-        }
-      }]
+      maxPadding: 0.2,   // was 1.2 – shrink default empty space
+      plotBands: []      // start with no typical-range band
     },
     tooltip: {
       headerFormat: '<b>{point.x:%b %d, %Y}</b><br/>',
