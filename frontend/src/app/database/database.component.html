@@ -22,7 +22,7 @@
       </form>
     </mat-step>
 
-    <mat-step label="GitHub App" state="github" [completed]="status?.installations?.length">
+    <mat-step label="GitHub App" state="github" [completed]="installations?.length">
       <ng-template matStepperIcon="github">
         <mat-icon>settings_applications</mat-icon>
       </ng-template>

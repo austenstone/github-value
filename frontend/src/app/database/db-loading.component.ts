@@ -1,8 +1,9 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router } from '@angular/router';
-import { InstallationsService, SystemStatus } from '../services/api/installations.service';
+import { InstallationsService } from '../services/api/installations.service';
 import { Subscription } from 'rxjs';
+import { StatusService, SystemStatus } from '../services/api/status.service';
 
 @Component({
   selector: 'app-db-loading',
@@ -91,7 +92,7 @@ export class DbLoadingComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    private installationsService: InstallationsService
+    private statusService: StatusService
   ) {}
 
   ngOnInit() {
@@ -106,7 +107,7 @@ export class DbLoadingComponent implements OnInit, OnDestroy {
 
   private pollStatus() {
     const interval = setInterval(() => {
-      this.statusSubscription = this.installationsService.refreshStatus().subscribe((status: SystemStatus) => {
+      this.statusSubscription = this.statusService.refreshStatus().subscribe((status: SystemStatus) => {
         if (!status.componentDetails['database']?.currentStatus || status.componentDetails['database'].currentStatus === 'error') {
           clearInterval(interval);
           this.statusSubscription?.unsubscribe();
@@ -115,12 +116,12 @@ export class DbLoadingComponent implements OnInit, OnDestroy {
         }
 
         // Check initialization components
-        this.dbStatus = {
-          usage: status.componentDetails['usage']?.currentStatus === 'running',
-          metrics: status.componentDetails['metrics']?.currentStatus === 'running',
-          copilotSeats: status.componentDetails['seats']?.currentStatus === 'running',
-          teamsAndMembers: status.componentDetails['teams']?.currentStatus === 'running'
-        };
+        // this.dbStatus = {
+        //   usage: status.componentDetails['usage']?.currentStatus === 'running',
+        //   metrics: status.componentDetails['metrics']?.currentStatus === 'running',
+        //   copilotSeats: status.componentDetails['seats']?.currentStatus === 'running',
+        //   teamsAndMembers: status.componentDetails['teams']?.currentStatus === 'running'
+        // };
 
         this.updateProgress();
 

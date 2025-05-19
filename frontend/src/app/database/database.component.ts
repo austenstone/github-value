@@ -11,8 +11,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { finalize, takeWhile, timer } from 'rxjs';
-import { InstallationsService } from '../services/api/installations.service';
+import { Installations, InstallationsService } from '../services/api/installations.service';
 import { SetupService } from '../services/api/setup.service';
+import { StatusService, SystemStatus } from '../services/api/status.service';
 
 @Component({
   selector: 'app-database',
@@ -42,6 +43,7 @@ import { SetupService } from '../services/api/setup.service';
 export class DatabaseComponent implements AfterViewInit {
   @ViewChild('stepper') private stepper!: MatStepper;
   status?: SystemStatus;
+  installations?: Installations;
   isDbConnecting = false;
   dbFormGroup = new FormGroup({
     uri: new FormControl('', Validators.required)
@@ -50,15 +52,14 @@ export class DatabaseComponent implements AfterViewInit {
   constructor(
     private cdr: ChangeDetectorRef,
     private installationService: InstallationsService,
+    private statusService: StatusService,
     private router: Router,
     private setupService: SetupService
   ) { }
 
   ngAfterViewInit() {
     timer(0, 1000).pipe(
-      takeWhile(() => {
-        return !this.status || !this.status.installations?.length;
-      }),
+      takeWhile(() => !this.status?.isReady),
       finalize(async () => {
         await this.router.navigate(['/copilot'])
       })
@@ -78,22 +79,30 @@ export class DatabaseComponent implements AfterViewInit {
   }
 
   checkStatus() {
-    this.installationService.refreshStatus().subscribe(status => {
+    this.installationService.getInstallations().subscribe(installations => {
+      this.installations = installations;
+      this.cdr.detectChanges();
+    });
+    this.statusService.refreshStatus().subscribe(status => {
       this.status = status;
-      if (this.status.isReady && this.stepper.selectedIndex === 0) {
+      // Check if database is connected and system is ready
+      if (this.status.status.database === 'running' && this.stepper.selectedIndex === 0) {
         const step = this.stepper.steps.get(0);
         if (step) step.completed = true;
         this.stepper.next();
       }
-      if (this.status.installations?.length && this.stepper.selectedIndex === 1) {
+      // Check if GitHub installation is complete
+      if (this.status.status.github === 'running' && this.stepper.selectedIndex === 1) {
         const step = this.stepper.steps.get(1);
         if (step) step.completed = true;
         this.stepper.next();
       }
-      if (this.status.installations?.length && this.stepper.selectedIndex === 2) {
+      // Mark the final step as interacted when all conditions are met
+      if (this.status.isReady && this.stepper.selectedIndex === 2) {
         const step = this.stepper.steps.get(2);
         if (step) step.interacted = true;
       }
-    })
+      this.cdr.detectChanges();
+    });
   }
 }

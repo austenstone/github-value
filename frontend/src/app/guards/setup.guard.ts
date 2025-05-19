@@ -2,29 +2,30 @@ import { Injectable, isDevMode } from '@angular/core';
 import { CanActivate, GuardResult, MaybeAsync, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
-import { InstallationsService, statusResponse } from '../services/api/installations.service';
+import { StatusService, SystemStatus } from '../services/api/status.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SetupStatusGuard implements CanActivate {
-  responseCache?: statusResponse;
+  responseCache?: SystemStatus;
 
   constructor(
-    private installationsService: InstallationsService,
+    private statusService: StatusService,
     private router: Router
   ) {}
 
   canActivate(): MaybeAsync<GuardResult> {
-    if (this.responseCache?.isSetup === true) return of(true);
-    return this.installationsService.refreshStatus().pipe(
+    if (this.responseCache?.isReady === true) return of(true);
+    return this.statusService.refreshStatus().pipe(
       map((response) => {
+        console.log('SetupStatusGuard response', response);
         this.responseCache = response;
-        if (!response.dbConnected) {
+        if (response.status.database !== 'running') {
           this.router.navigate(['/setup/db']);
           return false;
         }
-        if (!response.isSetup) {
+        if (!response.isReady) {
           this.router.navigate(['/setup/db']);
           return false;
         }
@@ -35,6 +36,7 @@ export class SetupStatusGuard implements CanActivate {
         return true;
       }),
       catchError((error) => {
+        console.log('SetupStatusGuard error', error);
         const serializedError = {
           message: error.message || 'An unknown error occurred',
           code: error.code || 'UNKNOWN',

@@ -5,14 +5,14 @@ import { CopilotMetrics } from '../../../services/api/metrics.service.interfaces
 import { ActivityResponse, SeatService } from '../../../services/api/seat.service';
 import { MembersService } from '../../../services/api/members.service';
 import { CopilotSurveyService, Survey } from '../../../services/api/copilot-survey.service';
-import { InstallationsService, SystemStatus } from '../../../services/api/installations.service';
+import { InstallationsService } from '../../../services/api/installations.service';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { AdoptionChartComponent } from '../copilot-value/adoption-chart/adoption-chart.component';
 import { DailyActivityChartComponent } from '../copilot-value/daily-activity-chart/daily-activity-chart.component';
 import { TimeSavedChartComponent } from '../copilot-value/time-saved-chart/time-saved-chart.component';
 import { LoadingSpinnerComponent } from '../../../shared/loading-spinner/loading-spinner.component';
 import { StatusComponent } from './status/status.component';
-import { getStatusInfo } from './status-checks';
+import { StatusService, SystemStatus } from '../../../services/api/status.service';
 
 interface Status {
   title: string;
@@ -87,6 +87,7 @@ export class CopilotDashboardComponent implements OnInit, OnDestroy {
     private seatService: SeatService,
     private surveyService: CopilotSurveyService,
     private installationsService: InstallationsService,
+    private statusService: StatusService,
     private cdr: ChangeDetectorRef
   ) { }
 
@@ -98,13 +99,14 @@ export class CopilotDashboardComponent implements OnInit, OnDestroy {
     this.installationsService.getCurrentInstallation().pipe(
       takeUntil(this._destroy$.asObservable())
     ).subscribe(installation => {
+      console.log('Current installation change:', installation);
       this.subscriptions.forEach(s => s.unsubscribe());
       this.metricsData = undefined;
       this.activityData = undefined;
       this.statuses = [];
 
       this.subscriptions.push(
-        this.installationsService.refreshStatus().subscribe(status => {
+        this.statusService.refreshStatus().subscribe(status => {
           this.systemStatus = status;
           this.updateStatusChecks();
         })
@@ -139,8 +141,6 @@ export class CopilotDashboardComponent implements OnInit, OnDestroy {
 
   private updateStatusChecks() {
     if (!this.systemStatus) return;
-
-    this.statuses = getStatusInfo(this.systemStatus, this.surveysData);
   }
 
   ngOnDestroy() {

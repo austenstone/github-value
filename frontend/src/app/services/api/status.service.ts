@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, Subscription, interval, of } from 'rxjs';
-import { catchError, shareReplay, switchMap, tap } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { shareReplay } from 'rxjs/operators';
 import { serverUrl } from '../server.service';
 
 export type ComponentStatus = 'starting' | 'running' | 'error' | 'warning' | 'stopping' | 'stopped';
-
+export type ComponentName = 'database' | 'github' | 'settings' | 'targets' | 'webhooks' | 'tasks';
 export interface StatusHistoryEntry {
   timestamp: string;
   status: ComponentStatus;
@@ -20,8 +20,8 @@ export interface ComponentStatusInfo {
 }
 
 export interface SystemStatus {
-  status: Record<string, ComponentStatus>;
-  componentDetails: Record<string, ComponentStatusInfo>;
+  status: Record<ComponentName, ComponentStatus>;
+  componentDetails: Record<ComponentName, ComponentStatusInfo>;
   isReady: boolean;
   uptime: number;
   startTime: string;
@@ -31,79 +31,20 @@ export interface SystemStatus {
   providedIn: 'root'
 })
 export class StatusService {
-  private apiUrl = `${serverUrl}/status`;
-  private refreshInterval = 30000; // Default refresh interval in milliseconds
-  private refreshTimer: Subscription | null = null;
-  private statusSubject = new BehaviorSubject<SystemStatus | null>(null);
-  
-  // Observable for subscribed components
-  systemStatus$ = this.statusSubject.asObservable();
-  
-  // Observable for auto-refresh (will be subscribed to externally)
-  autoRefreshStatus$ = interval(this.refreshInterval).pipe(
-    switchMap(() => this.fetchStatus()),
-    shareReplay(1)
-  );
+  private apiUrl = `${serverUrl}/api/status`;
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Manually refresh the system status
-   */
-  refreshStatus(): void {
-    this.fetchStatus().subscribe();
-  }
-
-  /**
-   * Set the auto-refresh interval
-   * @param intervalMs Refresh interval in milliseconds
-   */
-  setRefreshInterval(intervalMs: number): void {
-    this.refreshInterval = intervalMs;
-    
-    // Update the auto-refresh observable
-    this.autoRefreshStatus$ = interval(this.refreshInterval).pipe(
-      switchMap(() => this.fetchStatus()),
+  refreshStatus(): Observable<SystemStatus> {
+    return this.http.get<SystemStatus>(`${this.apiUrl}`).pipe(
       shareReplay(1)
     );
   }
 
-  /**
-   * Get the current system status
-   * @returns Observable of SystemStatus
-   */
-  private fetchStatus(): Observable<SystemStatus | null> {
-    return this.http.get<SystemStatus>(`${this.apiUrl}`).pipe(
-      tap(status => this.statusSubject.next(status)),
-      catchError(error => {
-        console.error('Error fetching system status:', error);
-        return of(null);
-      })
-    );
-  }
-
-  /**
-   * Trigger a health check for all components
-   * @returns Observable of health check results
-   */
   triggerHealthCheck(): Observable<any> {
-    return this.http.post<any>(`${this.apiUrl}/healthcheck`, {}).pipe(
-      tap(result => {
-        // Refresh status after health check
-        this.refreshStatus();
-      }),
-      catchError(error => {
-        console.error('Error running health check:', error);
-        throw error;
-      })
-    );
+    return this.http.post<any>(`${this.apiUrl}/healthcheck`, {});
   }
 
-  /**
-   * Get CSS class for status
-   * @param status Component status
-   * @returns CSS class for the status
-   */
   getStatusClass(status: ComponentStatus): string {
     switch (status) {
       case 'running':
@@ -119,11 +60,6 @@ export class StatusService {
     }
   }
 
-  /**
-   * Get icon for status
-   * @param status Component status
-   * @returns Material icon name for the status
-   */
   getStatusIcon(status: ComponentStatus): string {
     switch (status) {
       case 'running':

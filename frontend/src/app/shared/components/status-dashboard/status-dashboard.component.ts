@@ -5,9 +5,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { StatusService } from '../../../services/api/status.service.js';
+import { StatusService, SystemStatus, ComponentStatus } from '../../../services/api/status.service.js';
+import { InstallationsService, Installations } from '../../../services/api/installations.service';
 import { interval, Subscription } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, tap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-status-dashboard',
@@ -24,23 +25,30 @@ import { switchMap } from 'rxjs/operators';
   styleUrls: ['./status-dashboard.component.scss']
 })
 export class StatusDashboardComponent implements OnInit, OnDestroy {
-  status: any;
+  status: SystemStatus | null = null;
+  installations: Installations = [];
   loading = true;
   error: string | null = null;
   refreshing = false;
   private refreshInterval = 30000; // 30 seconds
   private subscription: Subscription | null = null;
+  private installationSubscription: Subscription | null = null;
 
-  constructor(private statusService: StatusService) {}
+  constructor(
+    private statusService: StatusService,
+    private installationsService: InstallationsService
+  ) {}
 
   ngOnInit(): void {
     this.loadStatus();
+    this.loadInstallations();
+    
     // Set up auto-refresh
     this.subscription = interval(this.refreshInterval)
       .pipe(
         switchMap(() => {
           this.refreshing = true;
-          return this.statusService.getStatus();
+          return this.statusService.refreshStatus();
         })
       )
       .subscribe({
@@ -61,11 +69,14 @@ export class StatusDashboardComponent implements OnInit, OnDestroy {
     if (this.subscription) {
       this.subscription.unsubscribe();
     }
+    if (this.installationSubscription) {
+      this.installationSubscription.unsubscribe();
+    }
   }
 
   loadStatus(): void {
     this.loading = true;
-    this.statusService.getStatus().subscribe({
+    this.statusService.refreshStatus().subscribe({
       next: (data) => {
         this.status = data;
         this.loading = false;
@@ -78,14 +89,34 @@ export class StatusDashboardComponent implements OnInit, OnDestroy {
       }
     });
   }
+  
+  loadInstallations(): void {
+    this.installationSubscription = this.installationsService.refreshStatus().subscribe({
+      next: (installations) => {
+        this.installations = installations;
+      },
+      error: (err) => {
+        console.error('Failed to load installations:', err);
+      }
+    });
+  }
 
   refreshStatus(): void {
     this.refreshing = true;
-    this.statusService.getStatus().subscribe({
+    this.statusService.refreshStatus().subscribe({
       next: (data) => {
         this.status = data;
         this.refreshing = false;
         this.error = null;
+        // Also refresh installations when status is refreshed
+        this.installationsService.refreshStatus().subscribe({
+          next: (installations) => {
+            this.installations = installations;
+          },
+          error: (err) => {
+            console.error('Failed to refresh installations:', err);
+          }
+        });
       },
       error: (err) => {
         console.error('Failed to refresh status:', err);
@@ -97,7 +128,7 @@ export class StatusDashboardComponent implements OnInit, OnDestroy {
 
   runHealthChecks(): void {
     this.refreshing = true;
-    this.statusService.runHealthChecks().subscribe({
+    this.statusService.triggerHealthCheck().subscribe({
       next: () => {
         this.refreshStatus();
       },
@@ -109,24 +140,11 @@ export class StatusDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  getStatusIcon(status: string): string {
-    switch (status) {
-      case 'running':
-        return 'check_circle';
-      case 'starting':
-        return 'pending';
-      case 'warning':
-        return 'warning';
-      case 'error':
-        return 'error';
-      case 'stopped':
-        return 'stop_circle';
-      default:
-        return 'help';
-    }
+  getStatusIcon(status: ComponentStatus): string {
+    return this.statusService.getStatusIcon(status);
   }
 
-  getStatusColor(status: string): string {
+  getStatusColor(status: ComponentStatus): string {
     switch (status) {
       case 'running':
         return 'green';

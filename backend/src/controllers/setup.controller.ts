@@ -78,9 +78,7 @@ class SetupController {
 
   async getInstallations(req: Request, res: Response) {
     try {
-      res.json({
-        installations: app.github.installations.map(i => i.installation)
-      });
+      res.json(app.github.installations.map(i => i.installation));
     } catch (error) {
       res.status(500).json(error);
     }

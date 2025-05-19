@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Subject, of, tap } from 'rxjs';
+import { BehaviorSubject, Subject, of, tap, takeUntil, catchError } from 'rxjs';
 import { serverUrl } from '../server.service';
 import { Endpoints } from '@octokit/types';
 import { HttpClient } from '@angular/common/http';
@@ -18,6 +18,18 @@ export class InstallationsService implements OnDestroy {
   readonly destroy$ = this._destroy$.asObservable();
 
   constructor(private http: HttpClient) {
+    // Initialize installations data when service is created
+    this.refreshStatus()
+      .pipe(
+        takeUntil(this._destroy$),
+        catchError(err => {
+          console.error('Failed to load installations:', err);
+          return of([]);
+        })
+      )
+      .subscribe();
+
+    // Still handle installation from localStorage if available
     const id = localStorage.getItem('installation');
     if (id) {
       this.setInstallation(Number(id));
@@ -37,9 +49,10 @@ export class InstallationsService implements OnDestroy {
   }
 
   refreshStatus() {
-    return this.http.get<any>(`${serverUrl}/api/setup/installations`).pipe(
+    return this.http.get<Installations>(`${serverUrl}/api/setup/installs`).pipe(
       tap((installations) => {
         if (installations) {
+          console.log('InstallationsService refreshStatus', installations);
           this.installations.next(installations);
           if (this.installations.value.length === 1) {
             this.setInstallation(this.installations.value[0].id);
@@ -62,6 +75,7 @@ export class InstallationsService implements OnDestroy {
   setInstallation(id: number) {
     this.currentInstallationId = id;
     this.currentInstallation.next(this.installations.value.find(i => i.id === id));
+    console.log('Setting installation to', id, this.installations.value, this.currentInstallation.value);
     localStorage.setItem('installation', id.toString());
   }
 }

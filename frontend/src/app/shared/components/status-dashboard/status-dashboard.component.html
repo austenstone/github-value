@@ -3,9 +3,9 @@
     <mat-card-header>
       <mat-card-title>
         System Status
-        <span *ngIf="!loading && !error && status?.systemStatus?.isReady" 
+        <span *ngIf="!loading && !error && status?.isReady" 
               class="status-badge ready">System Ready</span>
-        <span *ngIf="!loading && !error && !status?.systemStatus?.isReady" 
+        <span *ngIf="!loading && !error && !status?.isReady" 
               class="status-badge not-ready">System Not Ready</span>
       </mat-card-title>
       <div class="header-actions">
@@ -40,44 +40,70 @@
         <div class="status-info">
           <div class="uptime-info">
             <span class="label">Uptime:</span>
-            <span class="value">{{ formatUptime(status?.systemStatus?.uptime) }}</span>
+            <span class="value">{{ formatUptime(status?.uptime) }}</span>
           </div>
           <div class="started-info">
             <span class="label">Started:</span>
-            <span class="value">{{ status?.systemStatus?.startTime | date:'medium' }}</span>
+            <span class="value">{{ status?.startTime | date:'medium' }}</span>
           </div>
         </div>
         
         <div class="component-statuses">
           <h3>Component Status</h3>
           
-          <div *ngIf="status?.systemStatus?.components" class="component-grid">
-            <div *ngFor="let component of objectKeys(status.systemStatus.components)" 
+          <div *ngIf="status?.status" class="component-grid">
+            <div *ngFor="let component of objectKeys(status.status)" 
                  class="component-item">
-              <div class="component-icon" [style.color]="getStatusColor(status.systemStatus.components[component])">
-                <mat-icon>{{ getStatusIcon(status.systemStatus.components[component]) }}</mat-icon>
+              <div class="component-icon" [style.color]="getStatusColor(status.status[component])">
+                <mat-icon>{{ getStatusIcon(status.status[component]) }}</mat-icon>
               </div>
               <div class="component-details">
                 <div class="component-name">{{ component | titlecase }}</div>
-                <div class="component-status" [class]="status.systemStatus.components[component]">
-                  {{ status.systemStatus.components[component] | titlecase }}
+                <div class="component-status" [class]="status.status[component]">
+                  {{ status.status[component] | titlecase }}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Component details section -->
+          <div *ngIf="status?.componentDetails && objectKeys(status.componentDetails).length > 0" class="component-details-section">
+            <h4>Component Details</h4>
+            <div class="component-details-grid">
+              <div *ngFor="let compName of objectKeys(status.componentDetails)" class="component-detail-item">
+                <div class="detail-header">
+                  <span class="detail-name">{{ compName | titlecase }}</span>
+                  <span [class]="statusService.getStatusClass(status.componentDetails[compName].currentStatus)">
+                    {{ status.componentDetails[compName].currentStatus | titlecase }}
+                  </span>
+                </div>
+                <div class="detail-info">
+                  <span class="detail-updated">Updated: {{ status.componentDetails[compName].lastUpdated | date:'short' }}</span>
+                  <span *ngIf="status.componentDetails[compName].message" class="detail-message">
+                    {{ status.componentDetails[compName].message }}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
         </div>
         
-        <div *ngIf="status?.installations?.length" class="installations">
-          <h3>GitHub App Installations ({{ status.installations.length }})</h3>
+        <div *ngIf="installations?.length" class="installations">
+          <h3>GitHub App Installations ({{ installations.length }})</h3>
           <div class="installation-list">
-            <div *ngFor="let install of status.installations" class="installation-item">
+            <div *ngFor="let install of installations" class="installation-item">
               <div class="installation-icon">
-                <img [src]="install.installation.account.avatar_url" 
-                     [alt]="install.installation.account.login">
+                <img [src]="install.account.avatar_url" 
+                     [alt]="install.account.login">
               </div>
               <div class="installation-details">
-                <div class="installation-name">{{ install.installation.account.login }}</div>
-                <div class="installation-repos">{{ install.repos.length }} repositories</div>
+                <div class="installation-name">{{ install.account.login }}</div>
+                <div class="installation-repos" *ngIf="install.repository_selection === 'selected'">
+                  Selected repositories
+                </div>
+                <div class="installation-repos" *ngIf="install.repository_selection === 'all'">
+                  All repositories
+                </div>
               </div>
             </div>
           </div>
