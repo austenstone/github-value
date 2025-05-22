@@ -1,6 +1,7 @@
 import { Endpoints } from "@octokit/types";
 import mongoose from "mongoose";
 import logger from "./logger.js";
+import { MemberType } from "models/teams.model.js";
 
 class TeamsService {
   async updateTeams(
@@ -137,14 +138,14 @@ class TeamsService {
     return team?.updatedAt || new Date(0);
   }
 
-  async getMemberByLogin(login: string) {
+  async getMemberByLogin(login: string): Promise<MemberType> {
     const Member = mongoose.model("Member");
     return await Member.findOne({ login })
       .select("login name url avatar_url")
       .exec();
   }
 
-  async getAllMembers(org?: string) {
+  async getAllMembers(org?: string): Promise<MemberType[]> {
     const Member = mongoose.model("Member");
     try {
       return await Member.find({
