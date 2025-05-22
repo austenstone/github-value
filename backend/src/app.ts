@@ -92,7 +92,7 @@ class App {
           await TargetValuesService.initialize();
           logger.info('Targets initialized');
         } catch (error) {
-          logger.warn('GitHub App failed to connect', (error as any)?.message || error);
+          logger.warn('GitHub App failed to connect', error instanceof Error ? error.message : String(error));
         }
 
       }

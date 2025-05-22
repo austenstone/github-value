@@ -1,6 +1,6 @@
 import logger from "./logger.js";
 import Client from "smee-client";
-import { EventSource } from "eventsource";
+import { ErrorEvent, EventSource } from "eventsource";
 
 export interface WebhookServiceOptions {
   url?: string,
@@ -61,7 +61,7 @@ class WebhookService {
         });
         this.eventSource = await this.smee.start();
         // also catch any lower‑level EventSource errors
-        this.eventSource.addEventListener('error', (err: any) => {
+        this.eventSource.addEventListener('error', (err: ErrorEvent) => {
           const m = err?.message || err;
           if (typeof m === 'string' && m.includes('ECONNRESET')) {
             logger.warn('Smee EventSource', 'read ECONNRESET, reconnecting');

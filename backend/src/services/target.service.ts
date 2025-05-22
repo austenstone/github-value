@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
-import adoptionService, { AdoptionType } from './adoption.service.js';
-import app from '../index.js';
+import { AdoptionType } from './adoption.service.js'
 import { SettingsType } from './settings.service.js';
 import { TargetCalculationService } from './target-calculation-service.js';
 

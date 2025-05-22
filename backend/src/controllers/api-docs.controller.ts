@@ -982,7 +982,7 @@ class ApiDocsController {
       }
 
       res.status(200).json(openApiSpec);
-    } catch (error) {
+    } catch {
       res.status(500).json({ error: "Failed to retrieve API documentation" });
     }
   }

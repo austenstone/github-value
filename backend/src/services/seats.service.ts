@@ -27,22 +27,11 @@ type MemberDailyActivity = {
   };
 };
 
-interface ActivityTotalDocument {
-  org: string;
-  date: Date;
-  assignee: mongoose.Types.ObjectId;
-  assignee_id: number;
-  assignee_login: string;
-  total_active_time_ms?: number;
-  last_activity_at?: Date;
-  last_activity_editor?: string;
-}
-
 interface MemberDocument {
   _id: mongoose.Types.ObjectId;
   id: number;
   login: string;
-  [key: string]: any; // For other properties
+  // [key: string]: any; // For other properties
 }
 
 class SeatsService {
@@ -129,7 +118,7 @@ class SeatsService {
     }
 
     // Build query with date range filtering if provided
-    const query: mongoose.FilterQuery<any> = {
+    const query: mongoose.FilterQuery<SeatType> = {
       assignee: member._id
     };
 
@@ -184,7 +173,7 @@ class SeatsService {
           
           if (!member) {
             // Try case-insensitive search as a fallback
-            const regex = new RegExp(`^${identifierString.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i');
+            const regex = new RegExp(`^${identifierString.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i');
             const memberCaseInsensitive = await Member.findOne({ 
               login: regex
             }).lean() as MemberDocument | null;
@@ -203,22 +192,17 @@ class SeatsService {
             // Now TypeScript knows member has these properties
             numericId = member.id;
           }
-        } catch (memberLookupError: unknown) {
-          // Properly type the error
+        } catch {
           return []; // Return empty array on error
         }
       } else {
         numericId = Number(identifier);
-        //console.log(`Using numeric ID directly: ${numericId}`);
       }
       
-      // Build query
-      const query: Record<string, any> = { assignee_id: numericId };
+      const query: mongoose.FilterQuery<SeatType> = { assignee_id: numericId };
       
-      // Add filters
       if (params.org) {
         query.org = params.org;
-       // console.log(`Added org filter: ${params.org}`);
       }
       
       if (params.since || params.until) {

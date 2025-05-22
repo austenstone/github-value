@@ -33,7 +33,6 @@ class TeamsController {
   async getMemberByLogin(req: Request, res: Response): Promise<void> {
     try {
       const { login } = req.params;
-      const exact = req.query.exact === 'true';
       const member = await teamsService.getMemberByLogin(login);
       if (member) {
         res.json(member);

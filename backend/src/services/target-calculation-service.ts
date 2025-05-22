@@ -1,4 +1,4 @@
-import settingsService, { SettingsType } from './settings.service.js';
+import { SettingsType } from './settings.service.js';
 import adoptionService, { AdoptionType } from './adoption.service.js';
 import metricsService from './metrics.service.js';
 import { MetricDailyResponseType } from "../models/metrics.model.js";
@@ -46,25 +46,6 @@ interface Targets {
     productivityOrThroughputBoostPercent: Target;
   };
   [key: string]: Record<string, Target>;
-}
-
-// More specific typed interfaces for metrics data
-interface MetricsData {
-  copilot_ide_code_completions?: {
-    total_code_suggestions: number;
-    total_engaged_users: number;   // NEW
-  };
-  copilot_ide_chat?: {
-    total_chats: number;
-  };
-  copilot_dotcom_chat?: {          // NEW
-    total_chats: number;
-  };
-  copilot_dotcom_pull_requests?: {
-    total_pr_summaries_created: number;
-  };
-  total_active_users: number;
-  total_engaged_users?: number;    // NEW (top-level, used in debug log)
 }
 
 export class TargetCalculationService {
@@ -841,7 +822,6 @@ RESULT:
   calculateProductivityOrThroughputBoostPercent(): Target {
     const adoptedDevs = this.calculateAdoptedDevs().current;
     const weeklyTimeSavedHrs = this.calculateWeeklyTimeSavedHrs().current;
-const monthlyTimeSavings = adoptedDevs * weeklyTimeSavedHrs * 4; // Assuming 4 weeks per month
     
     // Convert hours per year to number
     const hoursPerYear = typeof this.settings.hoursPerYear === 'number' ? this.settings.hoursPerYear : 2000;

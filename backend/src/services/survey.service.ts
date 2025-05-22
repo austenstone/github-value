@@ -69,18 +69,18 @@ class SurveyService {
   /**
    * Get all surveys based on filtering criteria
    */
-  async getAllSurveys(params: {
-    org?: string;
-    team?: string;
-    reasonLength?: string;
-    since?: string;
-    until?: string;
-    status?: string;
-    userId?: string;
-  }) {
+    async getAllSurveys(params: {
+      org?: string;
+      team?: string;
+      reasonLength?: string;
+      since?: string;
+      until?: string;
+      status?: string;
+      userId?: string;
+    }) {
     const { org, team, reasonLength, since, until, status, userId } = params;
     
-    const dateFilter: mongoose.FilterQuery<any> = {};
+    const dateFilter: mongoose.FilterQuery<SurveyType> = {};
     
     // Validate the date strings before creating Date objects
     if (since) {
