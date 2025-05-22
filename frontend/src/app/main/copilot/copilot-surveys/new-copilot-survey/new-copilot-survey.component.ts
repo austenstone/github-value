@@ -75,7 +75,7 @@ export class NewCopilotSurveyComponent implements OnInit {
   surveys: Survey[] = [];
   orgFromApp = '';
   hasQueryParams = false;
-  
+
   // Add these properties to fix the template error
   repo = '';
   prNumber = '';
@@ -112,7 +112,7 @@ export class NewCopilotSurveyComponent implements OnInit {
       reason: new FormControl(''),
       timeUsedFor: new FormControl('', Validators.required)
     });
-    
+
     // Set up the search pipeline
     this.filteredMembers$ = this.searchTerms.pipe(
       debounceTime(300),
@@ -121,7 +121,7 @@ export class NewCopilotSurveyComponent implements OnInit {
         if (term.length < 2) {
           return of([]);
         }
-        
+
         this.isLoading$.next(true);
         return this.membersService.searchMembersByLogin(term).pipe(
           catchError(error => {
@@ -144,43 +144,47 @@ export class NewCopilotSurveyComponent implements OnInit {
         this.searchTerms.next(value);
       }
     });
-    
+
     // Initial form setup from query params
     this.route.queryParams.subscribe(params => {
       this.params = params;
-      
+
       // Set hasQueryParams BEFORE setting values to avoid form validation errors
       this.hasQueryParams = !!(params['author'] || params['repo'] || params['prno'] || params['url']);
-      
+
       // Pre-fill the form only if params exist
       if (params['author']) {
         this.surveyForm.get('userId')?.setValue(params['author']);
-        
+
         // Manually trigger activity lookup for pre-filled userID
         this.loadUserCopilotActivity(params['author']);
       }
-      
+
       if (params['repo']) {
         this.surveyForm.get('repo')?.setValue(params['repo']);
         this.repo = params['repo'];  // Immediately set the property for template access
       }
-      
+
       if (params['prno']) {
         this.surveyForm.get('prNumber')?.setValue(params['prno']);
         this.prNumber = params['prno'];  // Immediately set the property for template access
       }
-      
+
       // Handle GitHub URL parsing
-      if (params['url'] && params['url'].includes('github.com')) {
-        const { org, repo, prNumber } = this.parseGitHubPRUrl(params['url']);
-        this.orgFromApp = org;
-        if (!params['repo'] && repo) {
-          this.surveyForm.get('repo')?.setValue(repo);
-          this.repo = repo;  // Immediately set the property for template access
-        }
-        if (!params['prno'] && prNumber) {
-          this.surveyForm.get('prNumber')?.setValue(prNumber);
-          this.prNumber = String(prNumber);  // Immediately set the property for template access
+      if (params['url']) {
+        const parsedUrl = new URL(params['url']);
+        const allowedHosts = ['github.com', 'www.github.com'];
+        if (allowedHosts.includes(parsedUrl.host)) {
+          const { org, repo, prNumber } = this.parseGitHubPRUrl(params['url']);
+          this.orgFromApp = org;
+          if (!params['repo'] && repo) {
+            this.surveyForm.get('repo')?.setValue(repo);
+            this.repo = repo;
+          }
+          if (!params['prno'] && prNumber) {
+            this.surveyForm.get('prNumber')?.setValue(prNumber);
+            this.prNumber = String(prNumber);
+          }
         }
       }
     });
@@ -223,12 +227,12 @@ export class NewCopilotSurveyComponent implements OnInit {
     this.surveyForm.get('repo')?.valueChanges.subscribe(value => {
       this.repo = value;
     });
-    
+
     this.surveyForm.get('prNumber')?.valueChanges.subscribe(value => {
       this.prNumber = value;
     });
   }
-  
+
   loadHistoricalReasons() {
     this.copilotSurveyService.getAllSurveys({
       reasonLength: 20,
@@ -283,7 +287,7 @@ export class NewCopilotSurveyComponent implements OnInit {
 
         // Use fallbacks for org and repo
         const { org, repo, prNumber } = this.parseGitHubPRUrl(this.params['url'] || '');
-        
+
         const survey = {
           id: this.id,
           userId: finalUserId,
@@ -427,7 +431,7 @@ export class NewCopilotSurveyComponent implements OnInit {
         } else {
           // Invalid user (and not caught by catchError, e.g., API returned null)
           if (!userIdControl?.hasError('invalidUserId')) { // Avoid overwriting existing error
-             userIdControl?.setErrors({ invalidUserId: true });
+            userIdControl?.setErrors({ invalidUserId: true });
           }
         }
       });
@@ -442,7 +446,7 @@ export class NewCopilotSurveyComponent implements OnInit {
     // Calculate 7 days ago from now
     const since = dayjs().subtract(7, 'day').toISOString();
     const until = dayjs().toISOString();
-    
+
     this.seatService.getSeatByLogin(login, { since, until }).subscribe({
       next: (activity: Seat[]) => {
         if (activity && activity.length > 0) {
@@ -453,18 +457,18 @@ export class NewCopilotSurveyComponent implements OnInit {
               // Round to the hour to group closely timed activities
               const hourTimestamp = dayjs(item.last_activity_at).startOf('hour').format();
               uniqueTimestamps.add(hourTimestamp);
-              
+
               // This property doesn't exist on the item because it's not in the 
               // Seat type definition in your service
-                this.assignee_id = item.assignee_id;
+              this.assignee_id = item.assignee_id;
             }
           });
-          
+
           // Calculate total hours of activity
           this.copilotActivityHours = uniqueTimestamps.size;
           this.hasCopilotActivity = this.copilotActivityHours > 0;
-          
-          
+
+
           // Pre-select "Yes" for usedCopilot if there's recent activity
           if (this.hasCopilotActivity) {
             this.surveyForm.get('usedCopilot')?.setValue(true);
