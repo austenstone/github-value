@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { serverUrl } from '../server.service';
 import { HttpClient } from '@angular/common/http';
 import { Endpoints } from '@octokit/types';
-import { catchError, Observable, tap } from 'rxjs';
+import { catchError, Observable } from 'rxjs';
 import { throwError } from 'rxjs';
 
 export interface Member {
