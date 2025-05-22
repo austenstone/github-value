@@ -1,2 +1,6 @@
-<highcharts-chart [Highcharts]="Highcharts" [options]="_chartOptions" (chartInstance)="onChartInstance($event)">
+<highcharts-chart
+  [Highcharts]="Highcharts"
+  [options]="_chartOptions"
+  [update]="updateFlag"
+  (chartInstance)="onChartInstance($event)">
 </highcharts-chart>

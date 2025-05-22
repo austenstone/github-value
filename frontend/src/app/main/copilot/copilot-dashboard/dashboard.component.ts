@@ -1,18 +1,17 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { AppModule } from '../../../app.module';
-import { DashboardCardValueComponent } from './dashboard-card/dashboard-card-value/dashboard-card-value.component';
 import { MetricsService } from '../../../services/api/metrics.service';
 import { CopilotMetrics } from '../../../services/api/metrics.service.interfaces';
-import { ActivityResponse, Seat, SeatService } from '../../../services/api/seat.service';
-import { MembersService } from '../../../services/api/members.service';
+import { ActivityResponse, SeatService } from '../../../services/api/seat.service';
 import { CopilotSurveyService, Survey } from '../../../services/api/copilot-survey.service';
-import { forkJoin, Subject, Subscription, takeUntil } from 'rxjs';
+import { Subject, Subscription, takeUntil } from 'rxjs';
 import { AdoptionChartComponent } from '../copilot-value/adoption-chart/adoption-chart.component';
 import { DailyActivityChartComponent } from '../copilot-value/daily-activity-chart/daily-activity-chart.component';
 import { TimeSavedChartComponent } from '../copilot-value/time-saved-chart/time-saved-chart.component';
 import { LoadingSpinnerComponent } from '../../../shared/loading-spinner/loading-spinner.component';
 import { InstallationsService } from '../../../services/api/installations.service';
 import { StatusComponent } from './status/status.component';
+import { Targets, TargetsService } from '../../../services/api/targets.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -33,6 +32,7 @@ export class CopilotDashboardComponent implements OnInit, OnDestroy {
   subscriptions = [] as Subscription[];
   metricsData?: CopilotMetrics[];
   activityData?: ActivityResponse;
+  targetsData?: Targets;
   surveysData?: Survey[];
   chartOptions: Highcharts.Options = {
     chart: {
@@ -99,12 +99,13 @@ export class CopilotDashboardComponent implements OnInit, OnDestroy {
     { title: 'Target Levels Acquired', statusMessage: '0 Levels Acquired' }
   ];
 
+
   constructor(
     private metricsService: MetricsService,
-    private membersService: MembersService,
     private seatService: SeatService,
     private surveyService: CopilotSurveyService,
     private installationsService: InstallationsService,
+    private targetsService: TargetsService,
     private cdr: ChangeDetectorRef
   ) { }
 
@@ -166,6 +167,14 @@ export class CopilotDashboardComponent implements OnInit, OnDestroy {
           this.cdr.detectChanges();
         })
       )
+
+      this.subscriptions.push(
+        this.targetsService.getTargets().subscribe(data => {
+          this.targetsData = data;
+          this.cdr.detectChanges();
+        })
+      );
+
     });
   }
 

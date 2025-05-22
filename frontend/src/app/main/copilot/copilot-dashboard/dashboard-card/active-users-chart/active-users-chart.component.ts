@@ -88,7 +88,6 @@ export class ActiveUsersChartComponent implements OnChanges {
   ) { }
 
   ngOnChanges() {
-    console.log('ngOnChanges', this.data);
     this._chartOptions = Object.assign({}, this.chartOptions, this._chartOptions);
     if (this._chartOptions?.series && this.data) {
       // Create an array with [total_time, login, avatar_url] for each point

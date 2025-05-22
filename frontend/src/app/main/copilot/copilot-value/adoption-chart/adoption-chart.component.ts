@@ -24,11 +24,12 @@ export class AdoptionChartComponent implements OnInit, OnChanges {
   totalUsers = 500;
   @Input() data?: ActivityResponse;
   @Input() targets?: Targets;
+  @Input() yMax = 1111;
   @Input() chartOptions?: Highcharts.Options;
   _chartOptions: Highcharts.Options = {
     yAxis: {
       title: {
-        text: 'Adoption %'
+        text: 'Adoption (% of Max Devs)'
       },
       min: 0,
       max: 100,
@@ -57,7 +58,9 @@ export class AdoptionChartComponent implements OnInit, OnChanges {
           style: {
             color: 'var(--sys-primary)'
           }
-        }
+        },
+        zIndex: 2
+
       }]
     },
     series: [{
@@ -89,8 +92,8 @@ export class AdoptionChartComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes['data'] && this.data) {
-      const options = this.highchartsService.transformActivityMetricsToLine(this.data);
+    if (this.data && this.yMax) {
+      const options = this.highchartsService.transformActivityMetricsToLine(this.data, this.yMax);
       this._chartOptions = {
         ...this._chartOptions,
         ...options,
@@ -110,7 +113,7 @@ export class AdoptionChartComponent implements OnInit, OnChanges {
       }
       this.updateFlag = true;
       setTimeout(() => {
-        (this.chart?.yAxis[0] as any).plotLinesAndBands[0].render();
+        this.chart?.yAxis[0].update({});
       }, 2000)
     }
   }

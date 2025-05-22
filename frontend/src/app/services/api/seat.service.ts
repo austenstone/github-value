@@ -1,10 +1,23 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { serverUrl } from '../server.service';
 import { Endpoints } from "@octokit/types";
-import { map } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
-export type Seat = NonNullable<Endpoints["GET /orgs/{org}/copilot/billing/seats"]["response"]["data"]["seats"]>[0];
+// Base GitHub API seat type
+export type GitHubSeat = NonNullable<Endpoints["GET /orgs/{org}/copilot/billing/seats"]["response"]["data"]["seats"]>[0];
+
+// Extended seat type with backend-specific fields
+export interface Seat extends GitHubSeat {
+  assignee_id?: number;
+  assignee_login?: string;
+  org?: string;
+  team?: string;
+  queryAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface AllSeats {
   avatar_url: string,
   login: string,
@@ -59,8 +72,32 @@ export class SeatService {
     });
   }
 
-  getSeat(id: number | string) {
-    return this.http.get<Seat[]>(`${this.apiUrl}/${id}`);
+  /**
+   * Get seat activity for a user by ID with optional date filtering 
+   */
+  getSeat(id: string | number, params?: { since?: string; until?: string }): Observable<Seat[]> {
+    let queryParams = new HttpParams();
+    if (params?.since) {
+      queryParams = queryParams.set('since', params.since);
+    }
+    if (params?.until) {
+      queryParams = queryParams.set('until', params.until);
+    }
+    return this.http.get<Seat[]>(`${this.apiUrl}/${id}`, { params: queryParams });
+  }
+
+  /**
+   * Get seat activity for a user by login with optional date filtering
+   */
+  getSeatByLogin(login: string, params?: { since?: string; until?: string }): Observable<Seat[]> {
+    let queryParams = new HttpParams();
+    if (params?.since) {
+      queryParams = queryParams.set('since', params.since);
+    }
+    if (params?.until) {
+      queryParams = queryParams.set('until', params.until);
+    }
+    return this.http.get<Seat[]>(`${this.apiUrl}/${login}`, { params: queryParams });
   }
 
   getActivity(org?: string) {

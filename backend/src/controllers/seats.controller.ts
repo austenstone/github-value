@@ -7,19 +7,28 @@ class SeatsController {
     try {
       const seats = await SeatsService.getAllSeats(org);
       res.status(200).json(seats);
-    } catch (error) {
-      res.status(500).json(error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      res.status(500).json({ error: errorMessage });
     }
   }
 
   async getSeat(req: Request, res: Response): Promise<void> {
     const { id } = req.params;
-    const idNumber = Number(id);
+    const { since, until, org } = req.query as { [key: string]: string | undefined };
+    
     try {
-      const seat = isNaN(idNumber) ? await SeatsService.getAssigneeByLogin(id) : await SeatsService.getAssignee(idNumber);
+      const sanitizedOrg = typeof org === 'string' ? org : undefined;
+      const params = { since, until, org: sanitizedOrg };
+
+      // Use our new unified getSeat method that handles both ID and login
+      // Pass the ID directly without conversion - the service will handle it
+      const seat = await SeatsService.getSeat(id, params);
+      
       res.status(200).json(seat);
-    } catch (error) {
-      res.status(500).json(error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      res.status(500).json({ error: errorMessage });
     }
   }
 
@@ -38,8 +47,9 @@ class SeatsController {
         precision: precision as 'hour' | 'day'
       });
       res.status(200).json(activityDays);
-    } catch (error) {
-      res.status(500).json(error);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      res.status(500).json({ error: errorMessage });
     }
   }
 }

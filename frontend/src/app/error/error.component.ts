@@ -22,11 +22,11 @@ export class ErrorComponent {
     private router: Router
   ) {
     const navigation = this.router.getCurrentNavigation();
-    const state = navigation?.extras?.state as { error: any };
+    const state = navigation?.extras?.state;
 
     if (state) {
-      if (state.error) {
-        this.error = state.error || JSON.stringify(state.error);
+      if (state['error']) {
+        this.error = state['error'] || JSON.stringify(state['error']);
       } else {
         this.error.message = 'An unknown error occurred';
       }

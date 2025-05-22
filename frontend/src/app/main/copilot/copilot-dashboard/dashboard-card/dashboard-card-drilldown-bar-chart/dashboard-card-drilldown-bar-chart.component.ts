@@ -7,7 +7,6 @@ import { HighchartsChartModule } from 'highcharts-angular';
 import { CommonModule } from '@angular/common';
 import { HighchartsService } from '../../../../../services/highcharts.service';
 import { CopilotMetrics } from '../../../../../services/api/metrics.service.interfaces';
-import { LoadingSpinnerComponent } from '../../../../../shared/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-dashboard-card-drilldown-bar-chart',
@@ -15,8 +14,7 @@ import { LoadingSpinnerComponent } from '../../../../../shared/loading-spinner/l
   imports: [
     MatCardModule,
     CommonModule,
-    HighchartsChartModule,
-    // LoadingSpinnerComponent
+    HighchartsChartModule
   ],
   templateUrl: './dashboard-card-drilldown-bar-chart.component.html',
   styleUrls: [

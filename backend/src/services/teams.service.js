@@ -3,6 +3,7 @@ import { SeatType } from "../models/seats.model.js";
 import { components } from "@octokit/openapi-types";
 import mongoose from 'mongoose';
 import { MemberActivityType, MemberType } from 'models/teams.model.js';
+import fs from 'fs';
 import adoptionService from './adoption.service.js';
 import logger from './logger.js';
 
@@ -26,13 +27,6 @@ type MemberDailyActivity = {
   };
 };
 
-interface MemberDocument {
-  _id: mongoose.Types.ObjectId;
-  id: number;
-  login: string;
-  // [key: string]: any; // For other properties
-}
-
 class SeatsService {
   async getAllSeats(org?: string) {
     const Member = mongoose.model('Member');
@@ -52,87 +46,18 @@ class SeatsService {
     return seats;
   }
 
-  /**
-   * Retrieves all seat activity records for a user by their GitHub ID
-   * @param id GitHub user ID
-   * @param params Optional parameters for filtering (since, until)
-   */
-  async getAssignee(id: number, params: { since?: string; until?: string } = {}) {
+  async getAssignee(id: number) {
     const Seats = mongoose.model('Seats');
     const Member = mongoose.model('Member');
-    // First find the member document by GitHub user ID
     const member = await Member.findOne({ id }).sort({ org: -1 }); //this temporarily resolves a bug where one org fails but the other one succeeds
 
     if (!member) {
-      throw new Error(`Member with id ${id} not found`); // Updated to throw a proper Error
+      throw `Member with id ${id} not found`
     }
 
-    // Build query with date range filtering if provided
-    // Using a more specific type instead of any
-    interface SeatQuery {
-      assignee: mongoose.Types.ObjectId;
-      createdAt?: {
-        $gte?: Date;
-        $lte?: Date;
-      };
-    }
-
-    const query: SeatQuery = {
-      assignee: member._id  // This is the MongoDB ObjectId that links to the Member document
-    };
-
-    // Add date range filters if provided
-    if (params.since || params.until) {
-      query.createdAt = {
-        ...(params.since && { $gte: new Date(params.since) }),
-        ...(params.until && { $lte: new Date(params.until) })
-      };
-    }
-
-    // Query all seat activity records where the assignee field matches the member's _id
-    // This returns the complete activity history for this user
-    return Seats.find(query)
-      .sort({ createdAt: 1 }) // Sort by creation time ascending (oldest first)
-      .lean()  // Convert Mongoose documents to plain JavaScript objects
-      .populate({
-        path: 'assignee',  // Link to Member model 👤
-        model: Member,
-        select: 'login id avatar_url -_id'  // Only select needed fields 🎯
-      });
-  }
-
-  /**
-   * Retrieves all seat activity records for a user by their GitHub login (username)
-   * @param login GitHub username
-   * @param params Optional parameters for filtering (since, until)
-   */
-  async getAssigneeByLogin(login: string, params: { since?: string; until?: string } = {}) {
-    const Seats = mongoose.model('Seats');
-    const Member = mongoose.model('Member');
-    // First find the member document by GitHub username
-    const member = await Member.findOne({ login });
-
-    if (!member) {
-      throw `Member with id ${login} not found`
-    }
-
-    // Build query with date range filtering if provided
-    const query: mongoose.FilterQuery<SeatType> = {
+    return Seats.find({
       assignee: member._id
-    };
-
-    // Add date range filters if provided
-    if (params.since || params.until) {
-      query.createdAt = {
-        ...(params.since && { $gte: new Date(params.since) }),
-        ...(params.until && { $lte: new Date(params.until) })
-      };
-    }
-
-    // Query all seat activity records where the assignee field matches the member's _id
-    // This returns the complete activity history for this user
-    return Seats.find(query)
-      .sort({ createdAt: 1 }) // Sort by creation time ascending (oldest first)
+    })
       .lean()
       .populate({
         path: 'assignee',  // Link to Member model 👤
@@ -141,93 +66,24 @@ class SeatsService {
       });
   }
 
-  /**
-   * Improved method to find seat information by either ID or login
-   * @param identifier Either a numeric ID or string login
-   * @param params Optional parameters for filtering (since, until, org)
-   */
-  async getSeat(identifier: string | number, params: { since?: string; until?: string; org?: string } = {}) {
+  async getAssigneeByLogin(login: string) {
     const Seats = mongoose.model('Seats');
     const Member = mongoose.model('Member');
+    const member = await Member.findOne({ login });
 
-    try {
-      // Determine if identifier is numeric
-      const isNumeric = !isNaN(Number(identifier)) && String(Number(identifier)) === String(identifier);
-      let numericId: number | null = null;
-
-      // If it's a login, look up the ID first
-      if (!isNumeric) {
-        // Ensure identifier is treated as string before calling replace
-        const identifierString = String(identifier);
-
-        try {
-          // Find the member by login - exact match with explicit type casting
-          const member = await Member.findOne({ login: identifierString }).lean() as MemberDocument | null;
-
-          if (!member) {
-            // Try case-insensitive search as a fallback
-            const regex = new RegExp(`^${identifierString.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i');
-            const memberCaseInsensitive = await Member.findOne({
-              login: regex
-            }).lean() as MemberDocument | null;
-
-            if (!memberCaseInsensitive) {
-              return []; // Return empty array if no member found
-            }
-
-            // Now TypeScript knows memberCaseInsensitive has these properties
-            numericId = memberCaseInsensitive.id;
-          } else {
-            // Now TypeScript knows member has these properties
-            numericId = member.id;
-          }
-        } catch {
-          return []; // Return empty array on error
-        }
-      } else {
-        numericId = Number(identifier);
-      }
-
-      const query: mongoose.FilterQuery<SeatType> = { assignee_id: numericId };
-
-      if (params.org) {
-        query.org = { $eq: params.org };
-      }
-
-      if (params.since || params.until) {
-        query.createdAt = {};
-        if (params.since) {
-          query.createdAt.$gte = new Date(params.since);
-        }
-        if (params.until) {
-          query.createdAt.$lte = new Date(params.until);
-        }
-      }
-
-      // Execute the query
-      const results = await Seats.find(query)
-        .sort({ createdAt: 1 })
-        .populate({
-          path: 'assignee',
-          model: Member,
-          select: 'login id avatar_url name url html_url'
-        })
-        .lean()
-        .exec(); // Explicitly call exec()
-
-      logger.debug(`Query complete. Found ${results?.length || 0} seat records`);
-
-      return results || [];
-    } catch (error: unknown) {
-      logger.error('========== SEAT LOOKUP ERROR ==========');
-      logger.error('Error retrieving seat data for %s:', identifier, error);
-      // Safe access to stack property
-      logger.error(`Stack trace:`, error instanceof Error ? error.stack : 'No stack trace available');
-      logger.error('=======================================');
-
-      // Return empty results rather than throwing error
-      return [];
+    if (!member) {
+      throw `Member with id ${login} not found`
     }
+
+    return Seats.find({
+      assignee: member._id
+    })
+      .lean()
+      .populate({
+        path: 'assignee',  // Link to Member model 👤
+        model: Member,
+        select: 'login id avatar_url -_id'  // Only select needed fields 🎯
+      });
   }
 
   async insertSeats(org: string, queryAt: Date, data: SeatEntry[], team?: string) {
@@ -523,6 +379,8 @@ class SeatsService {
         .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
     );
 
+    fs.writeFileSync('sortedActivityDays.json', JSON.stringify(sortedActivityDays, null, 2), 'utf-8');
+
     return sortedActivityDays;
   }
 
@@ -664,6 +522,27 @@ class SeatsService {
     ]);
 
     return totals;
+  }
+
+  async searchMembersByLogin(query) {
+    try {
+      if (!query) return [];
+      
+      // Using MongoDB's $regex for partial text matching (case-insensitive)
+      const Member = mongoose.model('Member');
+      const members = await Member.find({
+        login: { $regex: query, $options: 'i' }
+      })
+      .select('login id avatar_url name org')
+      .limit(10)
+      .lean();
+      
+      console.log(`Found ${members.length} members matching query: ${query}`);
+      return members;
+    } catch (error) {
+      console.error('Error searching members by login:', error);
+      throw error;
+    }
   }
 }
 

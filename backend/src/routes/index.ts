@@ -7,6 +7,7 @@ import metricsController from '../controllers/metrics.controller.js';
 import teamsController from '../controllers/teams.controller.js';
 import targetValuesController from '../controllers/target.controller.js';
 import adoptionController from '../controllers/adoption.controller.js';
+import apiDocsController from '../controllers/api-docs.controller.js';
 import mongoSanitize from 'express-mongo-sanitize';
 
 const router = Router();
@@ -32,8 +33,10 @@ router.get('/seats/activity', adoptionController.getAdoptions);
 router.get('/seats/activity/totals', adoptionController.getAdoptionTotals);
 router.get('/seats/:id', SeatsController.getSeat);
 
+// The order matters - more specific routes first
 router.get('/teams', teamsController.getAllTeams);
 router.get('/members', teamsController.getAllMembers);
+router.get('/members/search', teamsController.searchMembersByLogin); // This needs to be before the dynamic route
 router.get('/members/:login', teamsController.getMemberByLogin);
 
 router.get('/settings', settingsController.getAllSettings);
@@ -54,6 +57,11 @@ router.get('/status', setupController.getStatus);
 
 router.get('/targets', targetValuesController.getTargetValues);
 router.post('/targets', targetValuesController.updateTargetValues);
+// Add the new route for target calculation
+router.get('/targets/calculate', targetValuesController.calculateTargetValues);
+
+// Add the new API documentation endpoint
+router.get('/docs', apiDocsController.getApiDocs);
 
 router.get('*', (req: Request, res: Response) => {
   res.status(404).send('Route not found');
