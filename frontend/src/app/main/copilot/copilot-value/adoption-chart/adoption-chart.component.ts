@@ -92,7 +92,6 @@ export class AdoptionChartComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-     console.log(this.yMax)
     if (this.data && this.yMax) {
       const options = this.highchartsService.transformActivityMetricsToLine(this.data, this.yMax);
       this._chartOptions = {

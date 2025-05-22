@@ -92,7 +92,6 @@ export class CopilotValueModelingComponent implements OnInit {
           this.userDataSource = this.transformTargets(targets.user);
           this.impactDataSource = this.transformTargets(targets.impact);
         });
-        console.log('Targets:', this.orgDataSource, this.userDataSource, this.impactDataSource);
       } catch (error) {
         console.error('Error during initialization:', error);
       }

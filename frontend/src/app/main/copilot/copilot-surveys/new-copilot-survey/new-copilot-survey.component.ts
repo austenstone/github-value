@@ -297,8 +297,6 @@ export class NewCopilotSurveyComponent implements OnInit {
           timeUsedFor: this.surveyForm.value.timeUsedFor || ''
         };
 
-        console.log('Submitting survey:', survey);
-
         if (!this.id) {
           this.copilotSurveyService.createSurvey(survey).pipe(
             catchError(error => {
@@ -359,7 +357,6 @@ export class NewCopilotSurveyComponent implements OnInit {
    */
   onMemberSelected(event: MatAutocompleteSelectedEvent): void {
     const selectedMember = event.option.value as Member;
-    console.log('Member selected:', selectedMember); // Optional: for debugging
 
     // Set the value in the form and clear errors
     const userIdControl = this.surveyForm.get('userId');
@@ -378,11 +375,8 @@ export class NewCopilotSurveyComponent implements OnInit {
       const userIdControl = this.surveyForm.get('userId');
       const userId = userIdControl?.value;
 
-      console.log('onUserIdBlur called with value:', userId); // Optional: for debugging
-
       // Skip validation if the value is already a Member object (meaning an option was selected)
       if (userId && typeof userId !== 'string' && userId.login) {
-        console.log('Value is a Member object, skipping validation'); // Optional: for debugging
         return;
       }
 
@@ -400,8 +394,6 @@ export class NewCopilotSurveyComponent implements OnInit {
     const userIdControl = this.surveyForm.get('userId');
     const userId = userIdControl?.value;
 
-    console.log('Validating userId:', userId); // Optional: for debugging
-
     // Skip validation if empty (let the required validator handle this)
     if (!userId) {
       return;
@@ -413,14 +405,9 @@ export class NewCopilotSurveyComponent implements OnInit {
       return;
     }
 
-    // Only validate if the value is a string (user typed it in and didn't select an option)
     if (typeof userId === 'string') {
-      console.log('Validating string value:', userId); // Optional: for debugging
-
-      // Set loading state
       this.isLoading$.next(true);
 
-      // Call validation method with exact=true for case-insensitive matching
       this.membersService.getMemberByLogin(userId, true).pipe(
         catchError(error => {
           console.error('Error validating user ID:', error);
@@ -437,8 +424,6 @@ export class NewCopilotSurveyComponent implements OnInit {
 
           // Always update to the correctly cased username from the API
           userIdControl?.setValue(result);
-
-          console.log('User validated and updated to correct case:', result.login); // Optional: for debugging
         } else {
           // Invalid user (and not caught by catchError, e.g., API returned null)
           if (!userIdControl?.hasError('invalidUserId')) { // Avoid overwriting existing error

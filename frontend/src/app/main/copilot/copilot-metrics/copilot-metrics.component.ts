@@ -85,10 +85,6 @@ export class CopilotMetricsComponent implements OnInit, OnDestroy {
 
     this.reset();
 
-    console.log({
-      since: event.start.toISOString(),
-      until: event.end.toISOString()
-    })
     this.subscriptions.push(
       this.seatService.getActivityTotals({
         org: this.installation?.account?.login,

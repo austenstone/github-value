@@ -1,5 +1,6 @@
 import express from 'express';
 import StatusService from '../services/status.service.js';
+import logger from '../services/logger.js';
 
 const router = express.Router();
 const statusService = new StatusService();
@@ -10,7 +11,7 @@ router.get('/', async (req, res) => {
     const status = await statusService.getStatus(req);
     res.json(status);
   } catch (error) {
-    console.error('Error fetching status:', error);
+    logger.error('Error fetching status:', error);
     res.status(500).json({ error: 'Failed to fetch status' });
   }
 });

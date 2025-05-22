@@ -57,20 +57,6 @@ export class MembersService {
   }
 
   searchMembersByLogin(query: string): Observable<Member[]> {
-    console.log(`MembersService: Searching with query "${query}"`);
-    
-    // Use the correct API endpoint that works
-    const url = `${serverUrl}/api/members/search`;
-    console.log(`MembersService: Request URL: ${url}`);
-    
-    return this.http.get<Member[]>(url, {
-      params: { query }
-    }).pipe(
-      tap(response => console.log('MembersService: Search response length:', response?.length)),
-      catchError(error => {
-        console.error('MembersService: Search error:', error);
-        return throwError(() => error);
-      })
-    );
+    return this.http.get<Member[]>(`${serverUrl}/api/members/search`, { params: { query } });
   }
 }

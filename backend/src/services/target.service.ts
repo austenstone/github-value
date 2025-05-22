@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { AdoptionType } from './adoption.service.js'
 import { SettingsType } from './settings.service.js';
 import { TargetCalculationService } from './target-calculation-service.js';
+import logger from './logger.js';
 
 interface Target {
   current: number;
@@ -116,9 +117,8 @@ class TargetValuesService {
 
       if (!existingTargets ) {
         const result = await this.calculateTargets();
-        // Extract the targets property from the result
         await Targets.create(result.targets);
-        console.log('Default targets created successfully.');
+        logger.info('Default targets created successfully.');
       }
     } catch (error) {
       throw new Error(`Error initializing target values: ${error}`);

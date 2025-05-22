@@ -6,7 +6,8 @@ import copilotSurveyService from './survey.service.js';
 import { SurveyType } from './survey.service.js'; // Import from survey.service.js instead
 import app from '../index.js';
 import dayjs from 'dayjs';
-import util from 'util';           // NEW
+import util from 'util';
+import logger from './logger.js';
 
 // Define types for calculation logging
 interface CalcLogType {
@@ -91,7 +92,7 @@ export class TargetCalculationService {
         this.calculationLogs.push(logEntry);
         
         // Also pretty print to console
-        console.log(`
+        logger.info(`
 ========== CALCULATION: ${name} ==========
 INPUTS:
 ${util.inspect(inputs, { depth: null, colors: false, compact: false })}
@@ -925,7 +926,7 @@ RESULT:
   ): Promise<{ targets: Targets; logs?: CalcLogType[] }> {
     this.debugLogging = enableLogging;
     this.resetLogging(); // Reset logging state
-    console.log(`Calculation logging ${enableLogging ? 'enabled' : 'disabled'}`);
+    logger.info(`Calculation logging ${enableLogging ? 'enabled' : 'disabled'}`);
     
     await this.fetchCalculationData(org);
     const targets = this.calculateAllTargets();
@@ -951,7 +952,7 @@ RESULT:
     enableLogging: boolean = false,
     includeLogsInResponse: boolean = false
   ): Promise<{ targets: Targets; logs?: CalcLogType[] }> {
-    console.log('Static method received params:', {
+    logger.info('Static method received params:', {
       org: org || 'null',
       enableLogging, 
       includeLogsInResponse
@@ -968,7 +969,7 @@ RESULT:
     
     // Verify the structure of the result before returning
     const hasLogs = Boolean(result.logs && result.logs.length > 0);
-    console.log(`Result has logs: ${hasLogs}, includeLogsInResponse: ${includeLogsInResponse}`);
+    logger.info(`Result has logs: ${hasLogs}, includeLogsInResponse: ${includeLogsInResponse}`);
     
     return result;
   }
@@ -981,7 +982,7 @@ if (import.meta.url.endsWith(process.argv[1])) {
   (async () => {
     // Example of using the static method with logs included in response
     const result = await TargetCalculationService.fetchAndCalculateTargets('test-org', true, true);
-    console.log('Calculated Targets:', JSON.stringify(result.targets, null, 2));
-    console.log(`Returned ${result.logs?.length || 0} calculation logs`);
+    logger.info('Calculated Targets:', JSON.stringify(result.targets, null, 2));
+    logger.info(`Returned ${result.logs?.length || 0} calculation logs`);
   })();
 }

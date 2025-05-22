@@ -106,7 +106,6 @@ export class CopilotValueComponent implements OnInit, OnDestroy {
         }),
         this.targetsService.getTargets().subscribe(data => {
           this.targetsData = data;
-          console.log('Targets:', data);
         })
       ];
     });

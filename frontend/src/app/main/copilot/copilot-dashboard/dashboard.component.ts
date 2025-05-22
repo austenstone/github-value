@@ -171,7 +171,6 @@ export class CopilotDashboardComponent implements OnInit, OnDestroy {
       this.subscriptions.push(
         this.targetsService.getTargets().subscribe(data => {
           this.targetsData = data;
-          console.log('Dashboard targets loaded:', data);   // DEBUG
           this.cdr.detectChanges();
         })
       );

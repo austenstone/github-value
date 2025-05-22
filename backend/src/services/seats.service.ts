@@ -3,7 +3,6 @@ import { SeatType } from "../models/seats.model.js";
 import { components } from "@octokit/openapi-types";
 import mongoose from 'mongoose';
 import { MemberActivityType, MemberType } from 'models/teams.model.js';
-import fs from 'fs';
 import adoptionService from './adoption.service.js';
 import logger from './logger.js';
 
@@ -77,7 +76,7 @@ class SeatsService {
         $lte?: Date;
       };
     }
-    
+
     const query: SeatQuery = {
       assignee: member._id  // This is the MongoDB ObjectId that links to the Member document
     };
@@ -150,42 +149,32 @@ class SeatsService {
   async getSeat(identifier: string | number, params: { since?: string; until?: string; org?: string } = {}) {
     const Seats = mongoose.model('Seats');
     const Member = mongoose.model('Member');
-    
+
     try {
-      //console.log('========== SEAT LOOKUP START ==========');
-      //console.log(`Looking up seat for identifier: ${identifier}, params:`, JSON.stringify(params));
-      
-      // Force console output to appear immediately
-      process.stdout.write(''); 
-      
       // Determine if identifier is numeric
       const isNumeric = !isNaN(Number(identifier)) && String(Number(identifier)) === String(identifier);
       let numericId: number | null = null;
-      
+
       // If it's a login, look up the ID first
       if (!isNumeric) {
         // Ensure identifier is treated as string before calling replace
         const identifierString = String(identifier);
-        
+
         try {
           // Find the member by login - exact match with explicit type casting
           const member = await Member.findOne({ login: identifierString }).lean() as MemberDocument | null;
-          
+
           if (!member) {
             // Try case-insensitive search as a fallback
             const regex = new RegExp(`^${identifierString.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i');
-            const memberCaseInsensitive = await Member.findOne({ 
+            const memberCaseInsensitive = await Member.findOne({
               login: regex
             }).lean() as MemberDocument | null;
-            
-            // Check if we got a document and then safely access properties
-            console.log(`Case-insensitive search result:`, 
-                        memberCaseInsensitive ? `Found ${memberCaseInsensitive.login}` : 'Not found');
-            
+
             if (!memberCaseInsensitive) {
               return []; // Return empty array if no member found
             }
-            
+
             // Now TypeScript knows memberCaseInsensitive has these properties
             numericId = memberCaseInsensitive.id;
           } else {
@@ -198,29 +187,24 @@ class SeatsService {
       } else {
         numericId = Number(identifier);
       }
-      
+
       const query: mongoose.FilterQuery<SeatType> = { assignee_id: numericId };
-      
+
       if (params.org) {
         query.org = params.org;
       }
-      
+
       if (params.since || params.until) {
         query.createdAt = {};
         if (params.since) {
           query.createdAt.$gte = new Date(params.since);
-        //  console.log(`Added since filter: ${params.since}`);
         }
         if (params.until) {
           query.createdAt.$lte = new Date(params.until);
-        //  console.log(`Added until filter: ${params.until}`);
         }
       }
-      
-     // console.log(`Final query:`, JSON.stringify(query));
-      
+
       // Execute the query
-      //console.log(`Executing Seats.find() with query`);
       const results = await Seats.find(query)
         .sort({ createdAt: 1 })
         .populate({
@@ -230,19 +214,17 @@ class SeatsService {
         })
         .lean()
         .exec(); // Explicitly call exec()
-      
+
       logger.debug(`Query complete. Found ${results?.length || 0} seat records`);
-      //console.log('========== SEAT LOOKUP END ==========');
-      
+
       return results || [];
-      
     } catch (error: unknown) {
       console.error('========== SEAT LOOKUP ERROR ==========');
       console.error(`Error retrieving seat data for ${identifier}:`, error);
       // Safe access to stack property
       console.error(`Stack trace:`, error instanceof Error ? error.stack : 'No stack trace available');
       console.error('=======================================');
-      
+
       // Return empty results rather than throwing error
       return [];
     }
@@ -541,8 +523,6 @@ class SeatsService {
         .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
     );
 
-    fs.writeFileSync('sortedActivityDays.json', JSON.stringify(sortedActivityDays, null, 2), 'utf-8');
-
     return sortedActivityDays;
   }
 
@@ -609,7 +589,7 @@ class SeatsService {
     const { org, since, until } = params;
     const limit = typeof params.limit === 'string' ? parseInt(params.limit) : (params.limit || 100);
 
-        const match: mongoose.FilterQuery<MemberActivityType> = {};
+    const match: mongoose.FilterQuery<MemberActivityType> = {};
     if (org) match.org = org;
     if (since || until) {
       match.date = {

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import TargetValuesService from '../services/target.service.js';
 import { TargetCalculationService } from '../services/target-calculation-service.js';
+import logger from '../services/logger.js';
 
 class TargetValuesController {
   async getTargetValues(req: Request, res: Response): Promise<void> {
@@ -8,6 +9,7 @@ class TargetValuesController {
       const targetValues = await TargetValuesService.getTargetValues();
       res.status(200).json(targetValues);
     } catch (error) {
+      logger.error('Error getting target values:', error);
       res.status(500).json(error);
     }
   }
@@ -17,6 +19,7 @@ class TargetValuesController {
       const updatedTargetValues = await TargetValuesService.updateTargetValues(req.body);
       res.status(200).json(updatedTargetValues);
     } catch (error) {
+      logger.error('Error updating target values:', error);
       res.status(500).json(error);
     }
   }
@@ -42,12 +45,12 @@ class TargetValuesController {
       
       // Check if we have logs before sending the response
       if (includeLogsInResponse) {
-        console.log(`Response will include ${result.logs?.length || 0} logs`);
+        logger.info(`Response will include ${result.logs?.length || 0} logs`);
       }
       
       res.status(200).json(result);
     } catch (error) {
-      console.error('Error calculating target values:', error);
+      logger.error('Error calculating target values:', error);
       res.status(500).json({ error: `Failed to calculate target values: ${error}` });
     }
   }
