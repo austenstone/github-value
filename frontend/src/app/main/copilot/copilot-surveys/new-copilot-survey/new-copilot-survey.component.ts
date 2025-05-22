@@ -7,7 +7,7 @@ import { CopilotSurveyService, Survey } from '../../../../services/api/copilot-s
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { MembersService, Member } from '../../../../services/api/members.service';
 import { InstallationsService } from '../../../../services/api/installations.service';
-import { BehaviorSubject, catchError, finalize, map, Observable, of, Subject, startWith, take } from 'rxjs';
+import { BehaviorSubject, catchError, finalize, map, Observable, of, Subject } from 'rxjs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatIconModule } from '@angular/material/icon'; // Import MatIconModule
 import { MatFormFieldModule } from '@angular/material/form-field'; // Import MatFormFieldModule
@@ -17,7 +17,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner'; /
 import { MatRadioModule } from '@angular/material/radio'; // Import MatRadioModule
 import { MatCardModule } from '@angular/material/card'; // Import MatCardModule
 import { MatSliderModule } from '@angular/material/slider'; // Import MatSliderModule
-import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 import { Seat, SeatService } from '../../../../services/api/seat.service';
 import dayjs from "dayjs";
 
@@ -73,13 +73,13 @@ export class NewCopilotSurveyComponent implements OnInit {
   defaultPercentTimeSaved = 25;
   id: number;
   surveys: Survey[] = [];
-  orgFromApp: string = '';
+  orgFromApp = '';
   hasQueryParams = false;
   
   // Add these properties to fix the template error
-  repo: string = '';
-  prNumber: string = '';
-  
+  repo = '';
+  prNumber = '';
+
   // Use a subject to trigger searches
   private searchTerms = new Subject<string>();
   // Use BehaviorSubject for loading state
@@ -173,6 +173,7 @@ export class NewCopilotSurveyComponent implements OnInit {
       // Handle GitHub URL parsing
       if (params['url'] && params['url'].includes('github.com')) {
         const { org, repo, prNumber } = this.parseGitHubPRUrl(params['url']);
+        this.orgFromApp = org;
         if (!params['repo'] && repo) {
           this.surveyForm.get('repo')?.setValue(repo);
           this.repo = repo;  // Immediately set the property for template access
@@ -184,10 +185,13 @@ export class NewCopilotSurveyComponent implements OnInit {
       }
     });
 
-    // Get organization
-    this.installationsService.currentInstallation.subscribe(installation => {
-      this.orgFromApp = installation?.account?.login || '';
-    });
+    if (!this.orgFromApp) {
+      this.installationsService.currentInstallation.subscribe(installation => {
+        this.orgFromApp = installation?.account?.login || '';
+      });
+    } else {
+      // set organization in installationsService
+    }
 
     this.loadHistoricalReasons();
 
@@ -485,7 +489,7 @@ export class NewCopilotSurveyComponent implements OnInit {
           this.copilotActivityHours = 0;
         }
       },
-      error: (error: any) => {  // Add type annotation here
+      error: (error) => {  // Add type annotation here
         console.error('Error fetching user Copilot activity:', error);
         this.hasCopilotActivity = false;
         this.copilotActivityHours = 0;

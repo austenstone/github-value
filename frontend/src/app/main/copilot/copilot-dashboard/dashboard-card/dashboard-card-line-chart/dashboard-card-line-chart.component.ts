@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HighchartsChartModule } from 'highcharts-angular';
 import * as Highcharts from 'highcharts';
@@ -12,7 +12,7 @@ import { HighchartsService } from '../../../../../services/highcharts.service';
   templateUrl: './dashboard-card-line-chart.component.html',
   styleUrls: ['./dashboard-card-line-chart.component.scss']
 })
-export class DashboardCardLineChartComponent {
+export class DashboardCardLineChartComponent implements OnChanges {
   @Input() data?: CopilotMetrics[];
 
   Highcharts: typeof Highcharts = Highcharts;

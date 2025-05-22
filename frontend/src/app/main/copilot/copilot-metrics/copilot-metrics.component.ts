@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { DateRangeSelectComponent } from "../../../shared/date-range-select/date-range-select.component";
 import { MetricsService } from '../../../services/api/metrics.service';
 import { CopilotMetrics } from '../../../services/api/metrics.service.interfaces';
@@ -34,7 +34,7 @@ import { DashboardCardLineChartComponent } from '../copilot-dashboard/dashboard-
     '../copilot-dashboard/dashboard.component.scss'
   ]
 })
-export class CopilotMetricsComponent implements OnInit {
+export class CopilotMetricsComponent implements OnInit, OnDestroy {
   metrics?: CopilotMetrics[];
   metricsTotals?: CopilotMetrics;
   installation?: Installation = undefined;

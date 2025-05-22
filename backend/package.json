@@ -5,10 +5,10 @@
   "description": "Demonstrate the value of GitHub",
   "main": "src/index.ts",
   "scripts": {
-    "start": "node -e \"process.env.NODE_HEAP_SIZE = process.env.NODE_HEAP_SIZE || '4096'; console.log('Using memory limit: ' + process.env.NODE_HEAP_SIZE + 'MB'); process.exit(0)\" && NODE_OPTIONS=\"--max-old-space-size=${NODE_HEAP_SIZE:-6120}\" node --enable-source-maps dist/index.js | bunyan -o short -l info",
+    "start": "node --enable-source-maps dist/index.js | bunyan -o short -l info",
     "test": "vitest",
     "build": "tsc",
-    "dev": "NODE_OPTIONS='--max-old-space-size=4096' tsx watch src/index.ts | bunyan -o short -l info",
+    "dev": "tsx watch src/index.ts | bunyan -o short -l info",
     "lint": "eslint src/**/*.ts",
     "compose:start": "docker-compose -f ../compose.yml up -d",
     "db:start": "docker-compose -f ../compose.yml up -d mongo",

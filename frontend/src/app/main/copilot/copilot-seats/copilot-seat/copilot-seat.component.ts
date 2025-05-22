@@ -21,16 +21,6 @@ dayjs.extend(relativeTime);
 
 type TimeRange = '7days' | '30days' | 'all';
 
-// Define interfaces for the activity data structure
-interface Activity {
-  duration?: number;
-  // Add other activity properties as needed
-}
-
-interface SeatWithActivity extends Seat {
-  activity?: Activity[];
-}
-
 @Component({
   selector: 'app-copilot-seat',
   standalone: true,
@@ -89,8 +79,8 @@ export class CopilotSeatComponent implements OnInit {
   timeSpent?: string;
   selectedTimeRange: TimeRange = '7days';
   loading = false;
-  surveyCount: number = 0;
-  avgTimeSavings: string = 'N/A';
+  surveyCount = 0;
+  avgTimeSavings = 'N/A';
 
   constructor(
     private copilotSeatService: SeatService,
@@ -223,7 +213,7 @@ export class CopilotSeatComponent implements OnInit {
           this.updateFlag = true;
           this.cdr.detectChanges();
         },
-        error: (error: any) => {
+        error: (error) => {
           console.error('Error loading data:', error);
           // Hide loading indicator - SET TO FALSE even if there's an error
           this.loading = false;

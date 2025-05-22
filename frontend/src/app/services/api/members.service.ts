@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { serverUrl } from '../server.service';
 import { HttpClient } from '@angular/common/http';
 import { Endpoints } from '@octokit/types';
-import { catchError, map, Observable, tap } from 'rxjs';
+import { catchError, Observable, tap } from 'rxjs';
 import { throwError } from 'rxjs';
 
 export interface Member {
@@ -45,10 +45,10 @@ export class MembersService {
     });
   }
 
-  getMemberByLogin(login: string, exact: boolean = true) {
+  getMemberByLogin(login: string, exact = true) {
     return this.http.get<Endpoints["GET /users/{username}"]["response"]["data"]>(
       `${this.apiUrl}/${login}`,
-      { params: { exact: String(exact) } }
+      { params: { exact: String(exact) } } // make this boolean not string.
     ).pipe(
       catchError(error => {
         return throwError(() => error);

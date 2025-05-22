@@ -24,9 +24,8 @@ export interface StatusType {
 }
 
 class StatusService {
-  constructor() {
-    
-  }
+  
+  constructor() { }
 
   async getStatus(req?: Request): Promise<StatusType> {
     const status = {} as StatusType;

@@ -587,7 +587,7 @@ export class HighchartsService {
       data: [] as CustomHighchartsPointOptions[]
     };
 
-    Object.entries(activity).forEach(([date, dateData]) => {
+    Object.entries(activity).forEach(([date]) => {
       // Skip if totalActive is undefined or 0 or there is a data quality issue making daily suggestions per average user > 250
       const currentMetrics = metrics.find(m => m.date.startsWith(date.slice(0, 10)));
       if (!currentMetrics || (currentMetrics.copilot_ide_code_completions?.total_engaged_users ?? 0) < 1 || ((currentMetrics.copilot_ide_code_completions?.total_code_suggestions ?? 0) / (currentMetrics.copilot_ide_code_completions?.total_engaged_users ?? 1)) > 250) return;

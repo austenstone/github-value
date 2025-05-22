@@ -1,12 +1,10 @@
 import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { AppModule } from '../../../app.module';
-import { DashboardCardValueComponent } from './dashboard-card/dashboard-card-value/dashboard-card-value.component';
 import { MetricsService } from '../../../services/api/metrics.service';
 import { CopilotMetrics } from '../../../services/api/metrics.service.interfaces';
-import { ActivityResponse, Seat, SeatService } from '../../../services/api/seat.service';
-import { MembersService } from '../../../services/api/members.service';
+import { ActivityResponse, SeatService } from '../../../services/api/seat.service';
 import { CopilotSurveyService, Survey } from '../../../services/api/copilot-survey.service';
-import { forkJoin, Subject, Subscription, takeUntil } from 'rxjs';
+import { Subject, Subscription, takeUntil } from 'rxjs';
 import { AdoptionChartComponent } from '../copilot-value/adoption-chart/adoption-chart.component';
 import { DailyActivityChartComponent } from '../copilot-value/daily-activity-chart/daily-activity-chart.component';
 import { TimeSavedChartComponent } from '../copilot-value/time-saved-chart/time-saved-chart.component';
@@ -104,7 +102,6 @@ export class CopilotDashboardComponent implements OnInit, OnDestroy {
 
   constructor(
     private metricsService: MetricsService,
-    private membersService: MembersService,
     private seatService: SeatService,
     private surveyService: CopilotSurveyService,
     private installationsService: InstallationsService,

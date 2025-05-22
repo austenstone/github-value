@@ -24,7 +24,7 @@ export class AdoptionChartComponent implements OnInit, OnChanges {
   totalUsers = 500;
   @Input() data?: ActivityResponse;
   @Input() targets?: Targets;
-  @Input() yMax: number = 1111;
+  @Input() yMax = 1111;
   @Input() chartOptions?: Highcharts.Options;
   _chartOptions: Highcharts.Options = {
     yAxis: {
@@ -114,7 +114,7 @@ export class AdoptionChartComponent implements OnInit, OnChanges {
       }
       this.updateFlag = true;
       setTimeout(() => {
-        (this.chart?.yAxis[0] as any).plotLinesAndBands[0].render();
+        this.chart?.yAxis[0].update({});
       }, 2000)
     }
   }
