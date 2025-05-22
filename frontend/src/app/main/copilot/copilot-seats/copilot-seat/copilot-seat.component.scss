@@ -1,3 +1,58 @@
 :host {
   display: block;
 }
+
+.container {
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.time-range-selector {
+  margin-bottom: 20px;
+}
+
+.info-card {
+  margin-bottom: 20px;
+}
+
+.chart-card {
+  margin-bottom: 20px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin-right: 20px;
+}
+
+.details {
+  h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+  }
+  
+  p {
+    margin: 5px 0;
+  }
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  font-size: 18px;
+  color: #666;
+}

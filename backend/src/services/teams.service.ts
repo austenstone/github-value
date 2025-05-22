@@ -1,6 +1,7 @@
 import { Endpoints } from "@octokit/types";
 import mongoose from "mongoose";
 import logger from "./logger.js";
+import { MemberType } from "models/teams.model.js";
 
 class TeamsService {
   async updateTeams(
@@ -27,11 +28,17 @@ class TeamsService {
         if (parentTeam) {
           await Team.findOneAndUpdate(
             { githubId: team.id },
-            { parent: parentTeam._id }
+            { parent: parentTeam._id }, // Use MongoDB _id for the parent
           );
         }
       }
     }
+
+    // const updated = await Team.findOneAndUpdate(
+    //   { organization: org },
+    //   { parent: teams[0] },
+    //   { upsert: true }
+    // );
 
     await Team.findOneAndUpdate(
       { githubId: -1 },
@@ -131,14 +138,14 @@ class TeamsService {
     return team?.updatedAt || new Date(0);
   }
 
-  async getMemberByLogin(login: string) {
+  async getMemberByLogin(login: string): Promise<MemberType> {
     const Member = mongoose.model("Member");
     return await Member.findOne({ login })
       .select("login name url avatar_url")
       .exec();
   }
 
-  async getAllMembers(org?: string) {
+  async getAllMembers(org?: string): Promise<MemberType[]> {
     const Member = mongoose.model("Member");
     try {
       return await Member.find({
@@ -180,6 +187,26 @@ class TeamsService {
       })
       .sort({ name: "asc", "members.login": "asc" })
       .exec();
+  }
+
+  async searchMembersByLogin(query: string) {
+    try {
+      if (!query) return [];
+      
+      // Using MongoDB's $regex for partial text matching (case-insensitive)
+      const Member = mongoose.model('Member');
+      const members = await Member.find({
+        login: { $regex: query, $options: 'i' }
+      })
+      .select('login id avatar_url name org')
+      .limit(10)
+      .lean();
+      
+      return members;
+    } catch (error) {
+      console.error('Error searching members:', error);
+      throw error;
+    }
   }
 }
 

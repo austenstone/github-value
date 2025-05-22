@@ -1,23 +1,59 @@
-<div class="page-container" *ngIf="seat && seat.assignee">
-  <div class="page-header">
-    <a [href]="seat.assignee.html_url" target="_blank">
-      <h1>
-        <img [src]="seat.assignee.avatar_url" class="avatar" alt="User avatar" width="75" height="75">
-        {{ seat.assignee.login }}
-      </h1>
-    </a>
+<div class="container" *ngIf="seat">
+  <div class="header">
+    
   </div>
-  <mat-card appearance="outlined">
+
+  <mat-card class="info-card">
     <mat-card-content>
-      <p></p>
-      <p><strong>Plan Type: </strong>{{ seat.plan_type | titlecase }}</p>
-      <p><strong>Created: </strong>{{ seat.created_at | date: 'medium' }}</p>
-      <p><strong>Last Active: </strong>{{ seat.last_activity_at | date: 'medium' }}</p>
-      <p><strong>Editor: </strong>{{ seat.last_activity_editor }}</p>
-      <p><strong>Site Admin: </strong>{{ seat.assignee.site_admin ? 'Yes' : 'No' }}</p>
-      <p><strong>Copilot Usage: </strong>{{ timeSpent }}</p>
+      <div class="user-info">
+        <img [src]="seat.assignee.avatar_url" alt="User avatar" class="avatar">
+        <div class="details">
+          <h2>{{ seat.assignee.login }}</h2>
+          <p>Plan Type: <strong>{{ seat.plan_type | titlecase }}</strong></p>
+          <p>Created: <strong>{{ seat.created_at | date:'MMM d, y, h:mm:ss a' }}</strong></p>
+          <p>Last active: {{ seat.last_activity_at | date:'medium' }}</p>
+          <p>Editor: {{ seat.last_activity_editor }}</p>
+          <p>Hours with Copilot activity: {{ timeSpent }}</p>
+          <div class="additional-stats">
+            <p>Number of Estimates (surveys): <strong>{{ surveyCount }}</strong></p>
+            <p>Average Time Savings Reported: <strong>{{ avgTimeSavings }}</strong></p>
+          </div>
+        </div>
+      </div>
     </mat-card-content>
   </mat-card>
+
+  <div class="chart-controls">
+    <!-- Time range selector - now right-justified above chart -->
+    <mat-button-toggle-group [(ngModel)]="selectedTimeRange" (change)="onTimeRangeChange()">
+      <mat-button-toggle value="7days">Last 7 Days</mat-button-toggle>
+      <mat-button-toggle value="30days">Last 30 Days</mat-button-toggle>
+      <mat-button-toggle value="all">All Time</mat-button-toggle>
+    </mat-button-toggle-group>
+  </div>
+
+  <mat-card class="chart-card">
+    <mat-card-content>
+      <div *ngIf="loading" class="loading-indicator">
+        <p>Loading activity data... This may take a moment.</p>
+        <div class="spinner"></div>
+      </div>
+      <highcharts-chart 
+        *ngIf="!loading"
+        [Highcharts]="Highcharts" 
+        [options]="chartOptions" 
+        [update]="updateFlag"
+        style="width: 100%; height: 400px; display: block;"
+      ></highcharts-chart>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<div class="container" *ngIf="!seat">
+  <div class="loading">
+    <p>Loading seat data...</p>
+    <div class="spinner"></div>
+  </div>
 </div>
 
 <style>
@@ -26,7 +62,55 @@
   margin-right: 8px;
   vertical-align: middle;
 }
-</style>
 
-<highcharts-chart [Highcharts]="Highcharts" [options]="chartOptions" [(update)]="updateFlag">
-</highcharts-chart>
+.chart-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 15px;
+}
+
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  color: #666;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 122, 204, 0.2);
+  border-top-color: #007ACC;
+  border-radius: 50%;
+  animation: spin 1s ease-in-out infinite;
+  margin: 20px 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  font-size: 18px;
+  color: #666;
+}
+
+.additional-stats {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.additional-stats h3 {
+  margin-bottom: 8px;
+  color: #333;
+  font-size: 16px;
+}
+</style>

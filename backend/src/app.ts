@@ -32,11 +32,15 @@ class App {
     //   throw new Error('MONGODB_URI must be set');
     // }
     this.database = new Database();
+    
+    // Create webhook service with just port/path, but without URL
+    // The URL will be populated from settings later
     const webhookService = new WebhookService({
-      url: process.env.WEBHOOK_PROXY_URL,
+      url: process.env.WEBHOOK_PROXY_URL || undefined, // Use env value or undefined
       path: '/api/github/webhooks',
       port
     });
+    
     this.github = new GitHub(
       {
         // adding GH_APP_* so you can set these as codespaces secrets, can't use GITHUB_* as a prefix for those
@@ -88,7 +92,7 @@ class App {
           await TargetValuesService.initialize();
           logger.info('Targets initialized');
         } catch (error) {
-          logger.warn('GitHub App failed to connect', (error as any)?.message || error);
+          logger.warn('GitHub App failed to connect', error instanceof Error ? error.message : String(error));
         }
 
       }
@@ -135,7 +139,7 @@ class App {
     logger.info(`eListener on port ${this.port} (http://localhost:${this.port})`);
   }
 
-  private initializeSettings() {
+  private async initializeSettings() {
     return this.settingsService.initialize()
       .then(async (settings) => {
         if (settings.webhookSecret) {
@@ -151,11 +155,27 @@ class App {
         if (settings.baseUrl) {
           this.baseUrl = settings.baseUrl;
         }
+        
+        // Add this section to properly set the webhook URL from settings
+        if (settings.webhookProxyUrl) {
+          // Update the webhook service with the stored URL
+          await this.github.webhookService.connect({ url: settings.webhookProxyUrl });
+          logger.info(`Using stored webhook URL: ${settings.webhookProxyUrl}`);
+        }
       })
       .finally(async () => {
         await this.settingsService.updateSetting('webhookSecret', this.github.input.webhooks?.secret || '', false);
         await this.settingsService.updateSetting('webhookProxyUrl', this.github.webhookService.url!, false);
         await this.settingsService.updateSetting('metricsCronExpression', this.github.cronExpression!, false);
+        
+        // Make sure we store the current URL after connection
+        const currentUrl = this.github.webhookService.url;
+        if (currentUrl) {
+          await this.settingsService.updateSetting('webhookProxyUrl', currentUrl, false);
+          logger.info(`Saved webhook URL: ${currentUrl}`);
+        } else {
+          logger.warn('No webhook URL available to save');
+        }
       })
   }
 }

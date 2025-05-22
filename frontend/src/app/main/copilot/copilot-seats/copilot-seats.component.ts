@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ColumnOptions, TableComponent } from '../../../shared/table/table.component';
 import { AllSeats, Seat, SeatService } from '../../../services/api/seat.service';
 import { SortDirection } from '@angular/material/sort';

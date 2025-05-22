@@ -5,7 +5,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { CopilotMetrics } from '../../../../../services/api/metrics.service.interfaces';
 import { HighchartsService } from '../../../../../services/highcharts.service';
-import { LoadingSpinnerComponent } from '../../../../../shared/loading-spinner/loading-spinner.component';
 
 export interface DashboardCardBarsInput {
   value: number;
@@ -23,8 +22,7 @@ export interface DashboardCardBarsInput {
     MatIconModule,
     CommonModule,
     MatProgressBarModule,
-    MatIconModule,
-    // LoadingSpinnerComponent
+    MatIconModule
   ],
   templateUrl: './dashboard-card-bars.component.html',
   styleUrls: [

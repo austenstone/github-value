@@ -26,10 +26,10 @@ export class TimeSavedChartComponent implements OnInit, OnChanges {
   _chartOptions: Highcharts.Options = {
     yAxis: {
       title: {
-        text: 'Time Saved (hrs per week)'
+        text: 'Time Saved (Hrs per Week)'
       },
       min: 0,
-      // max: 12,
+      max: 10,
       labels: {
         format: '{value}hrs'
       },

@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { serverUrl } from '../server.service';
 
@@ -42,6 +42,7 @@ export class CopilotSurveyService {
     since?: string;
     until?: string;
     status?: 'pending' | 'completed';
+    userId?: string;
   }) {
     if (!params?.org) delete params?.org;
     return this.http.get<Survey[]>(this.apiUrl, {
@@ -51,6 +52,10 @@ export class CopilotSurveyService {
 
   getSurveyById(id: number) {
     return this.http.get<Survey>(`${this.apiUrl}/${id}`);
+  }
+
+  getSurveysByUserId(userId: string) {
+    return this.getAllSurveys({ userId: userId.toString() });
   }
 
   deleteSurvey(id: number) {

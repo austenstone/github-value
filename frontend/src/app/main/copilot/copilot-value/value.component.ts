@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { AppModule } from '../../../app.module';
 import { AdoptionChartComponent } from "./adoption-chart/adoption-chart.component";
 import { ActivityResponse, SeatService } from '../../../services/api/seat.service';
@@ -32,7 +32,7 @@ HC_full_screen(Highcharts);
     // '../copilot-dashboard/dashboard.component.scss'
   ]
 })
-export class CopilotValueComponent implements OnInit {
+export class CopilotValueComponent implements OnInit, OnDestroy {
   activityData?: ActivityResponse;
   metricsData?: CopilotMetrics[];
   targetsData?: Targets;

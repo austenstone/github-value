@@ -1,7 +1,8 @@
 import mongoose from 'mongoose';
-import adoptionService, { AdoptionType } from './adoption.service.js';
-import app from '../index.js';
+import { AdoptionType } from './adoption.service.js'
 import { SettingsType } from './settings.service.js';
+import { TargetCalculationService } from './target-calculation-service.js';
+import logger from './logger.js';
 
 interface Target {
   current: number;
@@ -54,7 +55,12 @@ class TargetValuesService {
     }
   }
 
-  calculateTargets(settings: SettingsType, adoptions: AdoptionType[]): Targets {
+  //TODO: remove this method
+  // This method is not used in the current codebase and should be removed
+  // It was originally intended to calculate targets based on settings and adoptions
+  // but is now replaced by the fetchAndCalculateTargets method in TargetCalculationService
+  // and should be removed to avoid confusion.
+  calculateTargets_ori(settings: SettingsType, adoptions: AdoptionType[]): Targets {
     const topAdoptions = adoptions
       .sort((a, b) => b.totalActive - a.totalActive)
       .slice(0, 10);
@@ -98,20 +104,21 @@ class TargetValuesService {
       },
     };
   }
+   //TODO: remove the unused parameters from this method
+  calculateTargets(): Promise<{ targets: Targets; logs?: unknown[] }> {
+    return TargetCalculationService.fetchAndCalculateTargets(null, true, false); //always true for enableLogging for now  to audit calculations, always false for includeLogsInResponse.
+  }
 
-  async initialize() {
+  //create default targets if they don't exist  
+  async initialize() { 
     try {
       const Targets = mongoose.model('Targets');
       const existingTargets = await Targets.findOne();
 
-      if (!existingTargets) {
-        const settings = await app.settingsService.getAllSettings();
-        const adoptions = await adoptionService.getAllAdoptions2({
-          filter: { enterprise: 'enterprise' },
-          projection: {}
-        });
-        const initialData = this.calculateTargets(settings, adoptions);
-        await Targets.create(initialData);
+      if (!existingTargets ) {
+        const result = await this.calculateTargets();
+        await Targets.create(result.targets);
+        logger.info('Default targets created successfully.');
       }
     } catch (error) {
       throw new Error(`Error initializing target values: ${error}`);

@@ -85,7 +85,7 @@ export class CopilotValueModelingComponent implements OnInit {
   ngOnInit() {
     this.installationsService.currentInstallation.pipe(
       takeUntil(this._destroy$.asObservable())
-    ).subscribe(installation => {
+    ).subscribe(() => { // subscribe to installation to have installation specific targets
       try {
         this.targetsService.getTargets().subscribe(targets => {
           this.orgDataSource = this.transformTargets(targets.org);

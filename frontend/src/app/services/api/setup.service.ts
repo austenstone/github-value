@@ -60,4 +60,4 @@ export class SetupService {
     return this.http.post(`${this.apiUrl}/db`, request);
   }
 
-}
+  }
