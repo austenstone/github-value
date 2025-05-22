@@ -191,7 +191,7 @@ class SeatsService {
       const query: mongoose.FilterQuery<SeatType> = { assignee_id: numericId };
 
       if (params.org) {
-        query.org = params.org;
+        query.org = { $eq: params.org };
       }
 
       if (params.since || params.until) {
@@ -219,11 +219,11 @@ class SeatsService {
 
       return results || [];
     } catch (error: unknown) {
-      console.error('========== SEAT LOOKUP ERROR ==========');
-      console.error(`Error retrieving seat data for ${identifier}:`, error);
+      logger.error('========== SEAT LOOKUP ERROR ==========');
+      logger.error('Error retrieving seat data for %s:', identifier, error);
       // Safe access to stack property
-      console.error(`Stack trace:`, error instanceof Error ? error.stack : 'No stack trace available');
-      console.error('=======================================');
+      logger.error(`Stack trace:`, error instanceof Error ? error.stack : 'No stack trace available');
+      logger.error('=======================================');
 
       // Return empty results rather than throwing error
       return [];

@@ -18,9 +18,9 @@ class SeatsController {
     const { since, until, org } = req.query as { [key: string]: string | undefined };
     
     try {
-      // Create params object with all query parameters
-      const params = { since, until, org };
-      
+      const sanitizedOrg = typeof org === 'string' ? org : undefined;
+      const params = { since, until, org: sanitizedOrg };
+
       // Use our new unified getSeat method that handles both ID and login
       // Pass the ID directly without conversion - the service will handle it
       const seat = await SeatsService.getSeat(id, params);
@@ -28,8 +28,6 @@ class SeatsController {
       res.status(200).json(seat);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      const sanitizedId = encodeURIComponent(id);
-      console.error(`Error in getSeat controller for id=${sanitizedId}:`, errorMessage);
       res.status(500).json({ error: errorMessage });
     }
   }
