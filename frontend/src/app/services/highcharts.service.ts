@@ -591,7 +591,7 @@ export class HighchartsService {
       // Skip if totalActive is undefined or 0 or there is a data quality issue making daily suggestions per average user > 250
       const currentMetrics = metrics.find(m => m.date.startsWith(date.slice(0, 10)));
       if (!currentMetrics || (currentMetrics.copilot_ide_code_completions?.total_engaged_users ?? 0) < 1 || ((currentMetrics.copilot_ide_code_completions?.total_code_suggestions ?? 0) / (currentMetrics.copilot_ide_code_completions?.total_engaged_users ?? 1)) > 250) return;
-      
+
       if (currentMetrics?.copilot_ide_code_completions) {
         // Suggestions per user
         (dailyActiveIdeCompletionsSeries.data).push({
@@ -604,13 +604,13 @@ export class HighchartsService {
         (dailyActiveIdeAcceptsSeries.data).push({
           x: new Date(date).getTime(),
           y: (currentMetrics.copilot_ide_code_completions.total_code_acceptances /
-              currentMetrics.copilot_ide_code_completions.total_engaged_users),
+            currentMetrics.copilot_ide_code_completions.total_engaged_users),
           raw: date
         });
 
         // NEW: acceptance-rate (%)
         const sugg = currentMetrics.copilot_ide_code_completions.total_code_suggestions;
-        const acc  = currentMetrics.copilot_ide_code_completions.total_code_acceptances;
+        const acc = currentMetrics.copilot_ide_code_completions.total_code_acceptances;
         if (sugg > 0) {
           (dailyActiveIdeAcceptanceRateSeries.data).push({
             x: new Date(date).getTime(),
@@ -752,6 +752,56 @@ export class HighchartsService {
         // }
       ]
     };
+  }
+
+  transformSeatActivityToScatter(seatActivity: Seat[]): Highcharts.Options {
+    console.log(seatActivity);
+    return {
+      chart: {
+        type: 'scatter',
+      },
+      xAxis: {
+        title: {
+          text: 'Activity'
+        },
+        labels: {
+          format: '{value} m'
+        },
+        startOnTick: true,
+        endOnTick: true,
+        showLastLabel: true
+      },
+      yAxis: {
+        title: {
+          text: 'Time Saved'
+        },
+        labels: {
+          format: '{value} kg'
+        }
+      },
+      series: [{
+        name: 'Seat Activity',
+        type: 'scatter' as const,
+        data: seatActivity.map(seat => ({
+          x: new Date(seat.last_activity_at || seat.created_at).getTime(),
+          y: Math.random() * 100, // Placeholder for time saved, adjust as needed
+          name: seat.assignee?.login || `Seat ${seat.assignee?.id}`,
+          color: this.getEditorColor(seat.last_activity_editor?.split('/')[0] || 'unknown'),
+          raw: seat
+        })),
+        tooltip: {
+          headerFormat: '<b>{point.name}</b><br/>',
+          pointFormatter: function (this: CustomHighchartsPoint) {  
+            const parts = [
+              `<b>Editor:</b> ${this.raw?.last_activity_editor || 'unknown'}<br/>`,
+              `<b>Activity:</b> ${new Date(this.x).toLocaleString()}<br/>`,
+              `<b>Time Saved:</b> ${this.y} minutes`
+            ];
+            return parts.join('');
+          }
+        }
+      }]
+    }
   }
 
   transformSeatActivityToGantt(seatActivity: Seat[]): Highcharts.Options {
