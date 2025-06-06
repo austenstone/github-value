@@ -32,7 +32,7 @@
     "rxjs": "~7.8.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^19.2.6",
+    "@angular-devkit/build-angular": "^20.0.1",
     "@angular-eslint/builder": "^19.3.0",
     "@angular/cli": "^19.2.6",
     "@angular/compiler-cli": "^19.2.5",
