@@ -1,6 +1,14 @@
 <div class="page-container">
   <div class="page-header">
     <h1>Value Modeling & Targeting</h1>
+    <button mat-stroked-button color="warn" style="margin-left: 2rem;" (click)="resetTargets()">
+      <mat-icon>refresh</mat-icon>
+      Recalculate Targets
+    </button>
+    <button *ngIf="showSaveAllButton" mat-stroked-button color="primary" style="margin-left: 1rem;" (click)="saveTargets()">
+      <mat-icon>save</mat-icon>
+      Save All Targets
+    </button>
   </div>
 
   <h4 style="margin-top: 0">Org Metrics</h4>

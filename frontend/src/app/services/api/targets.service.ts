@@ -77,5 +77,10 @@ export class TargetsService {
   saveTargets(targets: Targets) {
     return this.http.post<Targets>(`${this.apiUrl}`, targets);
   }
+
+  recalculateTargets() {
+    // Calls the backend endpoint to recalculate targets
+    return this.http.get<any>(`${this.apiUrl}/calculate`);
+  }
 }
 
