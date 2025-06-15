@@ -29,7 +29,7 @@ export class TimeSavedChartComponent implements OnInit, OnChanges {
         text: 'Time Saved (Hrs per Week)'
       },
       min: 0,
-      max: 10,
+      max: 10, // Will be updated dynamically
       labels: {
         format: '{value}hrs'
       },
@@ -45,7 +45,7 @@ export class TimeSavedChartComponent implements OnInit, OnChanges {
         }
       }],
       plotLines: [{
-        value: 5,
+        value: 5, // Will be updated dynamically
         color: 'var(--sys-primary)',
         dashStyle: 'Dash',
         width: 2,
@@ -91,6 +91,7 @@ export class TimeSavedChartComponent implements OnInit, OnChanges {
     this._chartOptions.yAxis = Object.assign({}, this.chartOptions?.yAxis, this._chartOptions.yAxis);
     this._chartOptions.tooltip = Object.assign({}, this.chartOptions?.tooltip, this._chartOptions.tooltip);
     this._chartOptions = Object.assign({}, this.chartOptions, this._chartOptions);
+    this.updateYAxisFromTargets();
   }
 
   ngOnChanges() {
@@ -98,6 +99,41 @@ export class TimeSavedChartComponent implements OnInit, OnChanges {
       this._chartOptions = {
         ...this._chartOptions,
         ...this.highchartsService.transformSurveysToScatter(this.surveys, this.activity)
+      };
+      this.updateFlag = true;
+    }
+    this.updateYAxisFromTargets();
+  }
+
+  private updateYAxisFromTargets() {
+    if (this.targets?.user?.weeklyTimeSavedHrs) {
+      const targetValue = this.targets.user.weeklyTimeSavedHrs.target;
+      const maxValue = Math.max(
+        targetValue * 1.5,
+        this.targets.user.weeklyTimeSavedHrs.max || 10,
+        10
+      );
+      const yAxis = {
+        ...this._chartOptions.yAxis,
+        max: maxValue,
+        plotLines: [{
+          value: targetValue,
+          color: 'var(--sys-primary)',
+          dashStyle: 'Dash' as Highcharts.DashStyleValue,
+          width: 2,
+          label: {
+            text: 'Target Level',
+            align: 'left' as Highcharts.AlignValue,
+            style: {
+              color: 'var(--sys-primary)'
+            }
+          },
+          zIndex: 2
+        }]
+      };
+      this._chartOptions = {
+        ...this._chartOptions,
+        yAxis
       };
       this.updateFlag = true;
     }

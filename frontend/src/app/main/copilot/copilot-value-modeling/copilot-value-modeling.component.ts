@@ -37,6 +37,7 @@ export class CopilotValueModelingComponent implements OnInit {
   orgDataSource: TableTarget[] = [];
   userDataSource: TableTarget[] = [];
   impactDataSource: TableTarget[] = [];
+  showSaveAllButton = false;
   private readonly _destroy$ = new Subject<void>();
   keyToNameMap: Record<string, string> = {
     seats: 'Seats',
@@ -128,7 +129,9 @@ export class CopilotValueModelingComponent implements OnInit {
 
   saveTargets() {
     const targets: Targets = this.transformBackToTargets(this.orgDataSource, this.userDataSource, this.impactDataSource);
-    this.targetsService.saveTargets(targets).subscribe();
+    this.targetsService.saveTargets(targets).subscribe(() => {
+      this.showSaveAllButton = false;
+    });
   }
 
   openEditDialog(target: Target) {
@@ -142,6 +145,17 @@ export class CopilotValueModelingComponent implements OnInit {
         target = result;
         this.saveTargets();
       }
+    });
+  }
+
+  resetTargets() {
+    // Call the backend endpoint to recalculate targets
+    this.targetsService.recalculateTargets().subscribe((result: any) => {
+      const targets = result.targets || result; // handle both {targets, logs} and just targets
+      this.orgDataSource = this.transformTargets(targets.org);
+      this.userDataSource = this.transformTargets(targets.user);
+      this.impactDataSource = this.transformTargets(targets.impact);
+      this.showSaveAllButton = true;
     });
   }
 }
