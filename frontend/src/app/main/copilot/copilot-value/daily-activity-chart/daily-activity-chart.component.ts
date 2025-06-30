@@ -36,7 +36,6 @@ export class DailyActivityChartComponent implements OnInit, OnChanges {
             'IDE Accepts': this.targets?.user.dailyAcceptances.target || 0,
             'IDE Chats': this.targets?.user.dailyChatTurns.target || 0,
             '.COM Chats': this.targets?.user.dailyDotComChats.target || 0,
-            'IDE Acceptance Rate': 100 * ( this.targets?.user.dailyAcceptances.target || 0) / (this.targets?.user.dailySuggestions.target || 0),   // NEW
             'Pull Requests': this.targets?.user.weeklyPRSummaries.target  || 0  / 5  // 5 days in a week
           };
 
@@ -46,7 +45,6 @@ export class DailyActivityChartComponent implements OnInit, OnChanges {
             'IDE Accepts': [15, 40],
             'IDE Chats': [25, 40],
             '.COM Chats': [4, 8],
-            'IDE Acceptance Rate': [20, 40],   // NEW – percentage range (example)
             'Pull Requests': [1, 3]       // NEW example range
           };
 
@@ -143,7 +141,6 @@ export class DailyActivityChartComponent implements OnInit, OnChanges {
     series: [
       { name: 'IDE Suggestions',      type: 'spline', data: [], zIndex: 5 },
       { name: 'IDE Accepts',          type: 'spline', data: [], zIndex: 4 },
-      { name: 'IDE Acceptance Rate',  type: 'spline', data: [], zIndex: 3 },
       { name: 'IDE Chats',            type: 'spline', data: [], color: '#00E676', zIndex: 5 },
       { name: '.COM Chats',           type: 'spline', data: [], color: '#E91E63', zIndex: 4 },
       { name: 'Pull Requests',        type: 'spline', data: [], color: '#9C27B0', zIndex: 3 }

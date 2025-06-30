@@ -565,12 +565,6 @@ export class HighchartsService {
       name: 'IDE Accepts',
       data: [] as CustomHighchartsPointOptions[]
     };
-    // NEW: acceptance-rate (% of suggestions accepted)
-    const dailyActiveIdeAcceptanceRateSeries = {
-      ...initialSeries,
-      name: 'IDE Acceptance Rate',
-      data: [] as CustomHighchartsPointOptions[]
-    };
     const dailyActiveIdeChatSeries = {
       ...initialSeries,
       name: 'IDE Chats',
@@ -607,17 +601,6 @@ export class HighchartsService {
               currentMetrics.copilot_ide_code_completions.total_engaged_users),
           raw: date
         });
-
-        // NEW: acceptance-rate (%)
-        const sugg = currentMetrics.copilot_ide_code_completions.total_code_suggestions;
-        const acc  = currentMetrics.copilot_ide_code_completions.total_code_acceptances;
-        if (sugg > 0) {
-          (dailyActiveIdeAcceptanceRateSeries.data).push({
-            x: new Date(date).getTime(),
-            y: +(acc / sugg * 100).toFixed(2),
-            raw: date
-          });
-        }
       }
       if (currentMetrics?.copilot_ide_chat) {
         (dailyActiveIdeChatSeries.data).push({
@@ -646,7 +629,6 @@ export class HighchartsService {
       series: [
         dailyActiveIdeCompletionsSeries,
         dailyActiveIdeAcceptsSeries,
-        dailyActiveIdeAcceptanceRateSeries, // NEW series added to output
         dailyActiveIdeChatSeries,
         dailyActiveDotcomChatSeries,
         dailyActiveDotcomPrSeries        // ← was commented out
