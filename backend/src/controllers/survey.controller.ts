@@ -9,11 +9,21 @@ class SurveyController {
   async updateSurveyGitHub(req: Request, res: Response): Promise<void> {
     let survey: SurveyType;
     try {
-      const _survey = await surveyService.updateSurvey({
-        ...req.body,
+      const sanitizedBody = {
+        id: req.body.id,
+        userId: req.body.userId,
+        org: req.body.org,
+        repo: req.body.repo,
+        prNumber: req.body.prNumber,
+        usedCopilot: req.body.usedCopilot,
+        percentTimeSaved: req.body.percentTimeSaved,
+        reason: req.body.reason,
+        timeUsedFor: req.body.timeUsedFor,
+        kudos: req.body.kudos,
         hits: 0,
         status: 'completed'
-      });
+      };
+      const _survey = await surveyService.updateSurvey(sanitizedBody);
       if (!_survey) throw new Error('Survey not found');
       survey = _survey;
       res.status(201).json(survey);
