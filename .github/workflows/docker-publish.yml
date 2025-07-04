@@ -1,5 +1,9 @@
 name: Docker Deploy GHCR
 
+permissions:
+  contents: read
+  packages: write
+
 on:
   push:
     branches:
