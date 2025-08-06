@@ -55,7 +55,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - run: npm ci
         working-directory: ./backend
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: backend
           path: ./backend/dist
