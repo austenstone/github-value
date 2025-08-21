@@ -205,6 +205,22 @@ RESULT:
   // === UTILITY CALCULATION METHODS ===
   
   /**
+   * Type-safe parsing of numeric values that might be strings or numbers
+   * @param value The value to parse (string | number | null | undefined)
+   * @param defaultValue The default value to use if parsing fails
+   * @returns A valid number
+   */
+  private parseNumericValue(value: string | number | null | undefined, defaultValue: number): number {
+    if (value == null) return defaultValue;
+    if (typeof value === 'number') return isNaN(value) ? defaultValue : value;
+    if (typeof value === 'string') {
+      const parsed = parseFloat(value);
+      return isNaN(parsed) ? defaultValue : parsed;
+    }
+    return defaultValue;
+  }
+  
+  /**
    * Round a number to a specified number of decimal places
    * @param value The number to round
    * @param decimals The number of decimal places (default: 1)
@@ -702,8 +718,8 @@ RESULT:
     const userTimeSavings = distinctUsers.map(userId => {
       const userSurveys = this.surveysWeekly.filter(survey => survey.userId === userId);
       const totalPercent = userSurveys.reduce((sum, survey) => {
-        // Always parse percentTimeSaved as float
-        const percentTimeSaved = survey.percentTimeSaved != null ? parseFloat(survey.percentTimeSaved as any) : 0;
+        // Use type-safe parsing for percentTimeSaved
+        const percentTimeSaved = this.parseNumericValue(survey.percentTimeSaved, 0);
         return sum + percentTimeSaved;
       }, 0);
       return totalPercent / userSurveys.length; // Average percent time saved per user
@@ -712,9 +728,9 @@ RESULT:
     // Average across all users
     const avgPercentTimeSaved = userTimeSavings.reduce((sum, percent) => sum + percent, 0) / userTimeSavings.length;
     
-    // Convert settings values to numbers (parse from string if needed)
-    const hoursPerYear = this.settings.hoursPerYear != null ? parseFloat(this.settings.hoursPerYear as any) : 2000;
-    const percentCoding = this.settings.percentCoding != null ? parseFloat(this.settings.percentCoding as any) : 50;
+    // Convert settings values to numbers using type-safe parsing
+    const hoursPerYear = this.parseNumericValue(this.settings.hoursPerYear, 2000);
+    const percentCoding = this.parseNumericValue(this.settings.percentCoding, 50);
     
     // Calculate weekly hours saved based on settings and average percent
     const weeklyHours = hoursPerYear / 50; // Assuming 50 working weeks
@@ -722,7 +738,7 @@ RESULT:
     const avgWeeklyTimeSaved = weeklyDevHours * (avgPercentTimeSaved / 100);
     
     // Calculate max based on settings
-    const maxPercentTimeSaved = this.settings.percentTimeSaved != null ? parseFloat(this.settings.percentTimeSaved as any) : 20;
+    const maxPercentTimeSaved = this.parseNumericValue(this.settings.percentTimeSaved, 20);
     const maxWeeklyTimeSaved = weeklyDevHours * (maxPercentTimeSaved / 100);
     
     // Use default value of 2 if calculated value is 0 or very small
@@ -794,11 +810,11 @@ RESULT:
     const adoptedDevs = this.calculateAdoptedDevs().current;
     const weeklyTimeSavedHrs = this.calculateWeeklyTimeSavedHrs().current; // This now includes default of 2 if needed
     
-    // Always parse settings values as numbers (from string if needed)
-    const hoursPerYear = this.settings.hoursPerYear != null ? parseFloat(this.settings.hoursPerYear as any) : 2000;
+    // Use type-safe parsing for settings values
+    const hoursPerYear = this.parseNumericValue(this.settings.hoursPerYear, 2000);
     const weeksInYear = Math.round(hoursPerYear / 40) || 50; // Calculate weeks and ensure it's a number
     
-    const devCostPerYear = this.settings.devCostPerYear != null ? parseFloat(this.settings.devCostPerYear as any) : 0;
+    const devCostPerYear = this.parseNumericValue(this.settings.devCostPerYear, 0);
     const hourlyRate = devCostPerYear > 0 ? (devCostPerYear / hoursPerYear) : 50;
     
     const annualSavings = weeklyTimeSavedHrs * weeksInYear * hourlyRate * adoptedDevs;
@@ -834,8 +850,8 @@ RESULT:
     const adoptedDevs = this.calculateAdoptedDevs().current;
     const weeklyTimeSavedHrs = this.calculateWeeklyTimeSavedHrs().current; // This now includes default of 2 if needed
     
-    // Always parse hours per year as number
-    const hoursPerYear = this.settings.hoursPerYear != null ? parseFloat(this.settings.hoursPerYear as any) : 2000;
+    // Use type-safe parsing for hours per year
+    const hoursPerYear = this.parseNumericValue(this.settings.hoursPerYear, 2000);
     const hoursPerWeek = hoursPerYear / 50 || 40; // Default to 40 if undefined
     
     // Calculate productivity boost factor (not percentage)
