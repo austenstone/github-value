@@ -10,6 +10,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { SetupService } from '../../services/api/setup.service';
+import { DiagnosticsResponse } from '../../types/diagnostics.types';
 
 @Component({
   selector: 'app-main-diagnostics',
@@ -192,7 +193,7 @@ import { SetupService } from '../../services/api/setup.service';
 })
 export class MainDiagnosticsComponent {
   isLoading = false;
-  lastResult: any = null;
+  lastResult: DiagnosticsResponse | null = null;
 
   constructor(
     private setupService: SetupService,
@@ -460,7 +461,7 @@ export class MainDiagnosticsComponent {
 export class InstallationDiagnosticsDialogComponent {
   constructor(
     public dialogRef: MatDialogRef<InstallationDiagnosticsDialogComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any
+    @Inject(MAT_DIALOG_DATA) public data: DiagnosticsResponse
   ) {}
 
   getSuccessRate(): number {

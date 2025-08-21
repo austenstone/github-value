@@ -2,6 +2,62 @@ import { Request, Response } from 'express';
 import app from '../index.js';
 import StatusService from '../services/status.service.js';
 import logger from '../services/logger.js';
+import { Endpoints } from '@octokit/types';
+
+// Type definitions for the diagnostic response
+interface OctokitTestResult {
+  success: boolean;
+  appName?: string;
+  appOwner?: string;
+  permissions?: Record<string, string | undefined>;
+  error?: string;
+}
+
+interface InstallationDiagnostic {
+  index: number;
+  installationId: number;
+  accountLogin: string;
+  accountId: string | number;
+  accountType: string;
+  accountAvatarUrl: string;
+  appId: number;
+  appSlug: string;
+  targetType: string;
+  permissions: Record<string, string | undefined>;
+  events: string[];
+  createdAt: string;
+  updatedAt: string;
+  suspendedAt: string | null;
+  suspendedBy: { login: string; id: number } | null;
+  hasOctokit: boolean;
+  octokitTest: OctokitTestResult | null;
+  isValid: boolean;
+  validationErrors: string[];
+}
+
+interface AppInfo {
+  name: string;
+  description: string;
+  owner: string;
+  htmlUrl: string;
+  permissions: Record<string, string | undefined>;
+  events: string[];
+}
+
+interface DiagnosticsResponse {
+  timestamp: string;
+  appConnected: boolean;
+  totalInstallations: number;
+  installations: InstallationDiagnostic[];
+  errors: string[];
+  appInfo: AppInfo | null;
+  summary: {
+    validInstallations: number;
+    invalidInstallations: number;
+    organizationNames: string[];
+    accountTypes: Record<string, number>;
+  };
+}
 
 class SetupController {
   async registrationComplete(req: Request, res: Response) {
@@ -114,18 +170,18 @@ class SetupController {
 
   async validateInstallations(req: Request, res: Response) {
     try {
-      const diagnostics = {
+      const diagnostics: DiagnosticsResponse = {
         timestamp: new Date().toISOString(),
         appConnected: !!app.github.app,
         totalInstallations: app.github.installations.length,
-        installations: [] as any[],
-        errors: [] as string[],
-        appInfo: null as any,
+        installations: [],
+        errors: [],
+        appInfo: null,
         summary: {
           validInstallations: 0,
           invalidInstallations: 0,
-          organizationNames: [] as string[],
-          accountTypes: {} as Record<string, number>
+          organizationNames: [],
+          accountTypes: {}
         }
       };
 
@@ -139,7 +195,7 @@ class SetupController {
       for (let i = 0; i < app.github.installations.length; i++) {
         const { installation, octokit } = app.github.installations[i];
         
-        const installationDiag = {
+        const installationDiag: InstallationDiagnostic = {
           index: i,
           installationId: installation.id,
           accountLogin: installation.account?.login || 'MISSING',
@@ -149,16 +205,16 @@ class SetupController {
           appId: installation.app_id,
           appSlug: installation.app_slug,
           targetType: installation.target_type,
-          permissions: installation.permissions,
-          events: installation.events,
+          permissions: installation.permissions || {},
+          events: installation.events || [],
           createdAt: installation.created_at,
           updatedAt: installation.updated_at,
           suspendedAt: installation.suspended_at,
           suspendedBy: installation.suspended_by,
           hasOctokit: !!octokit,
-          octokitTest: null as any,
+          octokitTest: null,
           isValid: true,
-          validationErrors: [] as string[]
+          validationErrors: []
         };
 
         // Validate required fields
@@ -185,7 +241,7 @@ class SetupController {
             installationDiag.octokitTest = {
               success: true,
               appName: authTest.data?.name || 'Unknown',
-              appOwner: (authTest.data?.owner as any)?.login || 'Unknown',
+              appOwner: (authTest.data?.owner && 'login' in authTest.data.owner) ? authTest.data.owner.login : 'Unknown',
               permissions: authTest.data?.permissions || {}
             };
           } catch (error) {
@@ -224,7 +280,7 @@ class SetupController {
         diagnostics.appInfo = {
           name: appInfo.data?.name || 'Unknown',
           description: appInfo.data?.description || 'No description',
-          owner: (appInfo.data?.owner as any)?.login || 'Unknown',
+          owner: (appInfo.data?.owner && 'login' in appInfo.data.owner) ? appInfo.data.owner.login : 'Unknown',
           htmlUrl: appInfo.data?.html_url || 'Unknown',
           permissions: appInfo.data?.permissions || {},
           events: appInfo.data?.events || []
