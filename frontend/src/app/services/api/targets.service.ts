@@ -34,9 +34,16 @@ export interface Targets {
   }
 }
 
+export interface CalculationLog {
+  name: string;
+  inputs: Record<string, unknown>;
+  formula: string;
+  result: unknown;
+}
+
 export interface TargetsCalculationResponse {
   targets: Targets;
-  logs?: any[]; // Optional calculation logs
+  logs?: CalculationLog[]; // Optional calculation logs
 }
 
 // Union type to handle both response formats
