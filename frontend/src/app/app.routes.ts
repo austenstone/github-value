@@ -15,6 +15,7 @@ import { CopilotSeatComponent } from './main/copilot/copilot-seats/copilot-seat/
 import { DatabaseComponent } from './database/database.component';
 import { ErrorComponent } from './error/error.component';
 import { CopilotValueModelingComponent } from './main/copilot/copilot-value-modeling/copilot-value-modeling.component';
+import { MainDiagnosticsComponent } from './main/diagnostics/main-diagnostics.component';
 
 export const routes: Routes = [
   { path: 'setup', component: InstallComponent },
@@ -38,6 +39,7 @@ export const routes: Routes = [
       { path: 'copilot/surveys/:id', component: CopilotSurveyComponent, title: 'Survey' },
       { path: 'copilot/value-modeling', component: CopilotValueModelingComponent, title: 'Value Modeling' },
       { path: 'settings', component: SettingsComponent, title: 'Settings' },
+      { path: 'diagnostics', component: MainDiagnosticsComponent, title: 'Diagnostics' },
       { path: '', redirectTo: 'copilot', pathMatch: 'full' }
     ]
   },

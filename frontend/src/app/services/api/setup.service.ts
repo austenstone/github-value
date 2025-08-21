@@ -60,4 +60,8 @@ export class SetupService {
     return this.http.post(`${this.apiUrl}/db`, request);
   }
 
+  validateInstallations() {
+    return this.http.get<any>(`${this.apiUrl}/validate-installations`);
+  }
+
   }
