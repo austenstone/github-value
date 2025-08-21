@@ -114,8 +114,33 @@ class App {
   }
 
   private setupExpress() {
-    // Trust proxy when running behind load balancers/reverse proxies
-    this.e.set('trust proxy', true);
+    // Configure proxy trust based on environment variable
+    // Common values: 'true', 'false', number (proxy hops), or comma-separated IPs
+    const trustProxy = process.env.TRUST_PROXY;
+    
+    if (trustProxy !== undefined) {
+      // Parse the environment variable
+      if (trustProxy === 'true') {
+        this.e.set('trust proxy', true);
+      } else if (trustProxy === 'false') {
+        this.e.set('trust proxy', false);
+      } else if (/^\d+$/.test(trustProxy)) {
+        // Number of proxy hops (e.g., "1", "2")
+        this.e.set('trust proxy', parseInt(trustProxy, 10));
+      } else if (trustProxy.includes(',')) {
+        // Comma-separated IP addresses/ranges
+        this.e.set('trust proxy', trustProxy.split(',').map(ip => ip.trim()));
+      } else {
+        // Single IP address or invalid value
+        logger.warn(`Invalid TRUST_PROXY value: ${trustProxy}. Using default (false).`);
+        this.e.set('trust proxy', false);
+      }
+    } else {
+      // Default behavior: trust proxy in production environments
+      const isProd = process.env.NODE_ENV === 'production';
+      this.e.set('trust proxy', isProd ? 1 : false);
+      logger.info(`TRUST_PROXY not set. Using default: ${isProd ? '1 (production)' : 'false (development)'}`);
+    }
     
     this.e.use(cors());
     this.e.use((req, res, next) => {

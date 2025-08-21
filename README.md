@@ -16,6 +16,19 @@ GitHub Value is a free and open-source application designed to help measure the 
 
 github-value will take you through setup the first time you run it. You can manually configure it by copying the [`.env.example`](./.env.example) file to `.env` and configure the environment variables.
 
+#### Security Configuration
+
+When deploying behind load balancers, reverse proxies, or CDNs, configure the `TRUST_PROXY` environment variable:
+
+- **Development**: `TRUST_PROXY=false` (default)
+- **Production behind single proxy**: `TRUST_PROXY=1` (recommended)
+- **Production behind multiple proxies**: `TRUST_PROXY=2` (or number of hops)
+- **High security**: `TRUST_PROXY=10.0.0.1,172.16.0.0/12` (specific IPs/ranges)
+
+This ensures accurate rate limiting and IP detection while maintaining security.
+
+📖 **[Full Proxy Configuration Guide](./docs/PROXY_CONFIGURATION.md)**
+
 <details>
   <summary>Docker Compose</summary>
 
