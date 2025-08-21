@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import app from '../index.js';
 import StatusService from '../services/status.service.js';
 import logger from '../services/logger.js';
-import { Endpoints } from '@octokit/types';
 
 // Type definitions for the diagnostic response
 interface OctokitTestResult {
