@@ -114,12 +114,9 @@ class App {
   }
 
   private setupExpress() {
-    // Configure proxy trust based on environment variable
-    // Common values: 'true', 'false', number (proxy hops), or comma-separated IPs
     const trustProxy = process.env.TRUST_PROXY;
     
     if (trustProxy !== undefined) {
-      // Parse the environment variable
       if (trustProxy === 'true') {
         this.e.set('trust proxy', true);
       } else if (trustProxy === 'false') {
