@@ -25,10 +25,6 @@ When deploying behind load balancers, reverse proxies, or CDNs, configure the `T
 - **Production behind multiple proxies**: `TRUST_PROXY=2` (or number of hops)
 - **High security**: `TRUST_PROXY=10.0.0.1,172.16.0.0/12` (specific IPs/ranges)
 
-This ensures accurate rate limiting and IP detection while maintaining security.
-
-📖 **[Full Proxy Configuration Guide](./docs/PROXY_CONFIGURATION.md)**
-
 <details>
   <summary>Docker Compose</summary>
 
