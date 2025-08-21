@@ -114,6 +114,9 @@ class App {
   }
 
   private setupExpress() {
+    // Trust proxy when running behind load balancers/reverse proxies
+    this.e.set('trust proxy', true);
+    
     this.e.use(cors());
     this.e.use((req, res, next) => {
       if (req.path === '/api/github/webhooks') {
