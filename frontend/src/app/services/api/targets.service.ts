@@ -34,6 +34,21 @@ export interface Targets {
   }
 }
 
+export interface CalculationLog {
+  name: string;
+  inputs: Record<string, unknown>;
+  formula: string;
+  result: unknown;
+}
+
+export interface TargetsCalculationResponse {
+  targets: Targets;
+  logs?: CalculationLog[]; // Optional calculation logs
+}
+
+// Union type to handle both response formats
+export type RecalculateTargetsResponse = TargetsCalculationResponse | Targets;
+
 @Injectable({
   providedIn: 'root'
 })
@@ -76,6 +91,11 @@ export class TargetsService {
 
   saveTargets(targets: Targets) {
     return this.http.post<Targets>(`${this.apiUrl}`, targets);
+  }
+
+  recalculateTargets() {
+    // Calls the backend endpoint to recalculate targets
+    return this.http.get<RecalculateTargetsResponse>(`${this.apiUrl}/calculate`);
   }
 }
 

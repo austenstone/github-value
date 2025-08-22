@@ -52,6 +52,7 @@ router.get('/setup/manifest', setupController.getManifest);
 router.post('/setup/existing-app', setupController.addExistingApp);
 router.post('/setup/db', setupController.setupDB);
 router.get('/setup/status', setupController.setupStatus);
+router.get('/setup/validate-installations', setupController.validateInstallations);
 
 router.get('/status', setupController.getStatus);
 

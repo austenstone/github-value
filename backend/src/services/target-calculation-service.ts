@@ -205,6 +205,22 @@ RESULT:
   // === UTILITY CALCULATION METHODS ===
   
   /**
+   * Type-safe parsing of numeric values that might be strings or numbers
+   * @param value The value to parse (string | number | null | undefined)
+   * @param defaultValue The default value to use if parsing fails
+   * @returns A valid number
+   */
+  private parseNumericValue(value: string | number | null | undefined, defaultValue: number): number {
+    if (value == null) return defaultValue;
+    if (typeof value === 'number') return isNaN(value) ? defaultValue : value;
+    if (typeof value === 'string') {
+      const parsed = parseFloat(value);
+      return isNaN(parsed) ? defaultValue : parsed;
+    }
+    return defaultValue;
+  }
+  
+  /**
    * Round a number to a specified number of decimal places
    * @param value The number to round
    * @param decimals The number of decimal places (default: 1)
@@ -687,22 +703,23 @@ RESULT:
    * Calculate weekly time saved in hours per developer
    */
   calculateWeeklyTimeSavedHrs(): Target {
-    // If no surveys, return default values
+    // If no surveys, return default values with 2 hrs current
     if (this.surveysWeekly.length === 0) {
-      return { current: 0, target: 0, max: 10 };
+      return { current: 2, target: 2, max: 10 };
     }
     
     // Get distinct users who submitted surveys
     const distinctUsers = this.getDistinctSurveyUsers(this.surveysWeekly);
     if (distinctUsers.length === 0) {
-      return { current: 0, target: 0, max: 10 };
+      return { current: 2, target: 2, max: 10 };
     }
     
     // Group surveys by user to get average time saved per user
     const userTimeSavings = distinctUsers.map(userId => {
       const userSurveys = this.surveysWeekly.filter(survey => survey.userId === userId);
       const totalPercent = userSurveys.reduce((sum, survey) => {
-        const percentTimeSaved = typeof survey.percentTimeSaved === 'number' ? survey.percentTimeSaved : 0;
+        // Use type-safe parsing for percentTimeSaved
+        const percentTimeSaved = this.parseNumericValue(survey.percentTimeSaved, 0);
         return sum + percentTimeSaved;
       }, 0);
       return totalPercent / userSurveys.length; // Average percent time saved per user
@@ -711,9 +728,9 @@ RESULT:
     // Average across all users
     const avgPercentTimeSaved = userTimeSavings.reduce((sum, percent) => sum + percent, 0) / userTimeSavings.length;
     
-    // Convert settings values to numbers
-    const hoursPerYear = typeof this.settings.hoursPerYear === 'number' ? this.settings.hoursPerYear : 2000;
-    const percentCoding = typeof this.settings.percentCoding === 'number' ? this.settings.percentCoding : 50;
+    // Convert settings values to numbers using type-safe parsing
+    const hoursPerYear = this.parseNumericValue(this.settings.hoursPerYear, 2000);
+    const percentCoding = this.parseNumericValue(this.settings.percentCoding, 50);
     
     // Calculate weekly hours saved based on settings and average percent
     const weeklyHours = hoursPerYear / 50; // Assuming 50 working weeks
@@ -721,12 +738,16 @@ RESULT:
     const avgWeeklyTimeSaved = weeklyDevHours * (avgPercentTimeSaved / 100);
     
     // Calculate max based on settings
-    const maxPercentTimeSaved = typeof this.settings.percentTimeSaved === 'number' ? this.settings.percentTimeSaved : 20;
+    const maxPercentTimeSaved = this.parseNumericValue(this.settings.percentTimeSaved, 20);
     const maxWeeklyTimeSaved = weeklyDevHours * (maxPercentTimeSaved / 100);
     
+    // Use default value of 2 if calculated value is 0 or very small
+    const currentValue = avgWeeklyTimeSaved < 0.1 ? 2 : this.roundToDecimal(avgWeeklyTimeSaved);
+    const targetValue = avgWeeklyTimeSaved < 0.1 ? 3 : this.roundToDecimal(Math.min(avgWeeklyTimeSaved * 1.5, maxWeeklyTimeSaved * 0.8));
+    
     const result = {
-      current: this.roundToDecimal(avgWeeklyTimeSaved),
-      target: this.roundToDecimal(Math.min(avgWeeklyTimeSaved * 1.5, maxWeeklyTimeSaved * 0.8)), // Target is 50% increase, capped at 80% of max
+      current: currentValue,
+      target: targetValue, // Target is 50% increase, capped at 80% of max
       max: this.roundToDecimal(maxWeeklyTimeSaved || 10) // Provide a fallback
     };
     
@@ -739,9 +760,11 @@ RESULT:
         userPercentages: userTimeSavings,
         hoursPerYear: hoursPerYear,
         percentCoding: percentCoding,
-        weeklyDevHours: weeklyDevHours
+        weeklyDevHours: weeklyDevHours,
+        calculatedWeeklyTimeSaved: avgWeeklyTimeSaved,
+        usedDefaultValue: avgWeeklyTimeSaved < 0.1
       },
-      'Calculate average time saved percentage per user, then weeklyDevHours * (avgPercentTimeSaved / 100)',
+      'Calculate average time saved percentage per user, then weeklyDevHours * (avgPercentTimeSaved / 100), use default value of 2 if result is < 0.1',
       result
     );
     
@@ -769,9 +792,11 @@ RESULT:
       {
         adoptedDevsCount: adoptedDevs,
         weeklyTimeSavedHrs: weeklyTimeSavedHrs,
+        monthlyCalculation: `${adoptedDevs} * ${weeklyTimeSavedHrs} * 4 = ${monthlyTimeSavings}`,
+        calculatedMonthlyTimeSavings: monthlyTimeSavings,
         seatsCount: this.calculateSeats().current
       },
-      'Calculate adoptedDevs * weeklyTimeSavedHrs * 4, set current = monthlyTimeSavings, max = 80 * seats',
+      'Calculate adoptedDevs * weeklyTimeSavedHrs * 4 (weeklyTimeSavedHrs already includes default of 2 if needed), max = 80 * seats',
       result
     );
     
@@ -783,13 +808,13 @@ RESULT:
    */
   calculateAnnualTimeSavingsAsDollars(): Target {
     const adoptedDevs = this.calculateAdoptedDevs().current;
-    const weeklyTimeSavedHrs = this.calculateWeeklyTimeSavedHrs().current;
+    const weeklyTimeSavedHrs = this.calculateWeeklyTimeSavedHrs().current; // This now includes default of 2 if needed
     
-    // Ensure all values are properly typed as numbers
-    const hoursPerYear = typeof this.settings.hoursPerYear === 'number' ? this.settings.hoursPerYear : 2000;
+    // Use type-safe parsing for settings values
+    const hoursPerYear = this.parseNumericValue(this.settings.hoursPerYear, 2000);
     const weeksInYear = Math.round(hoursPerYear / 40) || 50; // Calculate weeks and ensure it's a number
     
-    const devCostPerYear = typeof this.settings.devCostPerYear === 'number' ? this.settings.devCostPerYear : 0;
+    const devCostPerYear = this.parseNumericValue(this.settings.devCostPerYear, 0);
     const hourlyRate = devCostPerYear > 0 ? (devCostPerYear / hoursPerYear) : 50;
     
     const annualSavings = weeklyTimeSavedHrs * weeksInYear * hourlyRate * adoptedDevs;
@@ -798,7 +823,7 @@ RESULT:
     const result = {
       current: Math.round(annualSavings || 0), // Round to whole dollars
       target: 0,
-      max: Math.round(12 * this.calculateSeats().current * weeksInYear * hourlyRate || 10000) // Provide fallback
+      max: Math.round(weeksInYear * this.calculateSeats().current * hourlyRate * 40 || 10000) // Max assumes 40 hours per week saved per seat
     };
     
     this.logCalculation(
@@ -808,9 +833,10 @@ RESULT:
         weeklyTimeSavedHrs: weeklyTimeSavedHrs,
         weeksInYear: weeksInYear,
         hourlyRate: hourlyRate,
+        annualSavingsCalculation: `${weeklyTimeSavedHrs} * ${weeksInYear} * ${hourlyRate} * ${adoptedDevs} = ${annualSavings}`,
         seatsCount: this.calculateSeats().current
       },
-      'Calculate weeklyTimeSavedHrs * weeksInYear * hourlyRate * adoptedDevs, set current = annualSavings, max = 80 * seats * 50',
+      'Calculate weeklyTimeSavedHrs * weeksInYear * hourlyRate * adoptedDevs (weeklyTimeSavedHrs includes default of 2 if needed)',
       result
     );
     
@@ -822,10 +848,10 @@ RESULT:
    */
   calculateProductivityOrThroughputBoostPercent(): Target {
     const adoptedDevs = this.calculateAdoptedDevs().current;
-    const weeklyTimeSavedHrs = this.calculateWeeklyTimeSavedHrs().current;
+    const weeklyTimeSavedHrs = this.calculateWeeklyTimeSavedHrs().current; // This now includes default of 2 if needed
     
-    // Convert hours per year to number
-    const hoursPerYear = typeof this.settings.hoursPerYear === 'number' ? this.settings.hoursPerYear : 2000;
+    // Use type-safe parsing for hours per year
+    const hoursPerYear = this.parseNumericValue(this.settings.hoursPerYear, 2000);
     const hoursPerWeek = hoursPerYear / 50 || 40; // Default to 40 if undefined
     
     // Calculate productivity boost factor (not percentage)
@@ -843,13 +869,13 @@ RESULT:
     this.logCalculation(
       'PRODUCTIVITY OR THROUGHPUT BOOST PERCENT',
       {
-        adoptedDevsCount: adoptedDevs,                  
+        adoptedDevsCount: adoptedDevs,
         weeklyTimeSavedHrs: weeklyTimeSavedHrs,
         hoursPerWeek: hoursPerWeek,
         productivityBoostFactor: productivityBoost,
         productivityBoostPercent: productivityBoostPercent
       },
-      'Calculate boost factor as (hoursPerWeek + weeklyTimeSavedHrs) / hoursPerWeek, then convert to percentage by (factor - 1) * 100',
+      'Calculate boost factor as (hoursPerWeek + weeklyTimeSavedHrs) / hoursPerWeek, then convert to percentage by (factor - 1) * 100 (weeklyTimeSavedHrs includes default of 2 if needed)',
       result
     );
     

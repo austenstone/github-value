@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
 import { Subject, takeUntil } from 'rxjs';
 import { InstallationsService } from '../../../services/api/installations.service';
-import { Target, Targets, TargetsService } from '../../../services/api/targets.service';
+import { Target, Targets, TargetsService, RecalculateTargetsResponse } from '../../../services/api/targets.service';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogActions, MatDialogContent, MatDialogRef, MatDialogTitle } from '@angular/material/dialog';
@@ -37,6 +37,7 @@ export class CopilotValueModelingComponent implements OnInit {
   orgDataSource: TableTarget[] = [];
   userDataSource: TableTarget[] = [];
   impactDataSource: TableTarget[] = [];
+  showSaveAllButton = false;
   private readonly _destroy$ = new Subject<void>();
   keyToNameMap: Record<string, string> = {
     seats: 'Seats',
@@ -128,7 +129,9 @@ export class CopilotValueModelingComponent implements OnInit {
 
   saveTargets() {
     const targets: Targets = this.transformBackToTargets(this.orgDataSource, this.userDataSource, this.impactDataSource);
-    this.targetsService.saveTargets(targets).subscribe();
+    this.targetsService.saveTargets(targets).subscribe(() => {
+      this.showSaveAllButton = false;
+    });
   }
 
   openEditDialog(target: Target) {
@@ -142,6 +145,18 @@ export class CopilotValueModelingComponent implements OnInit {
         target = result;
         this.saveTargets();
       }
+    });
+  }
+
+  resetTargets() {
+    // Call the backend endpoint to recalculate targets
+    this.targetsService.recalculateTargets().subscribe((result: RecalculateTargetsResponse) => {
+      // Handle response format - could be {targets: Targets, logs?: any[]} or just Targets
+      const targets = 'targets' in result ? result.targets : result as Targets;
+      this.orgDataSource = this.transformTargets(targets.org);
+      this.userDataSource = this.transformTargets(targets.user);
+      this.impactDataSource = this.transformTargets(targets.impact);
+      this.showSaveAllButton = true;
     });
   }
 }

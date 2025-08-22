@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { serverUrl } from '../server.service';
 import { Endpoints } from '@octokit/types';
 import { BehaviorSubject } from 'rxjs';
+import { DiagnosticsResponse } from '../../types/diagnostics.types';
 
 export interface InstallationStatus {
   installation?: Endpoints["GET /app/installations"]["response"]["data"][number],
@@ -58,6 +59,10 @@ export class SetupService {
     uri: string;
   }) {
     return this.http.post(`${this.apiUrl}/db`, request);
+  }
+
+  validateInstallations() {
+    return this.http.get<DiagnosticsResponse>(`${this.apiUrl}/validate-installations`);
   }
 
   }
