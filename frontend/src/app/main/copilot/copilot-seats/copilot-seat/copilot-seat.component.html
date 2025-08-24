@@ -47,6 +47,22 @@
       ></highcharts-chart>
     </mat-card-content>
   </mat-card>
+
+  <mat-card class="chart-card">
+    <mat-card-content>
+      <div *ngIf="loading" class="loading-indicator">
+        <p>Loading activity data... This may take a moment.</p>
+        <div class="spinner"></div>
+      </div>
+      <highcharts-chart 
+        *ngIf="!loading"
+        [Highcharts]="Highcharts" 
+        [options]="chart2Options" 
+        [update]="updateFlag"
+        style="width: 100%; height: 400px; display: block;"
+      ></highcharts-chart>
+    </mat-card-content>
+  </mat-card>
 </div>
 
 <div class="container" *ngIf="!seat">
@@ -55,62 +71,3 @@
     <div class="spinner"></div>
   </div>
 </div>
-
-<style>
-.avatar {
-  border-radius: 50%;
-  margin-right: 8px;
-  vertical-align: middle;
-}
-
-.chart-controls {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 15px;
-}
-
-.loading-indicator {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 400px;
-  color: #666;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(0, 122, 204, 0.2);
-  border-top-color: #007ACC;
-  border-radius: 50%;
-  animation: spin 1s ease-in-out infinite;
-  margin: 20px 0;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.loading {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 300px;
-  font-size: 18px;
-  color: #666;
-}
-
-.additional-stats {
-  margin-top: 15px;
-  padding-top: 10px;
-  border-top: 1px solid #eee;
-}
-
-.additional-stats h3 {
-  margin-bottom: 8px;
-  color: #333;
-  font-size: 16px;
-}
-</style>

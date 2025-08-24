@@ -72,7 +72,40 @@ export class CopilotSeatComponent implements OnInit {
       ]
     }
   }
-  _chartOptions?: Highcharts.Options;
+  chart2Options: Highcharts.Options = {
+    title: {
+      text: "Seat Activity by Editor"
+    },
+    xAxis: {
+      type: "datetime"
+    },
+    legend: {
+      enabled: false
+    },
+    series: [
+      {
+        name: "Seat Activity",
+        type: "gantt",
+        data: []
+      }
+    ],
+    plotOptions: {
+      gantt: {
+        borderWidth: 0,
+        borderColor: undefined,
+        dataLabels: {
+          enabled: true
+        }
+      }
+    },
+    tooltip: {},
+    yAxis: {
+      categories: [
+        "vscode",
+        "copilot-summarization-pr"
+      ]
+    }
+  }
   id?: number | string;
   seat?: Seat;
   seatActivity?: Seat[];
@@ -91,29 +124,20 @@ export class CopilotSeatComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    // Extract the seat ID from the URL route parameters
     const id = this.activatedRoute.snapshot.paramMap.get('id');
-    if (!id) return; // Exit if no ID is found
+    if (!id) return;
     this.id = id;
 
-    // Load the initial data with default timerange
     this.loadData();
   }
 
-  /**
-   * Loads seat activity data based on the selected time range
-   */
   loadData() {
     if (!this.id) return;
-
-    // Show loading indicator - SET TO TRUE at the start of data loading
     this.loading = true;
-    this.cdr.detectChanges();
 
     let params: { since?: string; until?: string } = {};
     const until = dayjs().toISOString();
 
-    // Set the since date based on the selected time range
     switch (this.selectedTimeRange) {
       case '7days':
         params = { since: dayjs().subtract(7, 'day').toISOString(), until };
@@ -122,24 +146,17 @@ export class CopilotSeatComponent implements OnInit {
         params = { since: dayjs().subtract(30, 'day').toISOString(), until };
         break;
       case 'all':
-        // Instead of empty params, use a far past date (e.g., 5 years ago)
-        // This ensures we don't send 'undefined' to the API
-        params = { 
+        params = {
           since: dayjs().subtract(5, 'year').toISOString(),
-          until 
+          until
         };
         break;
     }
 
-    // Create observables for all the data we need to fetch
-    const seatActivity$ = this.copilotSeatService.getSeat(this.id, params);
-    
-    // First get the seat data to access the assignee login
-    seatActivity$.pipe(
+    this.copilotSeatService.getSeat(this.id, params).pipe(
       map(seatData => {
-        // Store the complete seat activity data
         this.seatActivity = seatData;
-        
+
         if (seatData.length > 0) {
           this.seat = seatData[seatData.length - 1];
           return this.seat?.assignee?.login;
@@ -151,81 +168,58 @@ export class CopilotSeatComponent implements OnInit {
         return of(null);
       })
     ).subscribe(login => {
-      // Now that we have the login, we can make the subsequent requests
       if (!login) {
-        // Complete the process with default empty values if no login is available
         this.loading = false;
         this.cdr.detectChanges();
         return;
       }
-      
-      // We now have the login, use it for survey queries
-      const surveyParams = {
+
+      this.surveyService.getAllSurveys({
         since: params.since,
         until: params.until,
         userId: login
-      };
-      
-      const surveys$ = this.surveyService.getAllSurveys(surveyParams).pipe(
+      }).pipe(
         catchError(error => {
+          this.loading = false;
+          this.cdr.detectChanges();
           console.error('Error loading survey data:', error);
           return of([] as Survey[]);
-        })
-      );
+        }),
+      ).subscribe(surveys => {
+        const surveysArray = Array.isArray(surveys) ? surveys : [surveys];
+        this.surveyCount = surveysArray.length;
 
-      // Update forkJoin to only include surveys
-      forkJoin({
-        surveys: surveys$
-      }).subscribe({
-        next: (results) => {
-          // Process survey data - ensure surveys is an array
-          const surveysArray = Array.isArray(results.surveys) ? results.surveys : [results.surveys];
-          this.surveyCount = surveysArray.length;
-          
-          if (this.surveyCount > 0) {
-            const totalTimeSavings = surveysArray.reduce((sum: number, survey: Survey) => 
-              sum + (survey.percentTimeSaved|| 0), 0);
-            const avgSavings = totalTimeSavings / this.surveyCount;
-            this.avgTimeSavings = avgSavings.toFixed(1) + '%';
-          }
-
-          // Transform the activity data into Highcharts Gantt chart format
-          // Use the full seatActivity array, not just the current seat
-          this._chartOptions = this.highchartsService.transformSeatActivityToGantt(this.seatActivity || []);
-          
-          // Merge the transformed options with default chart options
-          this.chartOptions = {
-            ...this.chartOptions,
-            ...this._chartOptions
-          };
-          
-          // Calculate total time spent based on Gantt data durations
-          this.timeSpent = " ~ " + Math.floor(dayjs.duration({
-            milliseconds: (this.chartOptions.series as Highcharts.SeriesGanttOptions[])?.reduce((total, series) => {
-              return total += series.data?.reduce((dataTotal, data) => dataTotal += (data.end || 0) - (data.start || 0), 0) || 0;
-            }, 0)
-          }).asHours()).toString() + " hrs"; // Formatted as hours
-          
-          // Hide loading indicator - SET TO FALSE after successful data load
-          this.loading = false;
-          
-          // Trigger chart update and refresh the component view
-          this.updateFlag = true;
-          this.cdr.detectChanges();
-        },
-        error: (error) => {
-          console.error('Error loading data:', error);
-          // Hide loading indicator - SET TO FALSE even if there's an error
-          this.loading = false;
-          this.cdr.detectChanges();
+        if (this.surveyCount > 0) {
+          const totalTimeSavings = surveysArray.reduce((sum: number, survey: Survey) =>
+            sum + (survey.percentTimeSaved || 0), 0);
+          const avgSavings = totalTimeSavings / this.surveyCount;
+          this.avgTimeSavings = avgSavings.toFixed(1) + '%';
         }
+
+        this.chartOptions = {
+          ...this.chartOptions,
+          ...this.highchartsService.transformSeatActivityToGantt(this.seatActivity || [])
+        };
+
+        this.chart2Options = {
+          ...this.chart2Options,
+          ...this.highchartsService.transformSeatActivityToScatter(this.seatActivity || [])
+        };
+
+        this.timeSpent = " ~ " + Math.floor(dayjs.duration({
+          milliseconds: (this.chartOptions.series as Highcharts.SeriesGanttOptions[])?.reduce((total, series) => {
+            return total += series.data?.reduce((dataTotal, data) => dataTotal += (data.end || 0) - (data.start || 0), 0) || 0;
+          }, 0)
+        }).asHours()).toString() + " hrs"; // Formatted as hours
+
+        this.loading = false;
+
+        this.updateFlag = true;
+        this.cdr.detectChanges();
       });
     });
   }
 
-  /**
-   * Handles time range selection change
-   */
   onTimeRangeChange() {
     this.loadData();
   }
