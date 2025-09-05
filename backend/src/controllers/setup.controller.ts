@@ -32,6 +32,7 @@ interface InstallationDiagnostic {
   octokitTest: OctokitTestResult | null;
   isValid: boolean;
   validationErrors: string[];
+  repositoryCount: number;
 }
 
 interface AppInfo {
@@ -55,6 +56,8 @@ interface DiagnosticsResponse {
     invalidInstallations: number;
     organizationNames: string[];
     accountTypes: Record<string, number>;
+    repositoryCounts: Record<string, number>;
+    totalRepositories: number;
   };
 }
 
@@ -180,7 +183,9 @@ class SetupController {
           validInstallations: 0,
           invalidInstallations: 0,
           organizationNames: [],
-          accountTypes: {}
+          accountTypes: {},
+          repositoryCounts: {},
+          totalRepositories: 0
         }
       };
 
@@ -213,7 +218,8 @@ class SetupController {
           hasOctokit: !!octokit,
           octokitTest: null,
           isValid: true,
-          validationErrors: []
+          validationErrors: [],
+          repositoryCount: 0
         };
 
         // Validate required fields
@@ -232,7 +238,7 @@ class SetupController {
           installationDiag.validationErrors.push('Missing account.type');
         }
 
-        // Test Octokit functionality
+        // Test Octokit functionality and fetch repository count
         if (octokit) {
           try {
             // Test basic API call with the installation's octokit
@@ -243,6 +249,16 @@ class SetupController {
               appOwner: (authTest.data?.owner && 'login' in authTest.data.owner) ? authTest.data.owner.login : 'Unknown',
               permissions: authTest.data?.permissions || {}
             };
+
+            // Fetch repositories for this installation
+            try {
+              const repos = await octokit.request(installation.repositories_url);
+              installationDiag.repositoryCount = repos.data.repositories?.length || 0;
+            } catch (repoError) {
+              // If repository fetching fails, log it but don't mark installation as invalid
+              installationDiag.validationErrors.push(`Failed to fetch repositories: ${repoError instanceof Error ? repoError.message : 'Unknown error'}`);
+              installationDiag.repositoryCount = 0;
+            }
           } catch (error) {
             installationDiag.octokitTest = {
               success: false,
@@ -250,10 +266,12 @@ class SetupController {
             };
             installationDiag.isValid = false;
             installationDiag.validationErrors.push(`Octokit API test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            installationDiag.repositoryCount = 0;
           }
         } else {
           installationDiag.isValid = false;
           installationDiag.validationErrors.push('Octokit instance is missing');
+          installationDiag.repositoryCount = 0;
         }
 
         // Update summary
@@ -269,6 +287,11 @@ class SetupController {
         // Track account types
         const accountType = installation.account?.type || 'Unknown';
         diagnostics.summary.accountTypes[accountType] = (diagnostics.summary.accountTypes[accountType] || 0) + 1;
+
+        // Track repository counts per organization
+        const orgName = installation.account?.login || 'Unknown';
+        diagnostics.summary.repositoryCounts[orgName] = installationDiag.repositoryCount;
+        diagnostics.summary.totalRepositories += installationDiag.repositoryCount;
 
         diagnostics.installations.push(installationDiag);
       }
