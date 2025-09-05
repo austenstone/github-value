@@ -41,6 +41,7 @@ import { DiagnosticsResponse } from '../../types/diagnostics.types';
             <li>Validating that all installation accounts have proper data</li>
             <li>Testing Octokit authentication for each installation</li>
             <li>Listing all organization names (account.login) available</li>
+            <li>Counting repositories for each GitHub App installation</li>
             <li>Verifying account types and permissions</li>
             <li>Providing detailed error information for troubleshooting</li>
           </ul>
@@ -84,13 +85,19 @@ import { DiagnosticsResponse } from '../../types/diagnostics.types';
               <div class="stat-value">{{ getSuccessRate() }}%</div>
               <div class="stat-label">Success Rate</div>
             </div>
+            <div class="stat">
+              <div class="stat-value" [class.success]="lastResult.summary.totalRepositories > 0">
+                {{ lastResult.summary.totalRepositories }}
+              </div>
+              <div class="stat-label">Total Repositories</div>
+            </div>
           </div>
           
           <div class="organizations" *ngIf="lastResult.summary.organizationNames.length > 0">
             <h4>Organizations Found:</h4>
             <div class="org-list">
               <span class="org-chip" *ngFor="let org of lastResult.summary.organizationNames">
-                {{ org }}
+                {{ org }} ({{ getRepositoryCount(org) }})
               </span>
             </div>
           </div>
@@ -232,6 +239,11 @@ export class MainDiagnosticsComponent {
     return Math.round((this.lastResult.summary.validInstallations / this.lastResult.totalInstallations) * 100);
   }
 
+  getRepositoryCount(orgName: string): number {
+    if (!this.lastResult || !this.lastResult.summary.repositoryCounts) return 0;
+    return this.lastResult.summary.repositoryCounts[orgName] || 0;
+  }
+
   showFullDetails(): void {
     this.dialog.open(InstallationDiagnosticsDialogComponent, {
       width: '90vw',
@@ -282,6 +294,7 @@ export class MainDiagnosticsComponent {
               <p><strong>Valid:</strong> {{ data.summary.validInstallations }}</p>
               <p><strong>Invalid:</strong> {{ data.summary.invalidInstallations }}</p>
               <p><strong>Success Rate:</strong> {{ getSuccessRate() }}%</p>
+              <p><strong>Total Repositories:</strong> {{ data.summary.totalRepositories }}</p>
             </mat-card-content>
           </mat-card>
         </div>
@@ -304,7 +317,7 @@ export class MainDiagnosticsComponent {
           </mat-card-header>
           <mat-card-content>
             <mat-chip-set>
-              <mat-chip *ngFor="let org of data.summary.organizationNames">{{ org }}</mat-chip>
+              <mat-chip *ngFor="let org of data.summary.organizationNames">{{ org }} ({{ getRepositoryCount(org) }} repos)</mat-chip>
             </mat-chip-set>
           </mat-card-content>
         </mat-card>
@@ -360,6 +373,9 @@ export class MainDiagnosticsComponent {
                 </div>
                 <div class="detail-item">
                   <strong>Has Octokit:</strong> {{ installation.hasOctokit ? 'Yes' : 'No' }}
+                </div>
+                <div class="detail-item">
+                  <strong>Repository Count:</strong> {{ installation.repositoryCount }}
                 </div>
                 <div class="detail-item">
                   <strong>Created:</strong> {{ installation.createdAt | date:'medium' }}
@@ -467,6 +483,11 @@ export class InstallationDiagnosticsDialogComponent {
   getSuccessRate(): number {
     if (this.data.totalInstallations === 0) return 0;
     return Math.round((this.data.summary.validInstallations / this.data.totalInstallations) * 100);
+  }
+
+  getRepositoryCount(orgName: string): number {
+    if (!this.data.summary.repositoryCounts) return 0;
+    return this.data.summary.repositoryCounts[orgName] || 0;
   }
 
   downloadDiagnostics(): void {

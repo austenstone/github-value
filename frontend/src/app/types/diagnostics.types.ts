@@ -27,6 +27,7 @@ export interface InstallationDiagnostic {
   octokitTest: OctokitTestResult | null;
   isValid: boolean;
   validationErrors: string[];
+  repositoryCount: number;
 }
 
 export interface AppInfo {
@@ -50,5 +51,7 @@ export interface DiagnosticsResponse {
     invalidInstallations: number;
     organizationNames: string[];
     accountTypes: Record<string, number>;
+    repositoryCounts: Record<string, number>;
+    totalRepositories: number;
   };
 }
