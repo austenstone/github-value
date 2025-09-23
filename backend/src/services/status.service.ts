@@ -11,7 +11,7 @@ export interface StatusType {
   };
   installations: {
     installation: Endpoints["GET /app/installations"]["response"]["data"][0]
-    repos: Endpoints["GET /app/installations"]["response"]["data"];
+    repos: Endpoints["GET /installation/repositories"]["response"]["data"]["repositories"];
   }[];
   surveyCount: number;
   auth?: {
@@ -56,10 +56,15 @@ class StatusService {
 
     status.installations = [];
     for (const installation of app.github.installations) {
-      const repos = await installation.octokit.request(installation.installation.repositories_url);
+      // Use paginated API to fetch ALL repositories across multiple pages
+      const repos = await installation.octokit.paginate(
+        "GET /installation/repositories"
+      );
+      
+      // Store installation data with complete repository list
       status.installations.push({
         installation: installation.installation,
-        repos: repos.data.repositories
+        repos: repos
       });
     }
 

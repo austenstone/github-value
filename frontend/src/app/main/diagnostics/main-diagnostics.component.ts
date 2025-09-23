@@ -21,7 +21,10 @@ import { DiagnosticsResponse } from '../../types/diagnostics.types';
     MatCardModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatToolbarModule
+    MatToolbarModule,
+    MatDialogModule,
+    MatExpansionModule,
+    MatChipsModule
   ],
   template: `
     <mat-toolbar color="primary">
@@ -83,6 +86,18 @@ import { DiagnosticsResponse } from '../../types/diagnostics.types';
             <div class="stat">
               <div class="stat-value">{{ getSuccessRate() }}%</div>
               <div class="stat-label">Success Rate</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value">{{ lastResult.summary.repositories.totalCount }}</div>
+              <div class="stat-label">Total Repositories</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value">{{ lastResult.summary.repositories.publicCount }}</div>
+              <div class="stat-label">Public Repos</div>
+            </div>
+            <div class="stat">
+              <div class="stat-value">{{ lastResult.summary.repositories.privateCount }}</div>
+              <div class="stat-label">Private Repos</div>
             </div>
           </div>
           
@@ -189,6 +204,95 @@ import { DiagnosticsResponse } from '../../types/diagnostics.types';
     mat-card-actions button {
       margin-right: 8px;
     }
+
+    .repositories-section {
+      margin-top: 16px;
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+    }
+
+    .repo-stats {
+      display: flex;
+      gap: 8px;
+      margin: 8px 0;
+    }
+
+    .stat-badge {
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.75em;
+      font-weight: 500;
+      background: #f5f5f5;
+      color: #666;
+    }
+
+    .stat-badge.public {
+      background: #e8f5e8;
+      color: #2e7d32;
+    }
+
+    .stat-badge.private {
+      background: #fff3e0;
+      color: #ef6c00;
+    }
+
+    .repo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .repo-item {
+      padding: 8px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      background: #fafafa;
+    }
+
+    .repo-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .visibility-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+
+    .visibility-icon.private {
+      color: #ef6c00;
+    }
+
+    .repo-name {
+      color: #1976d2;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .repo-name:hover {
+      text-decoration: underline;
+    }
+
+    .repo-full-name {
+      font-size: 0.75em;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .no-repos {
+      color: #666;
+      font-style: italic;
+    }
+
+    .many-repos {
+      text-align: center;
+      padding: 16px;
+      color: #666;
+    }
   `]
 })
 export class MainDiagnosticsComponent {
@@ -203,11 +307,15 @@ export class MainDiagnosticsComponent {
 
   runDiagnostics(): void {
     this.isLoading = true;
+    
+    // Call backend to validate all GitHub App installations and fetch repository data
     this.setupService.validateInstallations().subscribe({
       next: (result) => {
         this.isLoading = false;
+        // Store results for display in summary cards and detailed view
         this.lastResult = result;
         
+        // Show appropriate notification based on validation results
         if (result.summary.invalidInstallations > 0 || result.errors.length > 0) {
           this.snackBar.open('Diagnostics completed with some issues. Check the details.', 'Close', {
             duration: 5000
@@ -228,6 +336,7 @@ export class MainDiagnosticsComponent {
   }
 
   getSuccessRate(): number {
+    // Calculate percentage of valid installations for summary display
     if (!this.lastResult || this.lastResult.totalInstallations === 0) return 0;
     return Math.round((this.lastResult.summary.validInstallations / this.lastResult.totalInstallations) * 100);
   }
@@ -252,6 +361,22 @@ export class MainDiagnosticsComponent {
     link.download = `installation-diagnostics-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  getPublicRepoCount(repos: Array<{ private: boolean }>): number {
+    return repos.filter(repo => !repo.private).length;
+  }
+
+  getPrivateRepoCount(repos: Array<{ private: boolean }>): number {
+    return repos.filter(repo => repo.private).length;
+  }
+
+  showRepositoryList(installation: any): void {
+    // For now, just show an alert - we can create a proper dialog later
+    const repoList = installation.repositories.list.map((repo: any) => 
+      `${repo.name} (${repo.private ? 'private' : 'public'})`
+    ).join('\n');
+    alert(`Repositories for ${installation.accountLogin}:\n\n${repoList}`);
   }
 }
 
@@ -384,6 +509,38 @@ export class MainDiagnosticsComponent {
                   <li *ngFor="let error of installation.validationErrors" class="error-item">{{ error }}</li>
                 </ul>
               </div>
+              
+              <div class="repositories-section">
+                <h4>Repositories ({{ installation.repositories.count }})</h4>
+                <div *ngIf="installation.repositories.count === 0" class="no-repos">
+                  <p>No repositories found for this installation.</p>
+                </div>
+                <div *ngIf="installation.repositories.count > 0" class="repos-list">
+                  <div class="repo-stats">
+                    <span class="stat-badge">Total: {{ installation.repositories.count }}</span>
+                    <span class="stat-badge public">Public: {{ getPublicRepoCount(installation.repositories.list) }}</span>
+                    <span class="stat-badge private">Private: {{ getPrivateRepoCount(installation.repositories.list) }}</span>
+                  </div>
+                  <div class="repo-grid" *ngIf="installation.repositories.list.length <= 10">
+                    <div *ngFor="let repo of installation.repositories.list" class="repo-item">
+                      <div class="repo-header">
+                        <mat-icon class="visibility-icon" [class.private]="repo.private">
+                          {{ repo.private ? 'lock' : 'public' }}
+                        </mat-icon>
+                        <a [href]="repo.html_url" target="_blank" class="repo-name">{{ repo.name }}</a>
+                      </div>
+                      <div class="repo-full-name">{{ repo.full_name }}</div>
+                    </div>
+                  </div>
+                  <div *ngIf="installation.repositories.list.length > 10" class="many-repos">
+                    <p>{{ installation.repositories.count }} repositories (too many to display individually)</p>
+                    <button mat-button (click)="showRepositoryList(installation)">
+                      <mat-icon>list</mat-icon>
+                      View All Repositories
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </mat-expansion-panel>
         </mat-accordion>
@@ -470,6 +627,7 @@ export class InstallationDiagnosticsDialogComponent {
   }
 
   downloadDiagnostics(): void {
+    // Export diagnostic data as JSON file for external analysis
     const dataStr = JSON.stringify(this.data, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
@@ -478,5 +636,23 @@ export class InstallationDiagnosticsDialogComponent {
     link.download = `installation-diagnostics-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  getPublicRepoCount(repos: Array<{ private: boolean }>): number {
+    // Count public repositories for dialog statistics display
+    return repos.filter(repo => !repo.private).length;
+  }
+
+  getPrivateRepoCount(repos: Array<{ private: boolean }>): number {
+    // Count private repositories for dialog statistics display
+    return repos.filter(repo => repo.private).length;
+  }
+
+  showRepositoryList(installation: any): void {
+    // For now, just show an alert - we can create a proper dialog later
+    const repoList = installation.repositories.list.map((repo: any) => 
+      `${repo.name} (${repo.private ? 'private' : 'public'})`
+    ).join('\n');
+    alert(`Repositories for ${installation.accountLogin}:\n\n${repoList}`);
   }
 }

@@ -32,6 +32,16 @@ interface InstallationDiagnostic {
   octokitTest: OctokitTestResult | null;
   isValid: boolean;
   validationErrors: string[];
+  repositories: {
+    count: number;
+    list: Array<{
+      id: number;
+      name: string;
+      full_name: string;
+      private: boolean;
+      html_url: string;
+    }>;
+  };
 }
 
 interface AppInfo {
@@ -55,6 +65,11 @@ interface DiagnosticsResponse {
     invalidInstallations: number;
     organizationNames: string[];
     accountTypes: Record<string, number>;
+    repositories: {
+      totalCount: number;
+      publicCount: number;
+      privateCount: number;
+    };
   };
 }
 
@@ -169,6 +184,7 @@ class SetupController {
 
   async validateInstallations(req: Request, res: Response) {
     try {
+      // Initialize diagnostics response with empty summary stats
       const diagnostics: DiagnosticsResponse = {
         timestamp: new Date().toISOString(),
         appConnected: !!app.github.app,
@@ -180,20 +196,47 @@ class SetupController {
           validInstallations: 0,
           invalidInstallations: 0,
           organizationNames: [],
-          accountTypes: {}
+          accountTypes: {},
+          repositories: {
+            totalCount: 0,
+            publicCount: 0,
+            privateCount: 0
+          }
         }
       };
 
-      // Basic app validation
+      // Early exit if GitHub App is not properly initialized
       if (!app.github.app) {
         diagnostics.errors.push('GitHub App is not initialized');
         return res.json(diagnostics);
       }
 
-      // Validate each installation
+      // Process each GitHub App installation sequentially
       for (let i = 0; i < app.github.installations.length; i++) {
         const { installation, octokit } = app.github.installations[i];
         
+        // Fetch all repositories for this installation using pagination
+        let repositories = { count: 0, list: [] as Array<{ id: number; name: string; full_name: string; private: boolean; html_url: string; }> };
+        if (octokit) {
+          try {
+            // Use paginate to get ALL repos across multiple pages
+            const repos = await octokit.paginate("GET /installation/repositories");
+            repositories = {
+              count: repos.length,
+              list: repos.map(repo => ({
+                id: repo.id,
+                name: repo.name,
+                full_name: repo.full_name,
+                private: repo.private,
+                html_url: repo.html_url
+              }))
+            };
+          } catch (error) {
+            // Repository fetch failure shouldn't break entire diagnostic
+            console.error(`Failed to fetch repos for installation ${installation.id}:`, error);
+          }
+        }
+
         const installationDiag: InstallationDiagnostic = {
           index: i,
           installationId: installation.id,
@@ -213,10 +256,11 @@ class SetupController {
           hasOctokit: !!octokit,
           octokitTest: null,
           isValid: true,
-          validationErrors: []
+          validationErrors: [],
+          repositories: repositories
         };
 
-        // Validate required fields
+        // Validate required installation fields for proper functionality
         if (!installation.account?.login) {
           installationDiag.isValid = false;
           installationDiag.validationErrors.push('Missing account.login (organization name)');
@@ -232,10 +276,10 @@ class SetupController {
           installationDiag.validationErrors.push('Missing account.type');
         }
 
-        // Test Octokit functionality
+        // Verify Octokit can make authenticated API calls
         if (octokit) {
           try {
-            // Test basic API call with the installation's octokit
+            // Simple API test to verify authentication works
             const authTest = await octokit.rest.apps.getAuthenticated();
             installationDiag.octokitTest = {
               success: true,
@@ -244,6 +288,7 @@ class SetupController {
               permissions: authTest.data?.permissions || {}
             };
           } catch (error) {
+            // Mark as invalid if Octokit auth fails
             installationDiag.octokitTest = {
               success: false,
               error: error instanceof Error ? error.message : 'Unknown error'
@@ -256,7 +301,7 @@ class SetupController {
           installationDiag.validationErrors.push('Octokit instance is missing');
         }
 
-        // Update summary
+        // Aggregate installation status into summary counters
         if (installationDiag.isValid) {
           diagnostics.summary.validInstallations++;
           if (installation.account?.login) {
@@ -266,14 +311,24 @@ class SetupController {
           diagnostics.summary.invalidInstallations++;
         }
 
-        // Track account types
+        // Count installations by account type (Organization vs User)
         const accountType = installation.account?.type || 'Unknown';
         diagnostics.summary.accountTypes[accountType] = (diagnostics.summary.accountTypes[accountType] || 0) + 1;
+
+        // Aggregate repository counts across all installations
+        diagnostics.summary.repositories.totalCount += installationDiag.repositories.count;
+        installationDiag.repositories.list.forEach(repo => {
+          if (repo.private) {
+            diagnostics.summary.repositories.privateCount++;
+          } else {
+            diagnostics.summary.repositories.publicCount++;
+          }
+        });
 
         diagnostics.installations.push(installationDiag);
       }
 
-      // Additional app-level diagnostics
+      // Fetch GitHub App metadata for display purposes
       try {
         const appInfo = await app.github.app.octokit.rest.apps.getAuthenticated();
         diagnostics.appInfo = {
@@ -288,7 +343,7 @@ class SetupController {
         diagnostics.errors.push(`Failed to get app info: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
 
-      // Sort organization names for easier reading
+      // Sort organization names alphabetically for cleaner display
       diagnostics.summary.organizationNames.sort();
 
       res.json(diagnostics);
