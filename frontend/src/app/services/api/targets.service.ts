@@ -82,20 +82,23 @@ export class TargetsService {
 
   constructor(private http: HttpClient) { }
 
-  getTargets() {
-    return this.http.get<Targets>(this.apiUrl).pipe(
+  getTargets(org?: string) {
+    const options = org ? { params: { orgOrEnterprise: org } } : {};
+    return this.http.get<Targets>(this.apiUrl, options).pipe(
       map(data => data ?? TargetsService.DEFAULT_TARGETS),
       catchError(() => of(TargetsService.DEFAULT_TARGETS))
     );
   }
 
-  saveTargets(targets: Targets) {
-    return this.http.post<Targets>(`${this.apiUrl}`, targets);
+  saveTargets(targets: Targets, org?: string) {
+    const options = org ? { params: { orgOrEnterprise: org } } : {};
+    return this.http.post<Targets>(`${this.apiUrl}`, targets, options);
   }
 
-  recalculateTargets() {
-    // Calls the backend endpoint to recalculate targets
-    return this.http.get<RecalculateTargetsResponse>(`${this.apiUrl}/calculate`);
+  recalculateTargets(org?: string) {
+    // Calls the backend endpoint to recalculate targets with optional org parameter
+    const options = org ? { params: { orgOrEnterprise: org } } : {};
+    return this.http.get<RecalculateTargetsResponse>(`${this.apiUrl}/calculate`, options);
   }
 }
 

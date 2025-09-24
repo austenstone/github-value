@@ -86,9 +86,12 @@ export class CopilotValueModelingComponent implements OnInit {
   ngOnInit() {
     this.installationsService.currentInstallation.pipe(
       takeUntil(this._destroy$.asObservable())
-    ).subscribe(() => { // subscribe to installation to have installation specific targets
+    ).subscribe((installation) => { // subscribe to installation to have installation specific targets
       try {
-        this.targetsService.getTargets().subscribe(targets => {
+        // Extract org from current installation for org-specific targets
+        const org = this.getOrgFromInstallation(installation);
+        
+        this.targetsService.getTargets(org).subscribe(targets => {
           this.orgDataSource = this.transformTargets(targets.org);
           this.userDataSource = this.transformTargets(targets.user);
           this.impactDataSource = this.transformTargets(targets.impact);
@@ -97,6 +100,31 @@ export class CopilotValueModelingComponent implements OnInit {
         console.error('Error during initialization:', error);
       }
     });
+  }
+
+  /**
+   * Extract organization identifier from installation for API calls
+   * Returns org name for organization installations, "1" for enterprise-wide, undefined for no selection
+   */
+  private getOrgFromInstallation(installation: any): string | undefined {
+    if (!installation) {
+      // No installation selected - return undefined to use default (enterprise-wide)
+      return undefined;
+    }
+    
+    // Check if this is the special "Enterprise" selection (ID = 1)
+    // This only appears when there are multiple installations
+    if (installation.id === 1) {
+      return "1"; // Enterprise-wide targets
+    }
+    
+    // For specific organization installations, use the account login
+    if (installation.account?.login && installation.target_type === 'Organization') {
+      return installation.account.login;
+    }
+    
+    // Fallback to undefined (will use enterprise-wide on backend)
+    return undefined;
   }
 
   transformTargets(targets: Record<string, Target>): TableTarget[] {
@@ -129,7 +157,10 @@ export class CopilotValueModelingComponent implements OnInit {
 
   saveTargets() {
     const targets: Targets = this.transformBackToTargets(this.orgDataSource, this.userDataSource, this.impactDataSource);
-    this.targetsService.saveTargets(targets).subscribe(() => {
+    const installation = this.installationsService.currentInstallation.value;
+    const org = this.getOrgFromInstallation(installation);
+    
+    this.targetsService.saveTargets(targets, org).subscribe(() => {
       this.showSaveAllButton = false;
     });
   }
@@ -149,8 +180,11 @@ export class CopilotValueModelingComponent implements OnInit {
   }
 
   resetTargets() {
-    // Call the backend endpoint to recalculate targets
-    this.targetsService.recalculateTargets().subscribe((result: RecalculateTargetsResponse) => {
+    // Call the backend endpoint to recalculate targets with current installation context
+    const installation = this.installationsService.currentInstallation.value;
+    const org = this.getOrgFromInstallation(installation);
+    
+    this.targetsService.recalculateTargets(org).subscribe((result: RecalculateTargetsResponse) => {
       // Handle response format - could be {targets: Targets, logs?: any[]} or just Targets
       const targets = 'targets' in result ? result.targets : result as Targets;
       this.orgDataSource = this.transformTargets(targets.org);

@@ -109,7 +109,7 @@ class Database {
       models: [ModelSchema]
     });
 
-    mongoose.model('Metrics', new mongoose.Schema({
+    const metricsSchema = new mongoose.Schema({
       org: String,
       team: String,
       date: Date,
@@ -141,7 +141,13 @@ class Database {
         total_pr_summaries_created: Number,
         repositories: [RepositorySchema]
       }
-    }));
+    });
+
+    // Add indexes for common query patterns
+    metricsSchema.index({ org: 1, date: 1 }); // For queries filtering by org and sorting by date
+    metricsSchema.index({ org: 1, team: 1, date: 1 }); // For queries with org, team, and date
+
+    mongoose.model('Metrics', metricsSchema);
 
     const teamSchema = new Schema({
       org: { type: String, required: true },
@@ -245,6 +251,8 @@ class Database {
     seatsSchema.index({ assignee_login: 1 });
     seatsSchema.index({ assignee_id: 1 }); 
     seatsSchema.index({ org: 1 });
+    // Add index recommended by MongoDB for queries sorting by createdAt
+    seatsSchema.index({ createdAt: 1 });
     
     mongoose.model('Seats', seatsSchema);
 
@@ -280,6 +288,8 @@ class Database {
 
     // Create indexes
     adoptionSchema.index({ enterprise: 1, org: 1, team: 1, date: 1 }, { unique: true });
+    // Add index recommended by MongoDB for queries filtering by org and sorting by date
+    adoptionSchema.index({ org: 1, date: 1 });
 
     mongoose.model('Adoption', adoptionSchema);
 
@@ -304,7 +314,7 @@ class Database {
 
     mongoose.model('ActivityTotals', activityTotalsSchema);
 
-    mongoose.model('Survey', new mongoose.Schema({
+    const surveySchema = new mongoose.Schema({
       id: Number,
       userId: String,
       org: String,
@@ -319,7 +329,13 @@ class Database {
       hits: Number
     }, {
       timestamps: true
-    }));
+    });
+
+    // Add indexes for common query patterns
+    surveySchema.index({ org: 1, createdAt: 1 }); // For queries filtering by org and sorting by creation date
+    surveySchema.index({ org: 1, repo: 1 }); // For queries filtering by org and repo
+
+    mongoose.model('Survey', surveySchema);
 
     const TargetSchema = new mongoose.Schema({
       current: Number,
@@ -328,6 +344,9 @@ class Database {
     });
     
     const TargetsSchema = new mongoose.Schema({
+      // Scope identifier: org name for org installs, "1" for enterprise installs  
+      orgOrEnterprise: { type: String, required: true },
+      
       org: {
         seats: TargetSchema,
         adoptedDevs: TargetSchema,
@@ -352,6 +371,9 @@ class Database {
     }, {
       timestamps: true
     });
+    
+    // Index for efficient orgOrEnterprise-based queries
+    TargetsSchema.index({ orgOrEnterprise: 1 }, { unique: true });
     
     mongoose.model('Targets', TargetsSchema);
 

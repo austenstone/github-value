@@ -89,6 +89,10 @@ export class CopilotValueComponent implements OnInit, OnDestroy {
       takeUntil(this.installationsService.destroy$)
     ).subscribe(installation => {
       this.subscriptions.forEach(s => s.unsubscribe());
+      
+      // Extract org from installation for org-specific data and targets
+      const org = this.getOrgFromInstallation(installation);
+      
       this.subscriptions = [
         this.seatService.getActivity(installation?.account?.login).subscribe(data => {
           this.activityData = data;
@@ -104,11 +108,37 @@ export class CopilotValueComponent implements OnInit, OnDestroy {
         }).subscribe(data => {
           this.surveysData = data;
         }),
-        this.targetsService.getTargets().subscribe(data => {
+        // FIXED: Use org-specific targets based on current installation
+        this.targetsService.getTargets(org).subscribe(data => {
           this.targetsData = data;
         })
       ];
     });
+  }
+
+  /**
+   * Extract organization identifier from installation for API calls
+   * Returns org name for organization installations, "1" for enterprise-wide, undefined for default
+   */
+  private getOrgFromInstallation(installation: any): string | undefined {
+    if (!installation) {
+      // No installation selected - return undefined to use default (enterprise-wide)
+      return undefined;
+    }
+    
+    // Check if this is the special "Enterprise" selection (ID = 1)
+    // This only appears when there are multiple installations
+    if (installation.id === 1) {
+      return "1"; // Enterprise-wide targets
+    }
+    
+    // For specific organization installations, use the account login
+    if (installation.account?.login && installation.target_type === 'Organization') {
+      return installation.account.login;
+    }
+    
+    // Fallback to undefined (will use enterprise-wide on backend)
+    return undefined;
   }
 
   ngOnDestroy() {
