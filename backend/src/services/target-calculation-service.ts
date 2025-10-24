@@ -705,7 +705,7 @@ RESULT:
   calculateWeeklyTimeSavedHrs(): Target {
     // If no surveys, return default values with 2 hrs current
     if (this.surveysWeekly.length === 0) {
-      return { current: 2, target: 2, max: 10 };
+      return { current: 2, target: 4, max: 10 };
     }
     
     // Get distinct users who submitted surveys
@@ -777,29 +777,42 @@ RESULT:
    * Calculate monthly time savings in hours
    */
   calculateMonthlyTimeSavingsHrs(): Target {
-    const adoptedDevs = this.calculateAdoptedDevs().current;
-    const weeklyTimeSavedHrs = this.calculateWeeklyTimeSavedHrs().current;
-    const monthlyTimeSavings = adoptedDevs * weeklyTimeSavedHrs * 4; // Assuming 4 weeks per month
-    
+    const adoptedDevsCurrent = this.calculateAdoptedDevs().current;
+    const weeklyTimeSavedHrsCurrent = this.calculateWeeklyTimeSavedHrs().current;
+    const monthlyTimeSavingsCurrent = adoptedDevsCurrent * weeklyTimeSavedHrsCurrent * 4;
+
+    const adoptedDevsTarget = this.calculateAdoptedDevs().target;
+    const weeklyTimeSavedHrsTarget = this.calculateWeeklyTimeSavedHrs().target;
+    const monthlyTimeSavingsIdeal = adoptedDevsTarget * weeklyTimeSavedHrsTarget * 4;
+
+    const max = this.roundToDecimal(80 * this.calculateSeats().current);
+
+    // Conservative target: min( current * 1.4, monthlyTimeSavingsIdeal, max * 0.85 )
+    const target = this.roundToDecimal(
+      Math.min(monthlyTimeSavingsCurrent * 1.4, monthlyTimeSavingsIdeal, max * 0.85)
+    );
+
     const result = {
-      current: this.roundToDecimal(monthlyTimeSavings),
-      target: 0, // Target is user-defined
-      max: this.roundToDecimal(80 * this.calculateSeats().current) // Based on target.service.ts
+      current: this.roundToDecimal(monthlyTimeSavingsCurrent),
+      target,
+      max
     };
-    
+
     this.logCalculation(
       'MONTHLY TIME SAVINGS HRS',
       {
-        adoptedDevsCount: adoptedDevs,
-        weeklyTimeSavedHrs: weeklyTimeSavedHrs,
-        monthlyCalculation: `${adoptedDevs} * ${weeklyTimeSavedHrs} * 4 = ${monthlyTimeSavings}`,
-        calculatedMonthlyTimeSavings: monthlyTimeSavings,
-        seatsCount: this.calculateSeats().current
+        adoptedDevsCurrent,
+        weeklyTimeSavedHrsCurrent,
+        monthlyTimeSavingsCurrent,
+        adoptedDevsTarget,
+        weeklyTimeSavedHrsTarget,
+        monthlyTimeSavingsIdeal,
+        max
       },
-      'Calculate adoptedDevs * weeklyTimeSavedHrs * 4 (weeklyTimeSavedHrs already includes default of 2 if needed), max = 80 * seats',
+      'current = adoptedDevs.current * weeklyTimeSavedHrs.current * 4; target = min(current * 1.4, adoptedDevs.target * weeklyTimeSavedHrs.target * 4, max * 0.85)',
       result
     );
-    
+
     return result;
   }
   
@@ -807,39 +820,57 @@ RESULT:
    * Calculate annual time savings in dollars
    */
   calculateAnnualTimeSavingsAsDollars(): Target {
-    const adoptedDevs = this.calculateAdoptedDevs().current;
-    const weeklyTimeSavedHrs = this.calculateWeeklyTimeSavedHrs().current; // This now includes default of 2 if needed
-    
-    // Use type-safe parsing for settings values
+    const adoptedDevsCurrent = this.calculateAdoptedDevs().current;
+    const weeklyTimeSavedHrsCurrent = this.calculateWeeklyTimeSavedHrs().current;
     const hoursPerYear = this.parseNumericValue(this.settings.hoursPerYear, 2000);
-    const weeksInYear = Math.round(hoursPerYear / 40) || 50; // Calculate weeks and ensure it's a number
-    
+    const weeksInYear = Math.round(hoursPerYear / 40) || 50;
     const devCostPerYear = this.parseNumericValue(this.settings.devCostPerYear, 0);
     const hourlyRate = devCostPerYear > 0 ? (devCostPerYear / hoursPerYear) : 50;
-    
-    const annualSavings = weeklyTimeSavedHrs * weeksInYear * hourlyRate * adoptedDevs;
-    
-    // For dollar values, we can use 0 decimals (whole dollars)
+
+    const annualSavingsCurrent =
+      weeklyTimeSavedHrsCurrent * weeksInYear * hourlyRate * adoptedDevsCurrent;
+
+    const adoptedDevsTarget = this.calculateAdoptedDevs().target;
+    const weeklyTimeSavedHrsTarget = this.calculateWeeklyTimeSavedHrs().target;
+    const annualSavingsIdeal =
+      weeklyTimeSavedHrsTarget * weeksInYear * hourlyRate * adoptedDevsTarget;
+
+    // Max: assume 40 hrs/week saved per seat
+    const max = Math.round(
+      weeksInYear *
+      this.calculateSeats().current *
+      hourlyRate *
+      40
+    );
+
+    // Target = min( current * 1.35, ideal, max * 0.75 )
+    const target = Math.round(
+      Math.min(annualSavingsCurrent * 1.35, annualSavingsIdeal, max * 0.75)
+    );
+
     const result = {
-      current: Math.round(annualSavings || 0), // Round to whole dollars
-      target: 0,
-      max: Math.round(weeksInYear * this.calculateSeats().current * hourlyRate * 40 || 10000) // Max assumes 40 hours per week saved per seat
+      current: Math.round(annualSavingsCurrent || 0),
+      target,
+      max: Math.round(max || 10000)
     };
-    
+
     this.logCalculation(
       'ANNUAL TIME SAVINGS AS DOLLARS',
       {
-        adoptedDevsCount: adoptedDevs,
-        weeklyTimeSavedHrs: weeklyTimeSavedHrs,
-        weeksInYear: weeksInYear,
-        hourlyRate: hourlyRate,
-        annualSavingsCalculation: `${weeklyTimeSavedHrs} * ${weeksInYear} * ${hourlyRate} * ${adoptedDevs} = ${annualSavings}`,
-        seatsCount: this.calculateSeats().current
+        adoptedDevsCurrent,
+        weeklyTimeSavedHrsCurrent,
+        weeksInYear,
+        hourlyRate,
+        annualSavingsCurrent,
+        adoptedDevsTarget,
+        weeklyTimeSavedHrsTarget,
+        annualSavingsIdeal,
+        max
       },
-      'Calculate weeklyTimeSavedHrs * weeksInYear * hourlyRate * adoptedDevs (weeklyTimeSavedHrs includes default of 2 if needed)',
+      'current = weeklyTimeSavedHrs.current * weeksInYear * hourlyRate * adoptedDevs.current; target = min(current * 1.35, weeklyTimeSavedHrs.target * weeksInYear * hourlyRate * adoptedDevs.target, max * 0.75)',
       result
     );
-    
+
     return result;
   }
   
