@@ -60,7 +60,7 @@ class StatusService {
 
     // Helper to fetch repositories with a hard time cap (2 min) to avoid long waits
     // Returns partial results if time limit exceeded
-    async function fetchReposWithTimeLimit(installation: typeof app.github.installations[0], maxDurationMs = 2 * 60 * 1000, perPage = 1) {
+    async function fetchReposWithTimeLimit(installation: typeof app.github.installations[0], maxDurationMs = 2 * 60 * 1000, perPage = 100) {
       const start = Date.now();
       const repos: Endpoints["GET /installation/repositories"]["response"]["data"]["repositories"] = [] as any;
       let totalCount: number | undefined;
