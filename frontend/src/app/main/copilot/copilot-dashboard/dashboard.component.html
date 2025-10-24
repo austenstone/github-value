@@ -42,7 +42,7 @@
 
     @for (status of statuses; track $index) {
     <mat-card id="status" appearance="outlined">
-      <app-status [title]="status?.title" [message]="status?.message" [status]="status?.status"></app-status>
+      <app-status [title]="status?.title" [message]="status?.message" [status]="status?.status" [partial]="status?.partial" [fetchedCount]="status?.fetchedCount" [totalCount]="status?.totalCount"></app-status>
     </mat-card>
     }
 

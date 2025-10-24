@@ -78,7 +78,10 @@ export class CopilotDashboardComponent implements OnInit, OnDestroy {
   statuses = [] as {
     title: string,
     message: string,
-    status: 'success' | 'error' | 'warning'
+    status: 'success' | 'error' | 'warning',
+    partial?: boolean,
+    fetchedCount?: number,
+    totalCount?: number
   }[];
   statusChecks = [
     // First column: Telemetry
@@ -125,10 +128,23 @@ export class CopilotDashboardComponent implements OnInit, OnDestroy {
       this.subscriptions.push(
         this.installationsService.getStatus2().subscribe(status => {
           this.status = status;
+          const installations = status.installations || [];
+          const totalFetched = installations.reduce((acc: number, i: any) => acc + (i.repositoriesFetchedCount ?? i.repos?.length ?? 0), 0);
+          const totalDeclaredRaw = installations.reduce((acc: number, i: any) => acc + (i.repositoryTotalCount ?? 0), 0);
+          const anyDeclared = installations.some((i: any) => i.repositoryTotalCount !== undefined);
+          const totalDeclared = anyDeclared ? totalDeclaredRaw : undefined;
+          const anyPartial = installations.some((i: any) => i.partial) || installations.some((i: any) => {
+            const expected = i.repositoryTotalCount ?? i.repos?.length ?? 0;
+            const fetched = i.repositoriesFetchedCount ?? i.repos?.length ?? 0;
+            return expected > fetched;
+          });
           this.statuses[0] = {
             title: 'GitHub App',
-            message: status.installations.reduce((acc: number, i: any) => acc += i.repos.length, 0) + ' repositories',
-            status: status.installations.length > 0 ? 'success' : 'error'
+            message: totalFetched + ' repositories',
+            status: installations.length > 0 ? 'success' : 'error',
+            partial: anyPartial,
+            fetchedCount: totalFetched,
+            totalCount: totalDeclared
           };
           this.statuses[1] = {
             title: 'Polling History',

@@ -1,7 +1,18 @@
 <div class="status">
   <div class="status-header">
     <mat-card-title>{{title}}</mat-card-title>
-    <mat-card-subtitle>{{message}}</mat-card-subtitle>
+    <mat-card-subtitle>
+      {{message}}
+      @if (partial) {
+        <span class="partial-indicator" matTooltip="Results are incomplete; fetched {{fetchedCount || 0}} of {{ totalCount || '?' }} repositories">
+          <mat-icon class="partial-icon" color="warn">hourglass_bottom</mat-icon>
+          <span class="partial-text">Partial</span>
+          @if (fetchedCount !== undefined) {
+            <span class="partial-count">{{fetchedCount}}{{ totalCount ? ' / ' + totalCount : ''}}</span>
+          }
+        </span>
+      }
+    </mat-card-subtitle>
   </div>
   <span class="spacer"></span>
   <div class="status-icon">
