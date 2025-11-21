@@ -761,11 +761,9 @@ export class HighchartsService {
         type: 'scatter',
       },
       xAxis: {
+        type: 'datetime',
         title: {
           text: 'Activity'
-        },
-        labels: {
-          format: '{value} m'
         },
         startOnTick: true,
         endOnTick: true,
@@ -776,7 +774,7 @@ export class HighchartsService {
           text: 'Time Saved'
         },
         labels: {
-          format: '{value} kg'
+          format: '{value} min'
         }
       },
       series: [{
